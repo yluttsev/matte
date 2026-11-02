@@ -1,6 +1,10 @@
 package io.github.yluttsev.matte.core.model.media;
 
+import io.github.yluttsev.matte.core.construction.CopyableModel;
+import io.github.yluttsev.matte.core.construction.ModelCopies;
+
 import io.github.yluttsev.matte.core.model.ElementId;
+import io.github.yluttsev.matte.core.model.IdentifiedElement;
 import io.github.yluttsev.matte.core.model.reference.ReferenceOr;
 import io.github.yluttsev.matte.core.model.schema.Schema;
 import io.github.yluttsev.matte.core.model.value.DocumentValue;
@@ -10,7 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public final class MediaType {
+public final class MediaType implements IdentifiedElement, CopyableModel<MediaType> {
 
     private final ElementId id;
     private Schema schema;
@@ -20,6 +24,23 @@ public final class MediaType {
 
     public MediaType(ElementId id) {
         this.id = Objects.requireNonNull(id, "id");
+    }
+
+    private MediaType(MediaType source) {
+        this(source.id);
+        schema = ModelCopies.copy(source.schema);
+        example = source.example;
+        examples.putAll(ModelCopies.map(source.examples));
+        encoding.putAll(ModelCopies.map(source.encoding));
+    }
+
+    public static Builder builder(ElementId id) {
+        return new Builder(id);
+    }
+
+    @Override
+    public MediaType copy() {
+        return new MediaType(this);
     }
 
     public ElementId getId() {
@@ -40,5 +61,42 @@ public final class MediaType {
 
     public Map<String, Encoding> getEncoding() {
         return Collections.unmodifiableMap(encoding);
+    }
+
+    public static final class Builder {
+
+        private final MediaType draft;
+
+        private Builder(ElementId id) {
+            draft = new MediaType(id);
+        }
+
+        public Builder schema(Schema schema) {
+            draft.schema = schema;
+            return this;
+        }
+
+        public Builder example(DocumentValue example) {
+            draft.example = example;
+            return this;
+        }
+
+        public Builder examples(Map<String, ReferenceOr<Example>> examples) {
+            Map<String, ReferenceOr<Example>> values = ModelCopies.valueMap(examples);
+            draft.examples.clear();
+            draft.examples.putAll(values);
+            return this;
+        }
+
+        public Builder encoding(Map<String, Encoding> encoding) {
+            Map<String, Encoding> values = ModelCopies.valueMap(encoding);
+            draft.encoding.clear();
+            draft.encoding.putAll(values);
+            return this;
+        }
+
+        public MediaType build() {
+            return draft.copy();
+        }
     }
 }

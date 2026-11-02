@@ -22,4 +22,9 @@ public final class BooleanSchema implements Schema {
     public boolean getValue() {
         return value;
     }
+
+    @Override
+    public BooleanSchema copy() {
+        return new BooleanSchema(id, value);
+    }
 }

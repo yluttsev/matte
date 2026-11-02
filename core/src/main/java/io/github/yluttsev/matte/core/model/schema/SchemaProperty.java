@@ -1,10 +1,13 @@
 package io.github.yluttsev.matte.core.model.schema;
 
+import io.github.yluttsev.matte.core.construction.CopyableModel;
+
 import io.github.yluttsev.matte.core.model.ElementId;
+import io.github.yluttsev.matte.core.model.IdentifiedElement;
 
 import java.util.Objects;
 
-public final class SchemaProperty {
+public final class SchemaProperty implements IdentifiedElement, CopyableModel<SchemaProperty> {
 
     private final ElementId id;
     private String name;
@@ -13,7 +16,7 @@ public final class SchemaProperty {
     public SchemaProperty(ElementId id, String name, Schema schema) {
         this.id = Objects.requireNonNull(id, "id");
         this.name = Objects.requireNonNull(name, "name");
-        this.schema = Objects.requireNonNull(schema, "schema");
+        this.schema = Objects.requireNonNull(schema, "schema").copy();
     }
 
     public ElementId getId() {
@@ -26,5 +29,10 @@ public final class SchemaProperty {
 
     public Schema getSchema() {
         return schema;
+    }
+
+    @Override
+    public SchemaProperty copy() {
+        return new SchemaProperty(id, name, schema);
     }
 }
