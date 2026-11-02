@@ -14,28 +14,28 @@ import java.util.function.BiConsumer;
 final class DocumentChildren implements ModelChildren {
 
     @Override
-    public boolean visitChildren(Object node, String path, BiConsumer<Object, String> visitor) {
+    public boolean visitChildren(Object node, BiConsumer<Object, String> visitor) {
         if (node instanceof ApiDocument document) {
-            visitor.accept(document.getInfo(), path + ".info");
-            visitor.accept(document.getServers(), path + ".servers");
-            visitor.accept(document.getPaths(), path + ".paths");
-            visitor.accept(document.getComponents(), path + ".components");
-            visitor.accept(document.getTags(), path + ".tags");
-            visitor.accept(document.getSecurity(), path + ".security");
+            visitor.accept(document.getInfo(), "info");
+            visitor.accept(document.getServers(), "servers");
+            visitor.accept(document.getPaths(), "paths");
+            visitor.accept(document.getComponents(), "components");
+            visitor.accept(document.getTags(), "tags");
+            visitor.accept(document.getSecurity(), "security");
         } else if (node instanceof Components components) {
-            visitor.accept(components.getSchemas(), path + ".schemas");
-            visitor.accept(components.getParameters(), path + ".parameters");
-            visitor.accept(components.getRequestBodies(), path + ".requestBodies");
-            visitor.accept(components.getResponses(), path + ".responses");
-            visitor.accept(components.getHeaders(), path + ".headers");
-            visitor.accept(components.getSecuritySchemes(), path + ".securitySchemes");
-            visitor.accept(components.getExamples(), path + ".examples");
+            visitor.accept(components.getSchemas(), "schemas");
+            visitor.accept(components.getParameters(), "parameters");
+            visitor.accept(components.getRequestBodies(), "requestBodies");
+            visitor.accept(components.getResponses(), "responses");
+            visitor.accept(components.getHeaders(), "headers");
+            visitor.accept(components.getSecuritySchemes(), "securitySchemes");
+            visitor.accept(components.getExamples(), "examples");
         } else if (node instanceof NamedComponent<?> component) {
-            visitor.accept(component.getValue(), path + ".value");
+            visitor.accept(component.getValue(), "value");
         } else if (node instanceof InlineObject<?> inline) {
-            visitor.accept(inline.value(), path + ".value");
+            visitor.accept(inline.value(), "value");
         } else if (node instanceof Server server) {
-            visitor.accept(server.getVariables(), path + ".variables");
+            visitor.accept(server.getVariables(), "variables");
         } else {
             return node instanceof ApiInfo || node instanceof ObjectReference<?>
                     || node instanceof ServerVariable || node instanceof Tag;

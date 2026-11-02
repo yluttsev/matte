@@ -45,7 +45,10 @@ class DocumentStructureValidatorTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("duplicateComponents")
-    void testBuild_WhenComponentNamesAreDuplicated_ShouldRejectWithBothLocations(String section, Components components) {
+    void testBuild_WhenComponentNamesAreDuplicated_ShouldRejectWithBothLocations(
+            String section,
+            Components components
+    ) {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> ApiDocument.builder(ElementId.random()).components(components).build());
 

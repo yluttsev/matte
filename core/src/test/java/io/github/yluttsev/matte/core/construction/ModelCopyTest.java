@@ -59,7 +59,10 @@ class ModelCopyTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("builders")
-    void testBuild_WhenBuilderIsReused_ShouldProduceIndependentGraphs(String name, Supplier<? extends CopyableModel<?>> build) {
+    void testBuild_WhenBuilderIsReused_ShouldProduceIndependentGraphs(
+            String name,
+            Supplier<? extends CopyableModel<?>> build
+    ) {
         ModelAssertions.assertIndependentCopy(build.get(), build.get());
     }
 
