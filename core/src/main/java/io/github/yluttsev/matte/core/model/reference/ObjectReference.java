@@ -8,8 +8,11 @@ import io.github.yluttsev.matte.core.model.IdentifiedElement;
 import java.util.Objects;
 
 public record ObjectReference<T extends CopyableModel<T>>(
-        ElementId id, String value, String summary, String description)
-        implements IdentifiedElement, ReferenceOr<T> {
+        ElementId id,
+        String value,
+        String summary,
+        String description
+) implements IdentifiedElement, ReferenceOr<T> {
 
     public ObjectReference {
         Objects.requireNonNull(id, "id");
