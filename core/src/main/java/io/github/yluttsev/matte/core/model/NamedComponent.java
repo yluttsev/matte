@@ -1,8 +1,11 @@
 package io.github.yluttsev.matte.core.model;
 
+import io.github.yluttsev.matte.core.construction.CopyableModel;
+
 import java.util.Objects;
 
-public final class NamedComponent<T> {
+public final class NamedComponent<T extends CopyableModel<T>>
+        implements IdentifiedElement, CopyableModel<NamedComponent<T>> {
 
     private final ElementId id;
     private String name;
@@ -11,7 +14,7 @@ public final class NamedComponent<T> {
     public NamedComponent(ElementId id, String name, T value) {
         this.id = Objects.requireNonNull(id, "id");
         this.name = Objects.requireNonNull(name, "name");
-        this.value = Objects.requireNonNull(value, "value");
+        this.value = Objects.requireNonNull(value, "value").copy();
     }
 
     public ElementId getId() {
@@ -24,5 +27,10 @@ public final class NamedComponent<T> {
 
     public T getValue() {
         return value;
+    }
+
+    @Override
+    public NamedComponent<T> copy() {
+        return new NamedComponent<>(id, name, value);
     }
 }

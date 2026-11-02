@@ -8,4 +8,8 @@ public record ElementId(UUID value) {
     public ElementId {
         Objects.requireNonNull(value, "value");
     }
+
+    public static ElementId random() {
+        return new ElementId(UUID.randomUUID());
+    }
 }
