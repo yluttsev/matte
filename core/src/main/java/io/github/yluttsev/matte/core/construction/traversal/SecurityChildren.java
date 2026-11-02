@@ -9,14 +9,14 @@ import java.util.function.BiConsumer;
 final class SecurityChildren implements ModelChildren {
 
     @Override
-    public boolean visitChildren(Object node, String path, BiConsumer<Object, String> visitor) {
+    public boolean visitChildren(Object node, BiConsumer<Object, String> visitor) {
         if (node instanceof SecurityScheme scheme) {
-            visitor.accept(scheme.getFlows(), path + ".flows");
+            visitor.accept(scheme.getFlows(), "flows");
         } else if (node instanceof OAuthFlows flows) {
-            visitor.accept(flows.getImplicit(), path + ".implicit");
-            visitor.accept(flows.getPassword(), path + ".password");
-            visitor.accept(flows.getClientCredentials(), path + ".clientCredentials");
-            visitor.accept(flows.getAuthorizationCode(), path + ".authorizationCode");
+            visitor.accept(flows.getImplicit(), "implicit");
+            visitor.accept(flows.getPassword(), "password");
+            visitor.accept(flows.getClientCredentials(), "clientCredentials");
+            visitor.accept(flows.getAuthorizationCode(), "authorizationCode");
         } else {
             return node instanceof SecurityRequirement || node instanceof OAuthFlow;
         }

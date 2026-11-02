@@ -10,20 +10,20 @@ import java.util.function.BiConsumer;
 final class SchemaChildren implements ModelChildren {
 
     @Override
-    public boolean visitChildren(Object node, String path, BiConsumer<Object, String> visitor) {
+    public boolean visitChildren(Object node, BiConsumer<Object, String> visitor) {
         if (node instanceof SchemaComponent component) {
-            visitor.accept(component.getSchema(), path + ".schema");
+            visitor.accept(component.getSchema(), "schema");
         } else if (node instanceof SchemaProperty property) {
-            visitor.accept(property.getSchema(), path + ".schema");
+            visitor.accept(property.getSchema(), "schema");
         } else if (node instanceof SchemaObject schema) {
-            visitor.accept(schema.getProperties(), path + ".properties");
-            visitor.accept(schema.getAdditionalProperties(), path + ".additionalProperties");
-            visitor.accept(schema.getItems(), path + ".items");
-            visitor.accept(schema.getAllOf(), path + ".allOf");
-            visitor.accept(schema.getOneOf(), path + ".oneOf");
-            visitor.accept(schema.getAnyOf(), path + ".anyOf");
-            visitor.accept(schema.getNot(), path + ".not");
-            visitor.accept(schema.getDiscriminator(), path + ".discriminator");
+            visitor.accept(schema.getProperties(), "properties");
+            visitor.accept(schema.getAdditionalProperties(), "additionalProperties");
+            visitor.accept(schema.getItems(), "items");
+            visitor.accept(schema.getAllOf(), "allOf");
+            visitor.accept(schema.getOneOf(), "oneOf");
+            visitor.accept(schema.getAnyOf(), "anyOf");
+            visitor.accept(schema.getNot(), "not");
+            visitor.accept(schema.getDiscriminator(), "discriminator");
         } else {
             return node instanceof BooleanSchema || node instanceof Discriminator;
         }

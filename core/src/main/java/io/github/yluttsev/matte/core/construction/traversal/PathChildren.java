@@ -7,17 +7,17 @@ import java.util.function.BiConsumer;
 final class PathChildren implements ModelChildren {
 
     @Override
-    public boolean visitChildren(Object node, String path, BiConsumer<Object, String> visitor) {
+    public boolean visitChildren(Object node, BiConsumer<Object, String> visitor) {
         if (node instanceof PathItem item) {
-            visitor.accept(item.getOperations(), path + ".operations");
-            visitor.accept(item.getParameters(), path + ".parameters");
-            visitor.accept(item.getServers(), path + ".servers");
+            visitor.accept(item.getOperations(), "operations");
+            visitor.accept(item.getParameters(), "parameters");
+            visitor.accept(item.getServers(), "servers");
         } else if (node instanceof Operation operation) {
-            visitor.accept(operation.getParameters(), path + ".parameters");
-            visitor.accept(operation.getRequestBody(), path + ".requestBody");
-            visitor.accept(operation.getResponses(), path + ".responses");
-            visitor.accept(operation.getServers(), path + ".servers");
-            visitor.accept(operation.getSecurity(), path + ".security");
+            visitor.accept(operation.getParameters(), "parameters");
+            visitor.accept(operation.getRequestBody(), "requestBody");
+            visitor.accept(operation.getResponses(), "responses");
+            visitor.accept(operation.getServers(), "servers");
+            visitor.accept(operation.getSecurity(), "security");
         } else {
             return false;
         }

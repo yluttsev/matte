@@ -12,26 +12,26 @@ import java.util.function.BiConsumer;
 final class PayloadChildren implements ModelChildren {
 
     @Override
-    public boolean visitChildren(Object node, String path, BiConsumer<Object, String> visitor) {
+    public boolean visitChildren(Object node, BiConsumer<Object, String> visitor) {
         if (node instanceof Parameter parameter) {
-            visitor.accept(parameter.getSchema(), path + ".schema");
-            visitor.accept(parameter.getExamples(), path + ".examples");
-            visitor.accept(parameter.getContent(), path + ".content");
+            visitor.accept(parameter.getSchema(), "schema");
+            visitor.accept(parameter.getExamples(), "examples");
+            visitor.accept(parameter.getContent(), "content");
         } else if (node instanceof Header header) {
-            visitor.accept(header.getSchema(), path + ".schema");
-            visitor.accept(header.getExamples(), path + ".examples");
-            visitor.accept(header.getContent(), path + ".content");
+            visitor.accept(header.getSchema(), "schema");
+            visitor.accept(header.getExamples(), "examples");
+            visitor.accept(header.getContent(), "content");
         } else if (node instanceof RequestBody body) {
-            visitor.accept(body.getContent(), path + ".content");
+            visitor.accept(body.getContent(), "content");
         } else if (node instanceof ApiResponse response) {
-            visitor.accept(response.getHeaders(), path + ".headers");
-            visitor.accept(response.getContent(), path + ".content");
+            visitor.accept(response.getHeaders(), "headers");
+            visitor.accept(response.getContent(), "content");
         } else if (node instanceof MediaType mediaType) {
-            visitor.accept(mediaType.getSchema(), path + ".schema");
-            visitor.accept(mediaType.getExamples(), path + ".examples");
-            visitor.accept(mediaType.getEncoding(), path + ".encoding");
+            visitor.accept(mediaType.getSchema(), "schema");
+            visitor.accept(mediaType.getExamples(), "examples");
+            visitor.accept(mediaType.getEncoding(), "encoding");
         } else if (node instanceof Encoding encoding) {
-            visitor.accept(encoding.getHeaders(), path + ".headers");
+            visitor.accept(encoding.getHeaders(), "headers");
         } else {
             return node instanceof Example;
         }

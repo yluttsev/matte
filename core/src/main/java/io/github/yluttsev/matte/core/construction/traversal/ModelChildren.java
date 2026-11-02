@@ -4,5 +4,5 @@ import java.util.function.BiConsumer;
 
 interface ModelChildren {
 
-    boolean visitChildren(Object node, String path, BiConsumer<Object, String> visitor);
+    boolean visitChildren(Object node, BiConsumer<Object, String> visitor);
 }
