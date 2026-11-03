@@ -1,5 +1,8 @@
 package io.github.yluttsev.matte.core.reference;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import io.github.yluttsev.matte.core.construction.CopyableModel;
 import io.github.yluttsev.matte.core.model.media.Example;
 import io.github.yluttsev.matte.core.model.media.RequestBody;
@@ -8,9 +11,6 @@ import io.github.yluttsev.matte.core.model.parameter.Parameter;
 import io.github.yluttsev.matte.core.model.response.ApiResponse;
 import io.github.yluttsev.matte.core.model.security.SecurityScheme;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 final class ReferenceTypes {
 

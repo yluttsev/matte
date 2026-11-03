@@ -1,5 +1,7 @@
 package io.github.yluttsev.matte.core.reference;
 
+import java.util.List;
+import java.util.Map;
 import io.github.yluttsev.matte.core.construction.CopyableModel;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.Components;
@@ -29,8 +31,6 @@ import io.github.yluttsev.matte.core.model.security.SecurityScheme;
 import io.github.yluttsev.matte.core.model.value.ObjectValue;
 import io.github.yluttsev.matte.core.model.value.StringValue;
 import io.github.yluttsev.matte.core.navigation.DocumentIndex;
-import java.util.List;
-import java.util.Map;
 
 final class ReferenceFixture {
 
@@ -68,12 +68,15 @@ final class ReferenceFixture {
                         new SchemaComponent(ElementId.random(), "Derived", derived)))
                 .parameters(List.of(
                         component("Limit", limit), alias("Alias", "#/components/parameters/Limit"),
-                        alias("CycleA", "#/components/parameters/CycleB"), alias("CycleB", "#/components/parameters/CycleA"),
+                        alias("CycleA", "#/components/parameters/CycleB"),
+                        alias("CycleB", "#/components/parameters/CycleA"),
                         alias("BrokenAlias", "#/components/parameters/Missing"),
                         alias("ExternalAlias", "other.yaml#/components/parameters/Limit")))
                 .requestBodies(List.of(component("Body", new RequestBody(ElementId.random())),
                         alias("AliasBody", "#/components/requestBodies/Body")))
-                .responses(List.of(component("Success", success), alias("AliasResponse", "#/components/responses/Success")))
+                .responses(List.of(
+                        component("Success", success),
+                        alias("AliasResponse", "#/components/responses/Success")))
                 .headers(List.of(component("Header", new Header(ElementId.random())),
                         alias("AliasHeader", "#/components/headers/Header")))
                 .examples(List.of(component("Example", new Example(ElementId.random())),
@@ -83,7 +86,8 @@ final class ReferenceFixture {
                 .build();
         Operation operation = Operation.builder(ElementId.random())
                 .parameters(List.of(reference("#/components/parameters/Alias"), new InlineObject<>(
-                        Parameter.builder(ElementId.random()).schema(schemaReference("#/components/schemas/User2")).build())))
+                        Parameter.builder(ElementId.random())
+                                .schema(schemaReference("#/components/schemas/User2")).build())))
                 .requestBody(reference("#/components/requestBodies/Body"))
                 .responses(Map.of(new ResponseKey("200"), reference("#/components/responses/Success")))
                 .build();

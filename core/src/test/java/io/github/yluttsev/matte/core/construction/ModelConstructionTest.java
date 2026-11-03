@@ -1,5 +1,10 @@
 package io.github.yluttsev.matte.core.construction;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.ElementId;
 import io.github.yluttsev.matte.core.model.media.Example;
@@ -14,13 +19,7 @@ import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaReference;
 import io.github.yluttsev.matte.core.model.value.NullValue;
 import io.github.yluttsev.matte.core.model.value.StringValue;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -60,8 +59,14 @@ class ModelConstructionTest {
                 () -> assertEquals(List.of(new ResponseKey("200"), new ResponseKey("2XX"), new ResponseKey("default")),
                         List.copyOf(operation.getResponses().keySet())),
                 () -> assertInstanceOf(InlineObject.class, operation.getResponses().get(new ResponseKey("200"))),
-                () -> assertEquals(List.of("read", "write"), document.getSecurity().getFirst().getSchemes().get("OAuth")),
-                () -> assertEquals("dev", document.getServers().getFirst().getVariables().get("environment").getDefaultValue()),
+                () -> assertEquals(
+                        List.of("read", "write"),
+                        document.getSecurity().getFirst().getSchemes().get("OAuth")
+                ),
+                () -> assertEquals(
+                        "dev",
+                        document.getServers().getFirst().getVariables().get("environment").getDefaultValue()
+                ),
                 () -> assertEquals(1, document.getComponents().getSchemas().size()),
                 () -> assertEquals(1, document.getComponents().getParameters().size()),
                 () -> assertEquals(1, document.getComponents().getRequestBodies().size()),

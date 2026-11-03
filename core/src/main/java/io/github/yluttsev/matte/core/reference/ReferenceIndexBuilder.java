@@ -1,5 +1,8 @@
 package io.github.yluttsev.matte.core.reference;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import io.github.yluttsev.matte.core.construction.CopyableModel;
 import io.github.yluttsev.matte.core.model.reference.ObjectReference;
 import io.github.yluttsev.matte.core.model.schema.Discriminator;
@@ -8,9 +11,6 @@ import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.navigation.DocumentEntry;
 import io.github.yluttsev.matte.core.navigation.DocumentIndex;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 public final class ReferenceIndexBuilder {
 

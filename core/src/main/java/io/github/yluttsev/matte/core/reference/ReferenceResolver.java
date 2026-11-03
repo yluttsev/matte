@@ -1,12 +1,5 @@
 package io.github.yluttsev.matte.core.reference;
 
-import io.github.yluttsev.matte.core.construction.CopyableModel;
-import io.github.yluttsev.matte.core.model.reference.ObjectReference;
-import io.github.yluttsev.matte.core.model.schema.Schema;
-import io.github.yluttsev.matte.core.model.schema.SchemaReference;
-import io.github.yluttsev.matte.core.navigation.DocumentEntry;
-import io.github.yluttsev.matte.core.navigation.DocumentIndex;
-import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -14,6 +7,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import io.github.yluttsev.matte.core.construction.CopyableModel;
+import io.github.yluttsev.matte.core.model.reference.ObjectReference;
+import io.github.yluttsev.matte.core.model.schema.Schema;
+import io.github.yluttsev.matte.core.model.schema.SchemaReference;
+import io.github.yluttsev.matte.core.navigation.DocumentEntry;
+import io.github.yluttsev.matte.core.navigation.DocumentIndex;
+import io.github.yluttsev.matte.core.navigation.DocumentPath;
 
 public final class ReferenceResolver {
 

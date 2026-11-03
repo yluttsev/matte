@@ -1,10 +1,10 @@
 package io.github.yluttsev.matte.core.construction.traversal;
 
+import java.util.function.BiConsumer;
 import io.github.yluttsev.matte.core.model.security.OAuthFlow;
 import io.github.yluttsev.matte.core.model.security.OAuthFlows;
 import io.github.yluttsev.matte.core.model.security.SecurityRequirement;
 import io.github.yluttsev.matte.core.model.security.SecurityScheme;
-import java.util.function.BiConsumer;
 
 final class SecurityChildren implements ModelChildren {
 

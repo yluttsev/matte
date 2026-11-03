@@ -1,8 +1,7 @@
 package io.github.yluttsev.matte.core.model.schema;
 
-import io.github.yluttsev.matte.core.model.ElementId;
-
 import java.util.Objects;
+import io.github.yluttsev.matte.core.model.ElementId;
 
 public final class BooleanSchema implements Schema {
 

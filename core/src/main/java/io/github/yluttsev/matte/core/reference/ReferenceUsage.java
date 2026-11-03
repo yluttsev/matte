@@ -1,8 +1,8 @@
 package io.github.yluttsev.matte.core.reference;
 
+import java.util.Objects;
 import io.github.yluttsev.matte.core.construction.CopyableModel;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
-import java.util.Objects;
 
 public record ReferenceUsage<T extends CopyableModel<?>>(
         DocumentPath sourcePath,

@@ -1,10 +1,9 @@
 package io.github.yluttsev.matte.core.model.server;
 
-import io.github.yluttsev.matte.core.construction.CopyableModel;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import io.github.yluttsev.matte.core.construction.CopyableModel;
 
 public final class ServerVariable implements CopyableModel<ServerVariable> {
 

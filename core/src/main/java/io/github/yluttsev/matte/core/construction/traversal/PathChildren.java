@@ -1,8 +1,8 @@
 package io.github.yluttsev.matte.core.construction.traversal;
 
+import java.util.function.BiConsumer;
 import io.github.yluttsev.matte.core.model.path.Operation;
 import io.github.yluttsev.matte.core.model.path.PathItem;
-import java.util.function.BiConsumer;
 
 final class PathChildren implements ModelChildren {
 

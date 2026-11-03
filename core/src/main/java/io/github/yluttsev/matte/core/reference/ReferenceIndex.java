@@ -1,8 +1,5 @@
 package io.github.yluttsev.matte.core.reference;
 
-import io.github.yluttsev.matte.core.model.ElementId;
-import io.github.yluttsev.matte.core.navigation.DocumentIndex;
-import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -10,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import io.github.yluttsev.matte.core.model.ElementId;
+import io.github.yluttsev.matte.core.navigation.DocumentIndex;
+import io.github.yluttsev.matte.core.navigation.DocumentPath;
 
 public final class ReferenceIndex {
 

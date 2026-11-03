@@ -10,20 +10,15 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class ModelAssertions {
 
     private ModelAssertions() {
-    }
-
-    public static void assertIndependentCopy(Object source, Object copy) {
-        assertIndependentCopy(source, copy, "$");
     }
 
     public static Set<CopyableModel<?>> modelNodes(CopyableModel<?> root) {
@@ -46,6 +41,10 @@ public final class ModelAssertions {
             assertThrows(UnsupportedOperationException.class, entries::clear, path);
             entries.forEach(entry -> assertReadOnly(entry, path));
         }
+    }
+
+    public static void assertIndependentCopy(Object source, Object copy) {
+        assertIndependentCopy(source, copy, "$");
     }
 
     private static void assertIndependentCopy(Object source, Object copy, String path) {

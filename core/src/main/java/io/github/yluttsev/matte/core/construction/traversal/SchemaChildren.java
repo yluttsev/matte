@@ -1,11 +1,11 @@
 package io.github.yluttsev.matte.core.construction.traversal;
 
+import java.util.function.BiConsumer;
 import io.github.yluttsev.matte.core.model.schema.BooleanSchema;
 import io.github.yluttsev.matte.core.model.schema.Discriminator;
 import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
 import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaProperty;
-import java.util.function.BiConsumer;
 
 final class SchemaChildren implements ModelChildren {
 

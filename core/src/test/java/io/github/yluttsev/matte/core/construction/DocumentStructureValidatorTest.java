@@ -1,5 +1,8 @@
 package io.github.yluttsev.matte.core.construction;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.Components;
 import io.github.yluttsev.matte.core.model.ElementId;
@@ -9,14 +12,10 @@ import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
 import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaProperty;
 import io.github.yluttsev.matte.core.model.schema.SchemaReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-
 import static io.github.yluttsev.matte.core.construction.ModelFixture.referenceComponent;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -77,7 +76,10 @@ class DocumentStructureValidatorTest {
                 () -> ApiDocument.builder(ElementId.random()).paths(List.of(
                         new PathItem(id, "/users"), new PathItem(id, "/customers"))).build());
 
-        assertEquals("Duplicate element ID " + id.value() + " at $.paths[1]; first at $.paths[0]", exception.getMessage());
+        assertEquals(
+                "Duplicate element ID " + id.value() + " at $.paths[1]; first at $.paths[0]",
+                exception.getMessage()
+        );
     }
 
     @Test

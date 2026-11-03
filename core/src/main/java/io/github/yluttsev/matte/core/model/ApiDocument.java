@@ -1,20 +1,18 @@
 package io.github.yluttsev.matte.core.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import io.github.yluttsev.matte.core.construction.CopyableModel;
 import io.github.yluttsev.matte.core.construction.DocumentStructureValidator;
 import io.github.yluttsev.matte.core.construction.ModelCopies;
-
 import io.github.yluttsev.matte.core.model.info.ApiInfo;
 import io.github.yluttsev.matte.core.model.info.ExternalDocumentation;
 import io.github.yluttsev.matte.core.model.path.PathItem;
 import io.github.yluttsev.matte.core.model.security.SecurityRequirement;
 import io.github.yluttsev.matte.core.model.server.Server;
 import io.github.yluttsev.matte.core.model.tag.Tag;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 
 public final class ApiDocument implements IdentifiedElement, CopyableModel<ApiDocument> {
 

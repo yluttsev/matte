@@ -1,5 +1,7 @@
 package io.github.yluttsev.matte.core.reference;
 
+import java.util.List;
+import java.util.stream.Stream;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.Components;
 import io.github.yluttsev.matte.core.model.ElementId;
@@ -11,14 +13,11 @@ import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaReference;
 import io.github.yluttsev.matte.core.navigation.DocumentIndex;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
-import java.util.List;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -35,7 +34,10 @@ class ReferenceResolverTest {
 
         ResolvedReference<?> resolved = assertInstanceOf(ResolvedReference.class, result);
         assertInstanceOf(SchemaObject.class, resolved.value());
-        assertSame(index.findByPath(DocumentPath.parse("/components/schemas/User")).orElseThrow().value(), resolved.value());
+        assertSame(
+                index.findByPath(DocumentPath.parse("/components/schemas/User")).orElseThrow().value(),
+                resolved.value()
+        );
         assertEquals(DocumentPath.parse("/components/schemas/User"), resolved.targetPath());
         assertEquals(List.of(resolved.targetPath()), resolved.traversedPaths());
         assertThrows(UnsupportedOperationException.class, resolved.traversedPaths()::clear);

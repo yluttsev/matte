@@ -1,5 +1,11 @@
 package io.github.yluttsev.matte.core.construction;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.Components;
 import io.github.yluttsev.matte.core.model.ElementId;
@@ -32,17 +38,10 @@ import io.github.yluttsev.matte.core.model.value.ArrayValue;
 import io.github.yluttsev.matte.core.model.value.DocumentValue;
 import io.github.yluttsev.matte.core.model.value.ObjectValue;
 import io.github.yluttsev.matte.core.model.value.StringValue;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -176,7 +175,8 @@ class ModelCopyTest {
 
     private static Stream<Arguments> builders() {
         return Stream.of(
-                builder("document", ApiDocument.builder(ElementId.random()).info(ApiInfo.builder().title("API").build())::build),
+                builder("document", ApiDocument.builder(ElementId.random())
+                        .info(ApiInfo.builder().title("API").build())::build),
                 builder("components", Components.builder().schemas(List.of(
                         new SchemaComponent(ElementId.random(), "User", ModelFixture.schema())))::build),
                 builder("info", ApiInfo.builder().title("API")::build),
@@ -203,7 +203,8 @@ class ModelCopyTest {
                 builder("tag", Tag.builder(ElementId.random(), "users")::build),
                 builder("security scheme", SecurityScheme.builder(ElementId.random()).flows(
                         OAuthFlows.builder().implicit(OAuthFlow.builder().tokenUrl("https://example.test/token").build()).build())::build),
-                builder("security requirement", SecurityRequirement.builder().schemes(Map.of("oauth", List.of("read")))::build),
+                builder("security requirement", SecurityRequirement.builder()
+                        .schemes(Map.of("oauth", List.of("read")))::build),
                 builder("OAuth flows", OAuthFlows.builder().authorizationCode(
                         OAuthFlow.builder().authorizationUrl("https://example.test/authorize").build())::build),
                 builder("OAuth flow", OAuthFlow.builder().scopes(Map.of("read", "Read users"))::build));

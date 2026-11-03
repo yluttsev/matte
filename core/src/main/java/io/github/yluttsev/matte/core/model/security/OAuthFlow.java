@@ -1,11 +1,10 @@
 package io.github.yluttsev.matte.core.model.security;
 
-import io.github.yluttsev.matte.core.construction.CopyableModel;
-import io.github.yluttsev.matte.core.construction.ModelCopies;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import io.github.yluttsev.matte.core.construction.CopyableModel;
+import io.github.yluttsev.matte.core.construction.ModelCopies;
 
 public final class OAuthFlow implements CopyableModel<OAuthFlow> {
 

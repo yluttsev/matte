@@ -1,5 +1,10 @@
 package io.github.yluttsev.matte.core.construction;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import io.github.yluttsev.matte.core.construction.traversal.ModelWalker;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.Components;
@@ -10,11 +15,6 @@ import io.github.yluttsev.matte.core.model.path.PathItem;
 import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
 import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaProperty;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
 
 public final class DocumentStructureValidator {
 
