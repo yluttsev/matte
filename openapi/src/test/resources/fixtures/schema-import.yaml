@@ -1,0 +1,19 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+components:
+  schemas:
+    Customer:
+      type: object
+      description: A customer
+      required: [id]
+      properties:
+        id:
+          type: string
+        friend:
+          $ref: '#/components/schemas/Customer'
+        external:
+          $ref: 'https://example.invalid/schemas.yaml#/External'
+x-internal:
+  untouched: yes

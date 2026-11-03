@@ -21,8 +21,8 @@ class OpenApiImporterTest {
 
         assertArrayEquals(content, result.source().content());
         assertEquals(Optional.of(SourceFormat.YAML), result.format());
-        assertEquals(ImportStatus.PARSED, result.status());
-        assertTrue(result.diagnostics().isEmpty());
+        assertEquals(ImportStatus.IMPORTED, result.status());
+        assertTrue(result.document().isPresent());
     }
 
     @Test
@@ -33,7 +33,7 @@ class OpenApiImporterTest {
 
         assertArrayEquals(content, result.source().content());
         assertEquals(Optional.of(SourceFormat.JSON), result.format());
-        assertEquals(ImportStatus.PARSED, result.status());
+        assertEquals(ImportStatus.IMPORTED, result.status());
     }
 
     @Test
@@ -149,7 +149,7 @@ class OpenApiImporterTest {
         ImportResult hinted = importer.importDocument(content, ImportOptions.withFormat(SourceFormat.YAML));
         ImportResult detected = importer.importDocument(content, ImportOptions.autoDetect());
 
-        assertEquals(ImportStatus.PARSED, hinted.status());
+        assertEquals(ImportStatus.INVALID_OPENAPI, hinted.status());
         assertEquals(ImportStatus.SYNTAX_ERROR, detected.status());
         assertEquals(Optional.of(SourceFormat.JSON), detected.format());
     }
@@ -159,7 +159,7 @@ class OpenApiImporterTest {
         ImportResult result = importer.importDocument(TestFixtures.bytes("cyclic-alias.yaml"),
                 ImportOptions.withFormat(SourceFormat.YAML));
 
-        assertEquals(ImportStatus.PARSED, result.status());
+        assertEquals(ImportStatus.IMPORTED, result.status());
     }
 
     @Test
@@ -186,7 +186,7 @@ class OpenApiImporterTest {
         ImportResult explicit = importer.importDocument(content, ImportOptions.withFormat(SourceFormat.JSON));
 
         assertEquals(ImportStatus.AMBIGUOUS_FORMAT, ambiguous.status());
-        assertEquals(ImportStatus.PARSED, explicit.status());
+        assertEquals(ImportStatus.INVALID_OPENAPI, explicit.status());
     }
 
     @Test
@@ -196,7 +196,7 @@ class OpenApiImporterTest {
         ImportResult result = importer.importDocument(content, ImportOptions.autoDetect());
 
         assertEquals(Optional.of(SourceFormat.YAML), result.format());
-        assertEquals(ImportStatus.PARSED, result.status());
+        assertEquals(ImportStatus.IMPORTED, result.status());
     }
 
     @Test
