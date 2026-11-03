@@ -1,28 +1,28 @@
 package io.github.yluttsev.matte.openapi.parser;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import io.github.yluttsev.matte.openapi.ImportDiagnostic;
 import io.github.yluttsev.matte.openapi.ImportStatus;
 import io.github.yluttsev.matte.openapi.SourceLocation;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonLocation;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.StreamReadFeature;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.ObjectReadContext;
+import tools.jackson.core.StreamReadFeature;
+import tools.jackson.core.TokenStreamLocation;
+import tools.jackson.core.json.JsonFactory;
 
 public final class JsonSyntaxParser implements SyntaxParser {
 
-    private static final String DUPLICATE_FIELD_PREFIX = "Duplicate field";
+    private static final String DUPLICATE_FIELD_PREFIX = "Duplicate Object property";
     private static final String MULTIPLE_VALUES_MESSAGE = "JSON must contain exactly one value";
     private static final JsonFactory FACTORY = JsonFactory.builder()
             .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
 
     @Override
     public Optional<ImportDiagnostic> validate(String text) {
-        try (JsonParser parser = FACTORY.createParser(text)) {
+        try (JsonParser parser = FACTORY.createParser(ObjectReadContext.empty(), text)) {
             JsonToken first = parser.nextToken();
             if (first == null) {
                 return Optional.of(ImportDiagnostic.emptySource());
@@ -32,16 +32,13 @@ public final class JsonSyntaxParser implements SyntaxParser {
                 return Optional.of(new ImportDiagnostic(ImportStatus.MULTIPLE_DOCUMENTS, MULTIPLE_VALUES_MESSAGE));
             }
             return Optional.empty();
-        } catch (JsonParseException exception) {
+        } catch (JacksonException exception) {
             return Optional.of(toDiagnostic(exception));
-        } catch (IOException exception) {
-            String message = Objects.requireNonNullElse(exception.getMessage(), "Failed to read JSON document");
-            return Optional.of(new ImportDiagnostic(ImportStatus.SYNTAX_ERROR, message));
         }
     }
 
-    private static ImportDiagnostic toDiagnostic(JsonParseException exception) {
-        JsonLocation location = exception.getLocation();
+    private static ImportDiagnostic toDiagnostic(JacksonException exception) {
+        TokenStreamLocation location = exception.getLocation();
         SourceLocation position = new SourceLocation(
                 Math.max(1, location.getLineNr()),
                 Math.max(1, location.getColumnNr())
