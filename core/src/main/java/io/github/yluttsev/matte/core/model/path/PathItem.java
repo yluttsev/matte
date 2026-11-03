@@ -1,22 +1,24 @@
 package io.github.yluttsev.matte.core.model.path;
 
-import io.github.yluttsev.matte.core.construction.CopyableModel;
-import io.github.yluttsev.matte.core.construction.ModelCopies;
-
-import io.github.yluttsev.matte.core.model.ElementId;
-import io.github.yluttsev.matte.core.model.IdentifiedElement;
-import io.github.yluttsev.matte.core.model.parameter.Parameter;
-import io.github.yluttsev.matte.core.model.reference.ReferenceOr;
-import io.github.yluttsev.matte.core.model.server.Server;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.UnaryOperator;
+import io.github.yluttsev.matte.core.construction.CopyableModel;
+import io.github.yluttsev.matte.core.construction.ModelCopies;
+import io.github.yluttsev.matte.core.editing.MutationAccess;
+import io.github.yluttsev.matte.core.editing.ReferenceOwner;
+import io.github.yluttsev.matte.core.editing.ReferenceUpdates;
+import io.github.yluttsev.matte.core.model.ElementId;
+import io.github.yluttsev.matte.core.model.IdentifiedElement;
+import io.github.yluttsev.matte.core.model.parameter.Parameter;
+import io.github.yluttsev.matte.core.model.reference.ReferenceOr;
+import io.github.yluttsev.matte.core.model.server.Server;
 
-public final class PathItem implements IdentifiedElement, CopyableModel<PathItem> {
+public final class PathItem implements IdentifiedElement, CopyableModel<PathItem>, ReferenceOwner {
 
     private final ElementId id;
     private String path;
@@ -75,6 +77,12 @@ public final class PathItem implements IdentifiedElement, CopyableModel<PathItem
 
     public List<Server> getServers() {
         return Collections.unmodifiableList(servers);
+    }
+
+    @Override
+    public void rewriteReferences(MutationAccess access, UnaryOperator<String> transform) {
+        access.require(this);
+        ReferenceUpdates.list(parameters, transform);
     }
 
     public static final class Builder {

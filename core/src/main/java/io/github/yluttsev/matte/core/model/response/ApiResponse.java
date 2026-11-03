@@ -1,20 +1,22 @@
 package io.github.yluttsev.matte.core.model.response;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.UnaryOperator;
 import io.github.yluttsev.matte.core.construction.CopyableModel;
 import io.github.yluttsev.matte.core.construction.ModelCopies;
-
+import io.github.yluttsev.matte.core.editing.MutationAccess;
+import io.github.yluttsev.matte.core.editing.ReferenceOwner;
+import io.github.yluttsev.matte.core.editing.ReferenceUpdates;
 import io.github.yluttsev.matte.core.model.ElementId;
 import io.github.yluttsev.matte.core.model.IdentifiedElement;
 import io.github.yluttsev.matte.core.model.media.MediaType;
 import io.github.yluttsev.matte.core.model.parameter.Header;
 import io.github.yluttsev.matte.core.model.reference.ReferenceOr;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
-
-public final class ApiResponse implements IdentifiedElement, CopyableModel<ApiResponse> {
+public final class ApiResponse implements IdentifiedElement, CopyableModel<ApiResponse>, ReferenceOwner {
 
     private final ElementId id;
     private String description;
@@ -55,6 +57,12 @@ public final class ApiResponse implements IdentifiedElement, CopyableModel<ApiRe
 
     public Map<String, MediaType> getContent() {
         return Collections.unmodifiableMap(content);
+    }
+
+    @Override
+    public void rewriteReferences(MutationAccess access, UnaryOperator<String> transform) {
+        access.require(this);
+        ReferenceUpdates.map(headers, transform);
     }
 
     public static final class Builder {

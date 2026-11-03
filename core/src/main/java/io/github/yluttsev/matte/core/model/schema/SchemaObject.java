@@ -1,10 +1,5 @@
 package io.github.yluttsev.matte.core.model.schema;
 
-import io.github.yluttsev.matte.core.construction.ModelCopies;
-
-import io.github.yluttsev.matte.core.model.ElementId;
-import io.github.yluttsev.matte.core.model.value.DocumentValue;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -13,8 +8,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.UnaryOperator;
+import io.github.yluttsev.matte.core.construction.ModelCopies;
+import io.github.yluttsev.matte.core.editing.MutationAccess;
+import io.github.yluttsev.matte.core.editing.ReferenceOwner;
+import io.github.yluttsev.matte.core.model.ElementId;
+import io.github.yluttsev.matte.core.model.value.DocumentValue;
 
-public final class SchemaObject implements Schema {
+public final class SchemaObject implements Schema, ReferenceOwner {
 
     private final ElementId id;
     private final Set<JsonType> types = new LinkedHashSet<>();
@@ -253,6 +254,19 @@ public final class SchemaObject implements Schema {
 
     public Discriminator getDiscriminator() {
         return discriminator;
+    }
+
+    public void addProperty(MutationAccess access, SchemaProperty property) {
+        access.require(this);
+        properties.add(Objects.requireNonNull(property, "property").copy());
+    }
+
+    @Override
+    public void rewriteReferences(MutationAccess access, UnaryOperator<String> transform) {
+        access.require(this);
+        if (reference != null) {
+            reference = new SchemaReference(transform.apply(reference.value()));
+        }
     }
 
     public static final class Builder {
