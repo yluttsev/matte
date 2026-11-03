@@ -6,4 +6,4 @@ dependencyResolutionManagement {
     }
 }
 
-include("core")
+include("core", "openapi")
