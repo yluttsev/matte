@@ -56,6 +56,9 @@ final class SchemaCommandHandler {
         if (component.getName().isBlank()) {
             return rejected(EditCode.INVALID_NAME, "Schema component name must not be blank");
         }
+        if (hasBlankPropertyName(component)) {
+            return rejected(EditCode.INVALID_NAME, "Property name must not be blank");
+        }
         if (hasName(document, component.getName())) {
             return rejected(EditCode.NAME_CONFLICT, "Schema component already exists: " + component.getName());
         }
@@ -82,7 +85,7 @@ final class SchemaCommandHandler {
             return rejected(EditCode.TARGET_TYPE_MISMATCH, "Target must be a SchemaObject");
         }
         SchemaProperty property = command.property();
-        if (property.getName().isBlank()) {
+        if (hasBlankPropertyName(property)) {
             return rejected(EditCode.INVALID_NAME, "Property name must not be blank");
         }
         if (schema.getProperties().stream().anyMatch(existing -> existing.getName().equals(property.getName()))) {
@@ -148,6 +151,16 @@ final class SchemaCommandHandler {
             }
         });
         return issues;
+    }
+
+    private boolean hasBlankPropertyName(CopyableModel<?> addition) {
+        List<SchemaProperty> invalid = new ArrayList<>();
+        new ModelWalker().walk(addition, (node, path) -> {
+            if (node instanceof SchemaProperty property && property.getName().isBlank()) {
+                invalid.add(property);
+            }
+        });
+        return !invalid.isEmpty();
     }
 
     private boolean hasName(ApiDocument document, String name) {
