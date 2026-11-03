@@ -1,9 +1,6 @@
 package io.github.yluttsev.matte.openapi;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,10 +42,7 @@ public final class OpenApiImporter {
     }
 
     private static String decode(SourceDocument source) throws CharacterCodingException {
-        String text = StandardCharsets.UTF_8.newDecoder()
-                .onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT)
-                .decode(ByteBuffer.wrap(source.content())).toString();
+        String text = source.decodeUtf8();
         if (!text.isEmpty() && text.charAt(0) == UTF8_BOM) {
             return text.substring(1);
         }

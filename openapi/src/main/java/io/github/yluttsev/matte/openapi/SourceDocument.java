@@ -1,5 +1,9 @@
 package io.github.yluttsev.matte.openapi;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -17,6 +21,14 @@ public final class SourceDocument {
 
     public int length() {
         return content.length;
+    }
+
+    public String decodeUtf8() throws CharacterCodingException {
+        return StandardCharsets.UTF_8.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .decode(ByteBuffer.wrap(content))
+                .toString();
     }
 
     @Override

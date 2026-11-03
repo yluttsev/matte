@@ -1,0 +1,28 @@
+openapi: 3.1.0
+info:
+  title: Customer API
+  version: 1.0.0
+components:
+  schemas:
+    Client: # keep this comment about Customer
+      type: object
+      discriminator:
+        propertyName: kind
+        mapping:
+          customer: Client
+      properties:
+        friend:
+          $ref: '#/components/schemas/Client'
+        remote:
+          $ref: 'https://example.invalid/api.yaml#/components/schemas/Customer'
+paths:
+  /customers:
+    get:
+      responses:
+        '200':
+          description: Customer response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client/properties/friend'
+x-note: Customer should remain in ordinary text
