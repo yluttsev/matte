@@ -21,30 +21,31 @@ class OpenApiImporterTest {
 
         assertArrayEquals(content, result.source().content());
         assertEquals(Optional.of(SourceFormat.YAML), result.format());
-        assertEquals(ImportStatus.NOT_PARSED, result.status());
+        assertEquals(ImportStatus.PARSED, result.status());
         assertTrue(result.diagnostics().isEmpty());
     }
 
     @Test
-    void testImportDocument_WhenFormatNotSpecified_ShouldNotGuessUntilParsingIsImplemented() throws IOException {
+    void testImportDocument_WhenFormatNotSpecified_ShouldDetectJson() throws IOException {
         byte[] content = TestFixtures.bytes("minimal.json");
 
         ImportResult result = importer.importDocument(content, ImportOptions.autoDetect());
 
         assertArrayEquals(content, result.source().content());
-        assertEquals(Optional.empty(), result.format());
-        assertEquals(ImportStatus.NOT_PARSED, result.status());
+        assertEquals(Optional.of(SourceFormat.JSON), result.format());
+        assertEquals(ImportStatus.PARSED, result.status());
     }
 
     @Test
-    void testImportDocument_WhenInputIsInvalidSyntax_ShouldRetainItWithoutClaimingToHaveParsedIt()
+    void testImportDocument_WhenInputIsInvalidSyntax_ShouldRetainItAndReportLocation()
             throws IOException {
         byte[] content = TestFixtures.bytes("invalid.json");
 
         ImportResult result = importer.importDocument(content, ImportOptions.withFormat(SourceFormat.JSON));
 
         assertArrayEquals(content, result.source().content());
-        assertEquals(ImportStatus.NOT_PARSED, result.status());
+        assertEquals(ImportStatus.SYNTAX_ERROR, result.status());
+        assertTrue(result.diagnostics().getFirst().location().isPresent());
     }
 
     @Test
@@ -64,18 +65,138 @@ class OpenApiImporterTest {
         ImportResult result = importer.importDocument(content, ImportOptions.autoDetect());
 
         assertArrayEquals(content, result.source().content());
-        assertEquals(ImportStatus.NOT_PARSED, result.status());
+        assertEquals(ImportStatus.EMPTY_SOURCE, result.status());
     }
 
     @Test
     void testImportDocument_WhenInputAndOutputArraysChange_ShouldKeepOriginalBytes() throws IOException {
-        byte[] content = TestFixtures.bytes("arbitrary-bytes.bin");
+        byte[] content = TestFixtures.bytes("minimal.json");
         ImportResult result = importer.importDocument(content, ImportOptions.autoDetect());
         content[0] = 42;
         byte[] returned = result.source().content();
         returned[1] = 42;
 
-        assertArrayEquals(TestFixtures.bytes("arbitrary-bytes.bin"), result.source().content());
+        assertArrayEquals(TestFixtures.bytes("minimal.json"), result.source().content());
+    }
+
+    @Test
+    void testImportDocument_WhenUtf8IsInvalid_ShouldKeepBytesAndReportEncoding() throws IOException {
+        byte[] content = TestFixtures.bytes("arbitrary-bytes.bin");
+
+        ImportResult result = importer.importDocument(content, ImportOptions.autoDetect());
+
+        assertArrayEquals(content, result.source().content());
+        assertEquals(ImportStatus.INVALID_ENCODING, result.status());
+        assertEquals(Optional.empty(), result.format());
+    }
+
+    @Test
+    void testImportDocument_WhenYamlHasDuplicateKeys_ShouldReportTheirLocation() throws IOException {
+        byte[] content = TestFixtures.bytes("duplicate-keys.yaml");
+
+        ImportResult result = importer.importDocument(content, ImportOptions.autoDetect());
+
+        assertEquals(Optional.of(SourceFormat.YAML), result.format());
+        assertEquals(ImportStatus.DUPLICATE_KEY, result.status());
+        assertEquals(Optional.of(new SourceLocation(4, 3)), result.diagnostics().getFirst().location());
+    }
+
+    @Test
+    void testImportDocument_WhenJsonHasDuplicateKeys_ShouldReportError() throws IOException {
+        byte[] content = TestFixtures.bytes("duplicate-keys.json");
+
+        ImportResult result = importer.importDocument(content, ImportOptions.autoDetect());
+
+        assertEquals(ImportStatus.DUPLICATE_KEY, result.status());
+        assertTrue(result.diagnostics().getFirst().location().isPresent());
+    }
+
+    @Test
+    void testImportDocument_WhenJsonHasComments_ShouldNotParseAsYaml() throws IOException {
+        byte[] content = TestFixtures.bytes("json-with-comments.json");
+
+        ImportResult result = importer.importDocument(content, ImportOptions.autoDetect());
+
+        assertEquals(Optional.of(SourceFormat.JSON), result.format());
+        assertEquals(ImportStatus.SYNTAX_ERROR, result.status());
+        assertArrayEquals(content, result.source().content());
+    }
+
+    @Test
+    void testImportDocument_WhenJsonHasTrailingComma_ShouldRejectIt() throws IOException {
+        ImportResult result = importer.importDocument(TestFixtures.bytes("trailing-comma.json"),
+                ImportOptions.autoDetect());
+
+        assertEquals(ImportStatus.SYNTAX_ERROR, result.status());
+    }
+
+    @Test
+    void testImportDocument_WhenYamlIsMalformed_ShouldReportSyntaxError() throws IOException {
+        byte[] content = TestFixtures.bytes("invalid.yaml");
+
+        ImportResult result = importer.importDocument(content, ImportOptions.autoDetect());
+
+        assertEquals(Optional.of(SourceFormat.YAML), result.format());
+        assertEquals(ImportStatus.SYNTAX_ERROR, result.status());
+        assertTrue(result.diagnostics().getFirst().location().isPresent());
+        assertArrayEquals(content, result.source().content());
+    }
+
+    @Test
+    void testImportDocument_WhenYamlStartsWithBrace_ShouldRespectExplicitHint() throws IOException {
+        byte[] content = TestFixtures.bytes("flow-mapping.yaml");
+
+        ImportResult hinted = importer.importDocument(content, ImportOptions.withFormat(SourceFormat.YAML));
+        ImportResult detected = importer.importDocument(content, ImportOptions.autoDetect());
+
+        assertEquals(ImportStatus.PARSED, hinted.status());
+        assertEquals(ImportStatus.SYNTAX_ERROR, detected.status());
+        assertEquals(Optional.of(SourceFormat.JSON), detected.format());
+    }
+
+    @Test
+    void testImportDocument_WhenYamlHasCyclicAlias_ShouldNotLoop() throws IOException {
+        ImportResult result = importer.importDocument(TestFixtures.bytes("cyclic-alias.yaml"),
+                ImportOptions.withFormat(SourceFormat.YAML));
+
+        assertEquals(ImportStatus.PARSED, result.status());
+    }
+
+    @Test
+    void testImportDocument_WhenYamlHasMultipleDocuments_ShouldRejectThem() throws IOException {
+        ImportResult result = importer.importDocument(TestFixtures.bytes("multiple-documents.yaml"),
+                ImportOptions.withFormat(SourceFormat.YAML));
+
+        assertEquals(ImportStatus.MULTIPLE_DOCUMENTS, result.status());
+    }
+
+    @Test
+    void testImportDocument_WhenJsonHasMultipleValues_ShouldRejectThem() throws IOException {
+        ImportResult result = importer.importDocument(TestFixtures.bytes("multiple-values.json"),
+                ImportOptions.withFormat(SourceFormat.JSON));
+
+        assertEquals(ImportStatus.MULTIPLE_DOCUMENTS, result.status());
+    }
+
+    @Test
+    void testImportDocument_WhenScalarFormatIsAmbiguous_ShouldRequireHint() throws IOException {
+        byte[] content = TestFixtures.bytes("scalar.json");
+
+        ImportResult ambiguous = importer.importDocument(content, ImportOptions.autoDetect());
+        ImportResult explicit = importer.importDocument(content, ImportOptions.withFormat(SourceFormat.JSON));
+
+        assertEquals(ImportStatus.AMBIGUOUS_FORMAT, ambiguous.status());
+        assertEquals(ImportStatus.PARSED, explicit.status());
+    }
+
+    @Test
+    void testImportDocument_WhenYamlStartsWithQuotedKey_ShouldDetectYaml() throws IOException {
+        byte[] content = TestFixtures.bytes("quoted-key.yaml");
+
+        ImportResult result = importer.importDocument(content, ImportOptions.autoDetect());
+
+        assertEquals(Optional.of(SourceFormat.YAML), result.format());
+        assertEquals(ImportStatus.PARSED, result.status());
     }
 
     @Test
