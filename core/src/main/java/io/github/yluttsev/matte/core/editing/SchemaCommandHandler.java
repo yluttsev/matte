@@ -18,7 +18,6 @@ import io.github.yluttsev.matte.core.editing.command.RenameSchemaComponent;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.ElementId;
 import io.github.yluttsev.matte.core.model.IdentifiedElement;
-import io.github.yluttsev.matte.core.model.schema.Discriminator;
 import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
 import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaProperty;
@@ -128,7 +127,7 @@ final class SchemaCommandHandler {
         component.rename(access, command.newName());
         new ModelWalker().walk(document, (node, path) -> {
             if (node instanceof ReferenceOwner owner) {
-                owner.rewriteReferences(access, node instanceof Discriminator ? rename::mapping : rename::reference);
+                rename.rewriteOwner(access, owner);
             }
         });
         return succeeded(document, changes);
@@ -141,7 +140,9 @@ final class SchemaCommandHandler {
         new ModelWalker().walk(addition, (node, path) -> {
             if (node instanceof IdentifiedElement element) {
                 ElementId id = element.getId();
-                if ((!seen.add(id) || index.findById(id).isPresent()) && conflicts.add(id)) {
+                boolean duplicateInAddition = !seen.add(id);
+                boolean existsInDocument = index.findById(id).isPresent();
+                if ((duplicateInAddition || existsInDocument) && conflicts.add(id)) {
                     issues.add(new EditIssue(EditCode.ID_CONFLICT, "Element ID already exists: " + id.value()));
                 }
             }

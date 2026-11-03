@@ -18,8 +18,12 @@ final class SecurityChildren implements ModelChildren {
             visitor.accept(flows.getClientCredentials(), "clientCredentials");
             visitor.accept(flows.getAuthorizationCode(), "authorizationCode");
         } else {
-            return node instanceof SecurityRequirement || node instanceof OAuthFlow;
+            return isLeafModel(node);
         }
         return true;
+    }
+
+    private static boolean isLeafModel(Object node) {
+        return node instanceof SecurityRequirement || node instanceof OAuthFlow;
     }
 }

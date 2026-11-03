@@ -13,38 +13,61 @@ import io.github.yluttsev.matte.core.navigation.DocumentPath;
 record ModelLocation(String diagnosticPath, DocumentPath documentPath) {
 
     ModelLocation field(Object owner, String field) {
-        boolean transparent = owner instanceof SchemaComponent || owner instanceof SchemaProperty
-                || owner instanceof NamedComponent<?> || owner instanceof InlineObject<?>
-                || owner instanceof PathItem && field.equals("operations");
-        return new ModelLocation(diagnosticPath + "." + field,
-                transparent ? documentPath : documentPath.child(field));
+        DocumentPath nextPath = omitsFieldInDocumentPath(owner, field)
+                ? documentPath
+                : documentPath.child(field);
+        return new ModelLocation(diagnosticPath + "." + field, nextPath);
     }
 
     ModelLocation mapEntry(Object key) {
-        String segment;
-        if (key instanceof HttpMethod method) {
-            segment = method.name().toLowerCase(Locale.ROOT);
-        } else if (key instanceof ResponseKey response) {
-            segment = response.value();
-        } else {
-            segment = key.toString();
-        }
-        return new ModelLocation(diagnosticPath + "[" + key + "]", documentPath.child(segment));
+        return new ModelLocation(diagnosticPath + "[" + key + "]", documentPath.child(mapKeySegment(key)));
     }
 
     ModelLocation listEntry(Object entry, int index) {
-        String segment;
-        if (entry instanceof SchemaComponent component) {
-            segment = component.getName();
-        } else if (entry instanceof NamedComponent<?> component) {
-            segment = component.getName();
-        } else if (entry instanceof SchemaProperty property) {
-            segment = property.getName();
-        } else if (entry instanceof PathItem path) {
-            segment = path.getPath();
-        } else {
-            segment = Integer.toString(index);
+        return new ModelLocation(
+                diagnosticPath + "[" + index + "]",
+                documentPath.child(listEntrySegment(entry, index))
+        );
+    }
+
+    private static boolean omitsFieldInDocumentPath(Object owner, String field) {
+        return isTransparentContainer(owner) || isPathOperationsField(owner, field);
+    }
+
+    private static boolean isTransparentContainer(Object owner) {
+        return owner instanceof SchemaComponent
+                || owner instanceof SchemaProperty
+                || owner instanceof NamedComponent<?>
+                || owner instanceof InlineObject<?>;
+    }
+
+    private static boolean isPathOperationsField(Object owner, String field) {
+        return owner instanceof PathItem && field.equals(PathChildren.OPERATIONS_FIELD);
+    }
+
+    private static String mapKeySegment(Object key) {
+        if (key instanceof HttpMethod method) {
+            return method.name().toLowerCase(Locale.ROOT);
         }
-        return new ModelLocation(diagnosticPath + "[" + index + "]", documentPath.child(segment));
+        if (key instanceof ResponseKey response) {
+            return response.value();
+        }
+        return key.toString();
+    }
+
+    private static String listEntrySegment(Object entry, int index) {
+        if (entry instanceof SchemaComponent component) {
+            return component.getName();
+        }
+        if (entry instanceof NamedComponent<?> component) {
+            return component.getName();
+        }
+        if (entry instanceof SchemaProperty property) {
+            return property.getName();
+        }
+        if (entry instanceof PathItem path) {
+            return path.getPath();
+        }
+        return Integer.toString(index);
     }
 }

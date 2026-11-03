@@ -25,8 +25,12 @@ final class SchemaChildren implements ModelChildren {
             visitor.accept(schema.getNot(), "not");
             visitor.accept(schema.getDiscriminator(), "discriminator");
         } else {
-            return node instanceof BooleanSchema || node instanceof Discriminator;
+            return isLeafModel(node);
         }
         return true;
+    }
+
+    private static boolean isLeafModel(Object node) {
+        return node instanceof BooleanSchema || node instanceof Discriminator;
     }
 }

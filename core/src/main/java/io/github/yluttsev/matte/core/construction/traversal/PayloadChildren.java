@@ -33,8 +33,12 @@ final class PayloadChildren implements ModelChildren {
         } else if (node instanceof Encoding encoding) {
             visitor.accept(encoding.getHeaders(), "headers");
         } else {
-            return node instanceof Example;
+            return isLeafModel(node);
         }
         return true;
+    }
+
+    private static boolean isLeafModel(Object node) {
+        return node instanceof Example;
     }
 }

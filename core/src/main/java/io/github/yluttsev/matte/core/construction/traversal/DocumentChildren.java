@@ -37,9 +37,15 @@ final class DocumentChildren implements ModelChildren {
         } else if (node instanceof Server server) {
             visitor.accept(server.getVariables(), "variables");
         } else {
-            return node instanceof ApiInfo || node instanceof ObjectReference<?>
-                    || node instanceof ServerVariable || node instanceof Tag;
+            return isLeafModel(node);
         }
         return true;
+    }
+
+    private static boolean isLeafModel(Object node) {
+        return node instanceof ApiInfo
+                || node instanceof ObjectReference<?>
+                || node instanceof ServerVariable
+                || node instanceof Tag;
     }
 }
