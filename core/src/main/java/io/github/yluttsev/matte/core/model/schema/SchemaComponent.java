@@ -1,11 +1,10 @@
 package io.github.yluttsev.matte.core.model.schema;
 
+import java.util.Objects;
 import io.github.yluttsev.matte.core.construction.CopyableModel;
-
+import io.github.yluttsev.matte.core.editing.MutationAccess;
 import io.github.yluttsev.matte.core.model.ElementId;
 import io.github.yluttsev.matte.core.model.IdentifiedElement;
-
-import java.util.Objects;
 
 public final class SchemaComponent implements IdentifiedElement, CopyableModel<SchemaComponent> {
 
@@ -29,6 +28,11 @@ public final class SchemaComponent implements IdentifiedElement, CopyableModel<S
 
     public Schema getSchema() {
         return schema;
+    }
+
+    public void rename(MutationAccess access, String name) {
+        access.require(this);
+        this.name = Objects.requireNonNull(name, "name");
     }
 
     @Override

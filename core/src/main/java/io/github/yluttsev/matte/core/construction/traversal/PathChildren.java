@@ -1,15 +1,17 @@
 package io.github.yluttsev.matte.core.construction.traversal;
 
+import java.util.function.BiConsumer;
 import io.github.yluttsev.matte.core.model.path.Operation;
 import io.github.yluttsev.matte.core.model.path.PathItem;
-import java.util.function.BiConsumer;
 
 final class PathChildren implements ModelChildren {
+
+    static final String OPERATIONS_FIELD = "operations";
 
     @Override
     public boolean visitChildren(Object node, BiConsumer<Object, String> visitor) {
         if (node instanceof PathItem item) {
-            visitor.accept(item.getOperations(), "operations");
+            visitor.accept(item.getOperations(), OPERATIONS_FIELD);
             visitor.accept(item.getParameters(), "parameters");
             visitor.accept(item.getServers(), "servers");
         } else if (node instanceof Operation operation) {

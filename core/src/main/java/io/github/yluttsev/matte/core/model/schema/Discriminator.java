@@ -1,13 +1,15 @@
 package io.github.yluttsev.matte.core.model.schema;
 
-import io.github.yluttsev.matte.core.construction.CopyableModel;
-import io.github.yluttsev.matte.core.construction.ModelCopies;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.UnaryOperator;
+import io.github.yluttsev.matte.core.construction.CopyableModel;
+import io.github.yluttsev.matte.core.construction.ModelCopies;
+import io.github.yluttsev.matte.core.editing.MutationAccess;
+import io.github.yluttsev.matte.core.editing.ReferenceOwner;
 
-public final class Discriminator implements CopyableModel<Discriminator> {
+public final class Discriminator implements CopyableModel<Discriminator>, ReferenceOwner {
 
     private String propertyName;
     private final Map<String, SchemaReference> mapping = new LinkedHashMap<>();
@@ -35,6 +37,12 @@ public final class Discriminator implements CopyableModel<Discriminator> {
 
     public Map<String, SchemaReference> getMapping() {
         return Collections.unmodifiableMap(mapping);
+    }
+
+    @Override
+    public void rewriteReferences(MutationAccess access, UnaryOperator<String> transform) {
+        access.require(this);
+        mapping.replaceAll((name, reference) -> new SchemaReference(transform.apply(reference.value())));
     }
 
     public static final class Builder {

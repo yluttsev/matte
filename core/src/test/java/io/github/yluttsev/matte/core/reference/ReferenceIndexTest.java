@@ -1,7 +1,9 @@
 package io.github.yluttsev.matte.core.reference;
 
-import io.github.yluttsev.matte.core.construction.ModelFixture;
+import java.util.List;
+import java.util.stream.Stream;
 import io.github.yluttsev.matte.core.construction.ModelAssertions;
+import io.github.yluttsev.matte.core.construction.ModelFixture;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.ElementId;
 import io.github.yluttsev.matte.core.model.media.Example;
@@ -14,13 +16,10 @@ import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
 import io.github.yluttsev.matte.core.model.security.SecurityScheme;
 import io.github.yluttsev.matte.core.navigation.DocumentIndex;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
-import java.util.List;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -58,7 +57,8 @@ class ReferenceIndexTest {
                 .filter(value -> value instanceof SchemaComponent)
                 .map(value -> ((SchemaComponent) value).getId())
                 .findFirst().orElseThrow();
-        Schema schema = (Schema) document.findByPath(DocumentPath.parse("/components/schemas/User")).orElseThrow().value();
+        Schema schema = (Schema) document.findByPath(DocumentPath.parse("/components/schemas/User"))
+                .orElseThrow().value();
 
         assertFalse(index.referencesTo(componentId).isEmpty());
         assertEquals(index.referencesTo(schema.getId()), index.referencesTo(componentId));
@@ -126,7 +126,8 @@ class ReferenceIndexTest {
         assertTrue(reasons.containsAll(List.of(ReferenceFailure.TARGET_NOT_FOUND,
                 ReferenceFailure.EXTERNAL_REFERENCE, ReferenceFailure.CYCLIC_REFERENCE)));
         assertTrue(index.referencesTo(DocumentPath.parse("/components/parameters/Missing")).stream()
-                .anyMatch(usage -> usage.sourcePath().equals(DocumentPath.parse("/components/parameters/BrokenAlias/$ref"))));
+                .anyMatch(usage -> usage.sourcePath().equals(
+                        DocumentPath.parse("/components/parameters/BrokenAlias/$ref"))));
     }
 
     @Test
@@ -170,8 +171,14 @@ class ReferenceIndexTest {
                 Arguments.of("/paths/~1users/get/requestBody/$ref", RequestBody.class),
                 Arguments.of("/paths/~1users/get/responses/200/$ref", ApiResponse.class),
                 Arguments.of("/components/responses/Success/headers/X-Trace/$ref", Header.class),
-                Arguments.of("/components/responses/Success/content/application~1json/examples/sample/$ref", Example.class),
-                Arguments.of("/components/responses/Success/content/application~1json/encoding/name/headers/X-Trace/$ref", Header.class),
+                Arguments.of(
+                        "/components/responses/Success/content/application~1json/examples/sample/$ref",
+                        Example.class
+                ),
+                Arguments.of(
+                        "/components/responses/Success/content/application~1json/encoding/name/headers/X-Trace/$ref",
+                        Header.class
+                ),
                 Arguments.of("/components/parameters/Limit/schema/$ref", Schema.class));
     }
 }

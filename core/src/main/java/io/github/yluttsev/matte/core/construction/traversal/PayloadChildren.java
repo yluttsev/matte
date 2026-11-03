@@ -1,5 +1,6 @@
 package io.github.yluttsev.matte.core.construction.traversal;
 
+import java.util.function.BiConsumer;
 import io.github.yluttsev.matte.core.model.media.Encoding;
 import io.github.yluttsev.matte.core.model.media.Example;
 import io.github.yluttsev.matte.core.model.media.MediaType;
@@ -7,7 +8,6 @@ import io.github.yluttsev.matte.core.model.media.RequestBody;
 import io.github.yluttsev.matte.core.model.parameter.Header;
 import io.github.yluttsev.matte.core.model.parameter.Parameter;
 import io.github.yluttsev.matte.core.model.response.ApiResponse;
-import java.util.function.BiConsumer;
 
 final class PayloadChildren implements ModelChildren {
 
@@ -33,8 +33,12 @@ final class PayloadChildren implements ModelChildren {
         } else if (node instanceof Encoding encoding) {
             visitor.accept(encoding.getHeaders(), "headers");
         } else {
-            return node instanceof Example;
+            return isLeafModel(node);
         }
         return true;
+    }
+
+    private static boolean isLeafModel(Object node) {
+        return node instanceof Example;
     }
 }

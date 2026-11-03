@@ -1,15 +1,13 @@
 package io.github.yluttsev.matte.core.model.media;
 
-import io.github.yluttsev.matte.core.construction.CopyableModel;
-import io.github.yluttsev.matte.core.construction.ModelCopies;
-
-import io.github.yluttsev.matte.core.model.ElementId;
-import io.github.yluttsev.matte.core.model.IdentifiedElement;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import io.github.yluttsev.matte.core.construction.CopyableModel;
+import io.github.yluttsev.matte.core.construction.ModelCopies;
+import io.github.yluttsev.matte.core.model.ElementId;
+import io.github.yluttsev.matte.core.model.IdentifiedElement;
 
 public final class RequestBody implements IdentifiedElement, CopyableModel<RequestBody> {
 

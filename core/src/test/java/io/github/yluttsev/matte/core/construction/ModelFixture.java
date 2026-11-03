@@ -1,5 +1,11 @@
 package io.github.yluttsev.matte.core.construction;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.Components;
 import io.github.yluttsev.matte.core.model.ElementId;
@@ -47,12 +53,6 @@ import io.github.yluttsev.matte.core.model.value.NullValue;
 import io.github.yluttsev.matte.core.model.value.NumberValue;
 import io.github.yluttsev.matte.core.model.value.ObjectValue;
 import io.github.yluttsev.matte.core.model.value.StringValue;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public final class ModelFixture {
 

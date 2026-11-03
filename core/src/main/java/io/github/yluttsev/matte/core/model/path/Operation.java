@@ -1,8 +1,17 @@
 package io.github.yluttsev.matte.core.model.path;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.UnaryOperator;
 import io.github.yluttsev.matte.core.construction.CopyableModel;
 import io.github.yluttsev.matte.core.construction.ModelCopies;
-
+import io.github.yluttsev.matte.core.editing.MutationAccess;
+import io.github.yluttsev.matte.core.editing.ReferenceOwner;
+import io.github.yluttsev.matte.core.editing.ReferenceUpdates;
 import io.github.yluttsev.matte.core.model.ElementId;
 import io.github.yluttsev.matte.core.model.IdentifiedElement;
 import io.github.yluttsev.matte.core.model.info.ExternalDocumentation;
@@ -14,14 +23,7 @@ import io.github.yluttsev.matte.core.model.response.ResponseKey;
 import io.github.yluttsev.matte.core.model.security.SecurityRequirement;
 import io.github.yluttsev.matte.core.model.server.Server;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-public final class Operation implements IdentifiedElement, CopyableModel<Operation> {
+public final class Operation implements IdentifiedElement, CopyableModel<Operation>, ReferenceOwner {
 
     private final ElementId id;
     private String operationId;
@@ -116,6 +118,14 @@ public final class Operation implements IdentifiedElement, CopyableModel<Operati
 
     public List<SecurityRequirement> getSecurity() {
         return Collections.unmodifiableList(security);
+    }
+
+    @Override
+    public void rewriteReferences(MutationAccess access, UnaryOperator<String> transform) {
+        access.require(this);
+        ReferenceUpdates.list(parameters, transform);
+        requestBody = ReferenceUpdates.value(requestBody, transform);
+        ReferenceUpdates.map(responses, transform);
     }
 
     public static final class Builder {

@@ -1,13 +1,13 @@
 package io.github.yluttsev.matte.core.construction.traversal;
 
-import io.github.yluttsev.matte.core.construction.CopyableModel;
-import io.github.yluttsev.matte.core.model.ApiDocument;
-import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import io.github.yluttsev.matte.core.construction.CopyableModel;
+import io.github.yluttsev.matte.core.model.ApiDocument;
+import io.github.yluttsev.matte.core.navigation.DocumentPath;
 
 public final class ModelWalker {
 
@@ -63,8 +63,8 @@ public final class ModelWalker {
         }
 
         visitor.accept(model, location);
-        BiConsumer<Object, String> childVisitor =
-                (child, field) -> visit(child, location.field(model, field), visitor, owners);
+        BiConsumer<Object, String> childVisitor
+                = (child, field) -> visit(child, location.field(model, field), visitor, owners);
         for (ModelChildren children : CHILDREN) {
             if (children.visitChildren(model, childVisitor)) {
                 return;

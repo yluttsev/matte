@@ -1,10 +1,10 @@
 package io.github.yluttsev.matte.core.construction.traversal;
 
+import java.util.function.BiConsumer;
 import io.github.yluttsev.matte.core.model.security.OAuthFlow;
 import io.github.yluttsev.matte.core.model.security.OAuthFlows;
 import io.github.yluttsev.matte.core.model.security.SecurityRequirement;
 import io.github.yluttsev.matte.core.model.security.SecurityScheme;
-import java.util.function.BiConsumer;
 
 final class SecurityChildren implements ModelChildren {
 
@@ -18,8 +18,12 @@ final class SecurityChildren implements ModelChildren {
             visitor.accept(flows.getClientCredentials(), "clientCredentials");
             visitor.accept(flows.getAuthorizationCode(), "authorizationCode");
         } else {
-            return node instanceof SecurityRequirement || node instanceof OAuthFlow;
+            return isLeafModel(node);
         }
         return true;
+    }
+
+    private static boolean isLeafModel(Object node) {
+        return node instanceof SecurityRequirement || node instanceof OAuthFlow;
     }
 }

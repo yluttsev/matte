@@ -1,8 +1,12 @@
 package io.github.yluttsev.matte.core.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import io.github.yluttsev.matte.core.construction.CopyableModel;
 import io.github.yluttsev.matte.core.construction.ModelCopies;
-
+import io.github.yluttsev.matte.core.editing.MutationAccess;
 import io.github.yluttsev.matte.core.model.media.Example;
 import io.github.yluttsev.matte.core.model.media.RequestBody;
 import io.github.yluttsev.matte.core.model.parameter.Header;
@@ -11,10 +15,6 @@ import io.github.yluttsev.matte.core.model.reference.ReferenceOr;
 import io.github.yluttsev.matte.core.model.response.ApiResponse;
 import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
 import io.github.yluttsev.matte.core.model.security.SecurityScheme;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public final class Components implements CopyableModel<Components> {
 
@@ -46,6 +46,11 @@ public final class Components implements CopyableModel<Components> {
     @Override
     public Components copy() {
         return new Components(this);
+    }
+
+    public void addSchemaComponent(MutationAccess access, SchemaComponent component) {
+        access.require(this);
+        schemas.add(Objects.requireNonNull(component, "component").copy());
     }
 
     public List<SchemaComponent> getSchemas() {

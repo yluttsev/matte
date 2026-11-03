@@ -5,7 +5,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -57,7 +56,10 @@ class DocumentPathTest {
         assertTrue(DocumentPath.root().parent().isEmpty());
         assertEquals("#", DocumentPath.root().toFragment());
         assertEquals(DocumentPath.root(), DocumentPath.parse("/components").parent().orElseThrow());
-        assertEquals(DocumentPath.parse("/components"), DocumentPath.parse("/components/schemas").parent().orElseThrow());
+        assertEquals(
+                DocumentPath.parse("/components"),
+                DocumentPath.parse("/components/schemas").parent().orElseThrow()
+        );
     }
 
     @Test

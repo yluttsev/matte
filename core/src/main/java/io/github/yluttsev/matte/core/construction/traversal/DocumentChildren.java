@@ -1,5 +1,6 @@
 package io.github.yluttsev.matte.core.construction.traversal;
 
+import java.util.function.BiConsumer;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.Components;
 import io.github.yluttsev.matte.core.model.NamedComponent;
@@ -9,7 +10,6 @@ import io.github.yluttsev.matte.core.model.reference.ObjectReference;
 import io.github.yluttsev.matte.core.model.server.Server;
 import io.github.yluttsev.matte.core.model.server.ServerVariable;
 import io.github.yluttsev.matte.core.model.tag.Tag;
-import java.util.function.BiConsumer;
 
 final class DocumentChildren implements ModelChildren {
 
@@ -37,9 +37,15 @@ final class DocumentChildren implements ModelChildren {
         } else if (node instanceof Server server) {
             visitor.accept(server.getVariables(), "variables");
         } else {
-            return node instanceof ApiInfo || node instanceof ObjectReference<?>
-                    || node instanceof ServerVariable || node instanceof Tag;
+            return isLeafModel(node);
         }
         return true;
+    }
+
+    private static boolean isLeafModel(Object node) {
+        return node instanceof ApiInfo
+                || node instanceof ObjectReference<?>
+                || node instanceof ServerVariable
+                || node instanceof Tag;
     }
 }

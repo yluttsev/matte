@@ -1,12 +1,10 @@
 package io.github.yluttsev.matte.core.model.tag;
 
+import java.util.Objects;
 import io.github.yluttsev.matte.core.construction.CopyableModel;
-
 import io.github.yluttsev.matte.core.model.ElementId;
 import io.github.yluttsev.matte.core.model.IdentifiedElement;
 import io.github.yluttsev.matte.core.model.info.ExternalDocumentation;
-
-import java.util.Objects;
 
 public final class Tag implements IdentifiedElement, CopyableModel<Tag> {
 

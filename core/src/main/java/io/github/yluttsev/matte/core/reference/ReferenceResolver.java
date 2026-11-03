@@ -1,12 +1,5 @@
 package io.github.yluttsev.matte.core.reference;
 
-import io.github.yluttsev.matte.core.construction.CopyableModel;
-import io.github.yluttsev.matte.core.model.reference.ObjectReference;
-import io.github.yluttsev.matte.core.model.schema.Schema;
-import io.github.yluttsev.matte.core.model.schema.SchemaReference;
-import io.github.yluttsev.matte.core.navigation.DocumentEntry;
-import io.github.yluttsev.matte.core.navigation.DocumentIndex;
-import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -14,6 +7,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import io.github.yluttsev.matte.core.construction.CopyableModel;
+import io.github.yluttsev.matte.core.model.reference.ObjectReference;
+import io.github.yluttsev.matte.core.model.schema.Schema;
+import io.github.yluttsev.matte.core.model.schema.SchemaReference;
+import io.github.yluttsev.matte.core.navigation.DocumentEntry;
+import io.github.yluttsev.matte.core.navigation.DocumentIndex;
+import io.github.yluttsev.matte.core.navigation.DocumentPath;
 
 public final class ReferenceResolver {
 
@@ -40,17 +40,15 @@ public final class ReferenceResolver {
             } catch (URISyntaxException exception) {
                 return new UnresolvedReference<>(ReferenceFailure.INVALID_REFERENCE, traversed);
             }
-            if (uri.getScheme() != null || uri.getRawAuthority() != null || uri.getRawQuery() != null
-                    || uri.getRawPath() != null && !uri.getRawPath().isEmpty()) {
+            if (isExternalReference(uri)) {
                 return new UnresolvedReference<>(ReferenceFailure.EXTERNAL_REFERENCE, traversed);
             }
-            String fragment = uri.getRawFragment();
-            if (fragment != null && !fragment.isEmpty() && !uri.getFragment().startsWith("/")) {
+            if (isUnsupportedAnchor(uri)) {
                 return new UnresolvedReference<>(ReferenceFailure.UNSUPPORTED_ANCHOR, traversed);
             }
             DocumentPath path;
             try {
-                path = fragment == null ? DocumentPath.root() : DocumentPath.fromFragment("#" + fragment);
+                path = resolveTargetPath(uri);
             } catch (IllegalArgumentException exception) {
                 return new UnresolvedReference<>(ReferenceFailure.INVALID_REFERENCE, traversed);
             }
@@ -65,12 +63,37 @@ public final class ReferenceResolver {
             if (expectedType.isInstance(entry.value())) {
                 return new ResolvedReference<>(expectedType.cast(entry.value()), path, traversed);
             }
-            if (entry.value() instanceof ObjectReference<?> alias
-                    && ReferenceTypes.at(path).filter(expectedType::isAssignableFrom).isPresent()) {
-                current = alias.value();
+            if (isCompatibleAlias(entry, expectedType)) {
+                current = ((ObjectReference<?>) entry.value()).value();
             } else {
                 return new UnresolvedReference<>(ReferenceFailure.TYPE_MISMATCH, traversed);
             }
         }
+    }
+
+    private static boolean isExternalReference(URI uri) {
+        return uri.getScheme() != null
+                || uri.getRawAuthority() != null
+                || uri.getRawQuery() != null
+                || hasNonEmptyPath(uri);
+    }
+
+    private static boolean hasNonEmptyPath(URI uri) {
+        return uri.getRawPath() != null && !uri.getRawPath().isEmpty();
+    }
+
+    private static boolean isUnsupportedAnchor(URI uri) {
+        String fragment = uri.getFragment();
+        return fragment != null && !fragment.isEmpty() && !fragment.startsWith("/");
+    }
+
+    private static DocumentPath resolveTargetPath(URI uri) {
+        String rawFragment = uri.getRawFragment();
+        return rawFragment == null ? DocumentPath.root() : DocumentPath.fromFragment("#" + rawFragment);
+    }
+
+    private static boolean isCompatibleAlias(DocumentEntry entry, Class<?> expectedType) {
+        return entry.value() instanceof ObjectReference<?>
+                && ReferenceTypes.at(entry.path()).filter(expectedType::isAssignableFrom).isPresent();
     }
 }

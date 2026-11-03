@@ -1,8 +1,7 @@
 package io.github.yluttsev.matte.core.model.reference;
 
-import io.github.yluttsev.matte.core.construction.CopyableModel;
-
 import java.util.Objects;
+import io.github.yluttsev.matte.core.construction.CopyableModel;
 
 public record InlineObject<T extends CopyableModel<T>>(T value) implements ReferenceOr<T> {
 
