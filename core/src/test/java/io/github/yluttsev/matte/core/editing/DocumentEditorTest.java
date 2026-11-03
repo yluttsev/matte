@@ -106,14 +106,21 @@ class DocumentEditorTest {
     void testApply_WhenNewNameIsBlank_ShouldRejectWithoutChangingOriginal(String name) {
         ApiDocument original = document(SchemaObject.builder(ElementId.random()).build());
         ElementId componentId = original.getComponents().getSchemas().getFirst().getId();
+        ElementId schemaId = original.getComponents().getSchemas().getFirst().getSchema().getId();
+        SchemaObject nestedWithBlankProperty = SchemaObject.builder(ElementId.random())
+                .properties(List.of(property(name)))
+                .build();
 
         assertRejected(original, new AddSchemaComponent(new SchemaComponent(
                 ElementId.random(), name, new BooleanSchema(ElementId.random(), true))), EditCode.INVALID_NAME);
+        assertRejected(original, new AddSchemaComponent(new SchemaComponent(
+                ElementId.random(), "Customer", nestedWithBlankProperty)), EditCode.INVALID_NAME);
+        assertRejected(original, new AddSchemaProperty(schemaId, property(name)), EditCode.INVALID_NAME);
         assertRejected(
                 original,
                 new AddSchemaProperty(
-                        original.getComponents().getSchemas().getFirst().getSchema().getId(),
-                        property(name)
+                        schemaId,
+                        new SchemaProperty(ElementId.random(), "address", nestedWithBlankProperty)
                 ),
                 EditCode.INVALID_NAME
         );
