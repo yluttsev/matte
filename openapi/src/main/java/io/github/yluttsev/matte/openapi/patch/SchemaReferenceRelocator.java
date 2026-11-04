@@ -30,6 +30,9 @@ final class SchemaReferenceRelocator {
 
     String updatedValue(SourceScalar scalar) {
         List<String> segments = scalar.path().segments();
+        if (isOpaqueValue(segments)) {
+            return scalar.value();
+        }
         if (!segments.isEmpty() && REF_FIELD.equals(segments.getLast())) {
             return relocateReference(scalar.value());
         }
@@ -38,6 +41,21 @@ final class SchemaReferenceRelocator {
             return scalar.value().equals(oldName) ? newName : relocateReference(scalar.value());
         }
         return scalar.value();
+    }
+
+    private static boolean isOpaqueValue(List<String> segments) {
+        boolean inExamples = false;
+        for (String segment : segments) {
+            if (segment.startsWith("x-") || "example".equals(segment)) {
+                return true;
+            }
+            if ("examples".equals(segment)) {
+                inExamples = true;
+            } else if (inExamples && "value".equals(segment)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String relocateReference(String value) {
