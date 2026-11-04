@@ -2,11 +2,17 @@ package io.github.yluttsev.matte.openapi;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 import io.github.yluttsev.matte.core.editing.EditRejected;
 import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.change.ReferenceChanged;
+import io.github.yluttsev.matte.core.editing.command.AddSchemaProperty;
 import io.github.yluttsev.matte.core.editing.command.RenameSchemaComponent;
+import io.github.yluttsev.matte.core.model.ElementId;
+import io.github.yluttsev.matte.core.model.schema.JsonType;
 import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
+import io.github.yluttsev.matte.core.model.schema.SchemaObject;
+import io.github.yluttsev.matte.core.model.schema.SchemaProperty;
 import io.github.yluttsev.matte.openapi.testing.TestFixtures;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -112,6 +118,37 @@ class SchemaRenameTest {
 
         assertArrayEquals(source.replace("Old:", "New:").getBytes(StandardCharsets.UTF_8),
                 result.source().orElseThrow().content());
+    }
+
+    @Test
+    void testEdit_WhenRenameIsFollowedByAddProperty_ShouldPreserveStateAndElementIds() throws IOException {
+        ImportResult imported = importer.importDocument(TestFixtures.bytes("schema-rename.yaml"),
+                ImportOptions.autoDetect());
+        SchemaComponent originalComponent = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
+        SchemaObject originalSchema = (SchemaObject) originalComponent.getSchema();
+        ElementId existingPropertyId = originalSchema.getProperties().getFirst().getId();
+
+        OpenApiSchemaEditor.RenameResult renamed = editor.rename(imported,
+                new RenameSchemaComponent(originalComponent.getId(), "Client"));
+        SchemaObject renamedSchema = (SchemaObject) renamed.state().document().orElseThrow()
+                .getComponents().getSchemas().getFirst().getSchema();
+        OpenApiEditResult added = editor.addProperty(renamed.state(), new AddSchemaProperty(renamedSchema.getId(),
+                new SchemaProperty(ElementId.random(), "email",
+                        SchemaObject.builder(ElementId.random()).types(Set.of(JsonType.STRING)).build())));
+        SchemaObject addedSchema = (SchemaObject) added.state().document().orElseThrow()
+                .getComponents().getSchemas().getFirst().getSchema();
+
+        OpenApiEditResult addedAgain = editor.addProperty(added.state(), new AddSchemaProperty(addedSchema.getId(),
+                new SchemaProperty(ElementId.random(), "phone",
+                        SchemaObject.builder(ElementId.random()).types(Set.of(JsonType.STRING)).build())));
+
+        SchemaObject finalSchema = (SchemaObject) addedAgain.state().document().orElseThrow()
+                .getComponents().getSchemas().getFirst().getSchema();
+        assertEquals("Client", addedAgain.state().document().orElseThrow()
+                .getComponents().getSchemas().getFirst().getName());
+        assertEquals(existingPropertyId, finalSchema.getProperties().getFirst().getId());
+        assertEquals(4, finalSchema.getProperties().size());
+        assertTrue(new String(addedAgain.state().source().content(), StandardCharsets.UTF_8).contains("phone:"));
     }
 
     @Test
