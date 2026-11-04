@@ -47,7 +47,7 @@ Unresolved reference reasons (`ReferenceFailure`):
 - object references (`ReferenceKind.OBJECT`) — `ObjectReference` instances in parameters, request bodies, responses, headers, examples, and components;
 - discriminator mappings (`ReferenceKind.DISCRIMINATOR_MAPPING`) — entries in `Discriminator.mapping`, supporting both full `#/components/schemas/...` pointers and short names of existing schemas.
 
-Literal `DocumentValue` payloads (inside `example` and `default`) are never indexed as references, even if they contain a `"$ref"` key.
+Literal `DocumentValue` payloads (inside schema `default`, `enum`, `const`, `example`, and `examples` fields, and inside `x-*` extension values) are never indexed as references, even if they contain a `"$ref"` key.
 
 Key lookup methods on `ReferenceIndex`:
 - `usages()` and `unresolvedUsages()` — all references in the document and the subset of unresolved references;

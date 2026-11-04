@@ -1,0 +1,40 @@
+openapi: 3.1.0
+info: {title: Test, version: 1.0.0}
+components:
+  schemas:
+    Old:
+      type: object
+      properties:
+        example:
+          $ref: '#/components/schemas/Old'
+        x-field:
+          $ref: '#/components/schemas/Old'
+        default:
+          $ref: '#/components/schemas/Old'
+        examples:
+          default: {$ref: '#/components/schemas/Old'}
+      default: {$ref: '#/components/schemas/Old'}
+      enum:
+        - {$ref: '#/components/schemas/Old'}
+      const: {$ref: '#/components/schemas/Old'}
+      example: {$ref: '#/components/schemas/Old'}
+      examples:
+        - {$ref: '#/components/schemas/Old'}
+      x-vendor: {$ref: '#/components/schemas/Old'}
+      discriminator:
+        propertyName: kind
+        mapping:
+          old: '#/components/schemas/Old'
+          alias: Old
+    UsesOld:
+      $ref: '#/components/schemas/Old'
+paths:
+  /items:
+    get:
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Old'
