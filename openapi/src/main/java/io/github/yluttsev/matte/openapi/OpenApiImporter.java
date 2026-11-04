@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.openapi.mapping.CoreModelMapper;
 import io.github.yluttsev.matte.openapi.parser.JsonSyntaxParser;
+import io.github.yluttsev.matte.openapi.parser.SourceSchemaValueReader;
 import io.github.yluttsev.matte.openapi.parser.SourceStructureReader;
 import io.github.yluttsev.matte.openapi.parser.SyntaxParser;
 import io.github.yluttsev.matte.openapi.parser.YamlSyntaxParser;
@@ -94,7 +95,8 @@ public final class OpenApiImporter {
         }
         return verifyParsedModel(parsed.getOpenAPI(), text, format, version)
                 .map(diagnostic -> reject(source, format, version, diagnostic))
-                .orElseGet(() -> mapModel(source, format, version, supportedVersion, parsed.getOpenAPI(), diagnostics));
+                .orElseGet(() -> mapModel(source, format, text, version, supportedVersion, parsed.getOpenAPI(),
+                        diagnostics));
     }
 
     private static ImportResult invalidParsedModel(
@@ -114,13 +116,15 @@ public final class OpenApiImporter {
     private static ImportResult mapModel(
             SourceDocument source,
             SourceFormat format,
+            String text,
             String version,
             OpenApiVersion supportedVersion,
             OpenAPI openApi,
             List<ImportDiagnostic> diagnostics
     ) {
         try {
-            ApiDocument document = new CoreModelMapper().map(openApi, supportedVersion);
+            ApiDocument document = new CoreModelMapper().map(openApi, supportedVersion,
+                    SourceSchemaValueReader.read(text, format, supportedVersion));
             return new ImportResult(source, Optional.of(format), ImportStatus.IMPORTED, diagnostics,
                     Optional.of(version), Optional.of(document));
         } catch (IllegalArgumentException exception) {

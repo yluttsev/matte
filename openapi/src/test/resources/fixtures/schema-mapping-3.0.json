@@ -1,0 +1,42 @@
+{
+  "openapi": "3.0.3",
+  "info": {"title": "Schema Mapping", "version": "1.0.0"},
+  "components": {
+    "schemas": {
+      "Base": {"type": "object"},
+      "Rich": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "array", "minItems": 1, "maxItems": 5, "uniqueItems": true,
+            "items": {"$ref": "#/components/schemas/Base"}
+          },
+          "dictionary": {
+            "type": "object", "minProperties": 1, "maxProperties": 4,
+            "additionalProperties": {"type": "string"}
+          },
+          "closed": {"additionalProperties": false},
+          "nullExample": {"type": "string", "example": null},
+          "text": {
+            "type": "string", "format": "password", "nullable": true,
+            "minLength": 2, "maxLength": 12, "pattern": "^[a-z]+$",
+            "default": null, "example": {"marker": "#/components/schemas/Base"},
+            "examples": ["ignored-in-3.0"], "const": "ignored-in-3.0",
+            "enum": [null, "active"], "deprecated": false,
+            "readOnly": false, "writeOnly": true
+          },
+          "amount": {
+            "type": "number", "minimum": 1.25, "maximum": 9.75,
+            "exclusiveMinimum": true, "exclusiveMaximum": true, "multipleOf": 0.25
+          },
+          "choice": {
+            "allOf": [{"$ref": "#/components/schemas/Base"}],
+            "oneOf": [{"type": "string"}],
+            "anyOf": [{"type": "integer"}], "not": {"type": "string"},
+            "discriminator": {"propertyName": "kind", "mapping": {"base": "Base"}}
+          }
+        }
+      }
+    }
+  }
+}

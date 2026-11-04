@@ -1,8 +1,11 @@
 package io.github.yluttsev.matte.openapi.mapping;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -14,12 +17,21 @@ import io.github.yluttsev.matte.core.model.Components;
 import io.github.yluttsev.matte.core.model.ElementId;
 import io.github.yluttsev.matte.core.model.info.ApiInfo;
 import io.github.yluttsev.matte.core.model.schema.BooleanSchema;
+import io.github.yluttsev.matte.core.model.schema.Discriminator;
 import io.github.yluttsev.matte.core.model.schema.JsonType;
 import io.github.yluttsev.matte.core.model.schema.Schema;
 import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
 import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaProperty;
 import io.github.yluttsev.matte.core.model.schema.SchemaReference;
+import io.github.yluttsev.matte.core.model.value.ArrayValue;
+import io.github.yluttsev.matte.core.model.value.BooleanValue;
+import io.github.yluttsev.matte.core.model.value.DocumentValue;
+import io.github.yluttsev.matte.core.model.value.NullValue;
+import io.github.yluttsev.matte.core.model.value.NumberValue;
+import io.github.yluttsev.matte.core.model.value.ObjectValue;
+import io.github.yluttsev.matte.core.model.value.StringValue;
+import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.OpenApiVersion;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -27,14 +39,20 @@ import io.swagger.v3.oas.models.info.Info;
 public final class CoreModelMapper {
 
     public ApiDocument map(OpenAPI openApi, OpenApiVersion version) {
+        return map(openApi, version, Map.of());
+    }
+
+    public ApiDocument map(OpenAPI openApi, OpenApiVersion version,
+            Map<DocumentPath, SchemaValueFields> schemaValues) {
         Objects.requireNonNull(openApi, "openApi");
         Objects.requireNonNull(version, "version");
+        Objects.requireNonNull(schemaValues, "schemaValues");
         ApiDocument.Builder document = ApiDocument.builder(ElementId.random());
         if (openApi.getInfo() != null) {
             document.info(mapInfo(openApi.getInfo()));
         }
         if (openApi.getComponents() != null && openApi.getComponents().getSchemas() != null) {
-            document.components(mapComponents(openApi.getComponents().getSchemas(), version));
+            document.components(mapComponents(openApi.getComponents().getSchemas(), version, schemaValues));
         }
         return document.build();
     }
@@ -51,14 +69,16 @@ public final class CoreModelMapper {
 
     private Components mapComponents(
             Map<String, io.swagger.v3.oas.models.media.Schema> sourceSchemas,
-            OpenApiVersion version
+            OpenApiVersion version,
+            Map<DocumentPath, SchemaValueFields> schemaValues
     ) {
         List<SchemaComponent> schemas = new ArrayList<>();
         for (var entry : sourceSchemas.entrySet()) {
             schemas.add(new SchemaComponent(
                     ElementId.random(),
                     entry.getKey(),
-                    mapSchema(entry.getValue(), Collections.newSetFromMap(new IdentityHashMap<>()), version)
+                    mapSchema(entry.getValue(), Collections.newSetFromMap(new IdentityHashMap<>()), version,
+                            DocumentPath.schemaComponent(entry.getKey()), schemaValues)
             ));
         }
         return Components.builder().schemas(schemas).build();
@@ -67,7 +87,9 @@ public final class CoreModelMapper {
     private Schema mapSchema(
             io.swagger.v3.oas.models.media.Schema<?> source,
             Set<io.swagger.v3.oas.models.media.Schema<?>> ancestors,
-            OpenApiVersion version
+            OpenApiVersion version,
+            DocumentPath path,
+            Map<DocumentPath, SchemaValueFields> schemaValues
     ) {
         if (source == null) {
             throw new IllegalArgumentException("Schema definition is missing");
@@ -79,14 +101,49 @@ public final class CoreModelMapper {
             if (source.getBooleanSchemaValue() != null) {
                 return new BooleanSchema(ElementId.random(), source.getBooleanSchemaValue());
             }
+            SchemaValueFields values = schemaValues.get(path);
             return SchemaObject.builder(ElementId.random())
                     .types(extractTypes(source, version))
                     .title(source.getTitle())
                     .description(source.getDescription())
                     .format(source.getFormat())
                     .reference(source.get$ref() == null ? null : new SchemaReference(source.get$ref()))
-                    .properties(mapProperties(source.getProperties(), ancestors, version))
+                    .defaultValue(values == null
+                            ? mapOptionalValue(source.getDefault(), source.getDefaultSetFlag())
+                            : values.hasDefault() ? values.defaultValue() : null)
+                    .example(values == null
+                            ? mapOptionalValue(source.getExample(), source.getExampleSetFlag())
+                            : values.hasExample() ? values.example() : null)
+                    .examples(mapExamples(source, values, version))
+                    .enumValues(values == null ? mapValues(source.getEnum()) : values.enumValues())
+                    .constValue(mapConst(source, values, version))
+                    .deprecated(source.getDeprecated())
+                    .readOnly(source.getReadOnly())
+                    .writeOnly(source.getWriteOnly())
+                    .properties(mapProperties(source.getProperties(), ancestors, version, path, schemaValues))
                     .required(source.getRequired() == null ? Set.of() : new LinkedHashSet<>(source.getRequired()))
+                    .items(mapOptionalSchema(source.getItems(), ancestors, version, path.child("items"),
+                            schemaValues))
+                    .additionalProperties(mapAdditionalProperties(source.getAdditionalProperties(), ancestors, version,
+                            path.child("additionalProperties"), schemaValues))
+                    .minProperties(integer(source.getMinProperties()))
+                    .maxProperties(integer(source.getMaxProperties()))
+                    .minItems(integer(source.getMinItems()))
+                    .maxItems(integer(source.getMaxItems()))
+                    .uniqueItems(source.getUniqueItems())
+                    .minLength(integer(source.getMinLength()))
+                    .maxLength(integer(source.getMaxLength()))
+                    .pattern(source.getPattern())
+                    .minimum(source.getMinimum())
+                    .maximum(source.getMaximum())
+                    .exclusiveMinimum(exclusiveMinimum(source, version))
+                    .exclusiveMaximum(exclusiveMaximum(source, version))
+                    .multipleOf(source.getMultipleOf())
+                    .allOf(mapSchemas(source.getAllOf(), ancestors, version, path.child("allOf"), schemaValues))
+                    .oneOf(mapSchemas(source.getOneOf(), ancestors, version, path.child("oneOf"), schemaValues))
+                    .anyOf(mapSchemas(source.getAnyOf(), ancestors, version, path.child("anyOf"), schemaValues))
+                    .not(mapOptionalSchema(source.getNot(), ancestors, version, path.child("not"), schemaValues))
+                    .discriminator(mapDiscriminator(source.getDiscriminator()))
                     .build();
         } finally {
             ancestors.remove(source);
@@ -119,7 +176,9 @@ public final class CoreModelMapper {
     private List<SchemaProperty> mapProperties(
             Map<String, io.swagger.v3.oas.models.media.Schema> sourceProperties,
             Set<io.swagger.v3.oas.models.media.Schema<?>> ancestors,
-            OpenApiVersion version
+            OpenApiVersion version,
+            DocumentPath path,
+            Map<DocumentPath, SchemaValueFields> schemaValues
     ) {
         if (sourceProperties == null) {
             return List.of();
@@ -129,9 +188,152 @@ public final class CoreModelMapper {
             properties.add(new SchemaProperty(
                     ElementId.random(),
                     entry.getKey(),
-                    mapSchema(entry.getValue(), ancestors, version)
+                    mapSchema(entry.getValue(), ancestors, version,
+                            path.child("properties").child(entry.getKey()), schemaValues)
             ));
         }
         return properties;
+    }
+
+    private List<Schema> mapSchemas(
+            List<io.swagger.v3.oas.models.media.Schema> sourceSchemas,
+            Set<io.swagger.v3.oas.models.media.Schema<?>> ancestors,
+            OpenApiVersion version,
+            DocumentPath path,
+            Map<DocumentPath, SchemaValueFields> schemaValues
+    ) {
+        if (sourceSchemas == null) {
+            return List.of();
+        }
+        List<Schema> schemas = new ArrayList<>();
+        for (int index = 0; index < sourceSchemas.size(); index++) {
+            schemas.add(mapSchema(sourceSchemas.get(index), ancestors, version,
+                    path.child(Integer.toString(index)), schemaValues));
+        }
+        return schemas;
+    }
+
+    private Schema mapOptionalSchema(
+            io.swagger.v3.oas.models.media.Schema<?> source,
+            Set<io.swagger.v3.oas.models.media.Schema<?>> ancestors,
+            OpenApiVersion version,
+            DocumentPath path,
+            Map<DocumentPath, SchemaValueFields> schemaValues
+    ) {
+        return source == null ? null : mapSchema(source, ancestors, version, path, schemaValues);
+    }
+
+    private Schema mapAdditionalProperties(
+            Object source,
+            Set<io.swagger.v3.oas.models.media.Schema<?>> ancestors,
+            OpenApiVersion version,
+            DocumentPath path,
+            Map<DocumentPath, SchemaValueFields> schemaValues
+    ) {
+        if (source == null) {
+            return null;
+        }
+        if (source instanceof Boolean value) {
+            return new BooleanSchema(ElementId.random(), value);
+        }
+        if (source instanceof io.swagger.v3.oas.models.media.Schema<?> schema) {
+            return mapSchema(schema, ancestors, version, path, schemaValues);
+        }
+        throw new IllegalArgumentException("Unsupported additionalProperties value: " + source.getClass());
+    }
+
+    private Discriminator mapDiscriminator(io.swagger.v3.oas.models.media.Discriminator source) {
+        if (source == null) {
+            return null;
+        }
+        Map<String, SchemaReference> mapping = new LinkedHashMap<>();
+        if (source.getMapping() != null) {
+            source.getMapping().forEach((name, reference) -> mapping.put(name, new SchemaReference(reference)));
+        }
+        return Discriminator.builder().propertyName(source.getPropertyName()).mapping(mapping).build();
+    }
+
+    private DocumentValue mapOptionalValue(Object source, boolean present) {
+        return present ? mapValue(source) : null;
+    }
+
+    private List<DocumentValue> mapValues(List<?> source) {
+        if (source == null) {
+            return List.of();
+        }
+        List<DocumentValue> values = new ArrayList<>();
+        for (Object value : source) {
+            values.add(mapValue(value));
+        }
+        return values;
+    }
+
+    private List<DocumentValue> mapExamples(io.swagger.v3.oas.models.media.Schema<?> source,
+            SchemaValueFields values, OpenApiVersion version) {
+        if (version == OpenApiVersion.V3_0) {
+            return List.of();
+        }
+        return values == null ? mapValues(source.getExamples()) : values.examples();
+    }
+
+    private DocumentValue mapConst(io.swagger.v3.oas.models.media.Schema<?> source,
+            SchemaValueFields values, OpenApiVersion version) {
+        if (version == OpenApiVersion.V3_0) {
+            return null;
+        }
+        return values == null
+                ? mapOptionalValue(source.getConst(), source.getConst() != null)
+                : values.hasConst() ? values.constValue() : null;
+    }
+
+    private DocumentValue mapValue(Object source) {
+        if (source == null) {
+            return new NullValue();
+        }
+        if (source instanceof Boolean value) {
+            return new BooleanValue(value);
+        }
+        if (source instanceof Number value) {
+            return new NumberValue(decimal(value));
+        }
+        if (source instanceof String value) {
+            return new StringValue(value);
+        }
+        if (source instanceof List<?> values) {
+            return new ArrayValue(mapValues(values));
+        }
+        if (source instanceof Map<?, ?> properties) {
+            Map<String, DocumentValue> values = new LinkedHashMap<>();
+            properties.forEach((name, value) -> {
+                if (!(name instanceof String stringName)) {
+                    throw new IllegalArgumentException("Schema value object keys must be strings");
+                }
+                values.put(stringName, mapValue(value));
+            });
+            return new ObjectValue(values);
+        }
+        throw new IllegalArgumentException("Unsupported schema value: " + source.getClass());
+    }
+
+    private BigDecimal decimal(Number value) {
+        return value instanceof BigDecimal decimal ? decimal : new BigDecimal(value.toString());
+    }
+
+    private BigInteger integer(Integer value) {
+        return value == null ? null : BigInteger.valueOf(value.longValue());
+    }
+
+    private BigDecimal exclusiveMinimum(io.swagger.v3.oas.models.media.Schema<?> source, OpenApiVersion version) {
+        if (version == OpenApiVersion.V3_1) {
+            return source.getExclusiveMinimumValue();
+        }
+        return Boolean.TRUE.equals(source.getExclusiveMinimum()) ? source.getMinimum() : null;
+    }
+
+    private BigDecimal exclusiveMaximum(io.swagger.v3.oas.models.media.Schema<?> source, OpenApiVersion version) {
+        if (version == OpenApiVersion.V3_1) {
+            return source.getExclusiveMaximumValue();
+        }
+        return Boolean.TRUE.equals(source.getExclusiveMaximum()) ? source.getMaximum() : null;
     }
 }
