@@ -1,0 +1,14 @@
+{
+  "openapi": "3.1.0",
+  "info": {"title": "Formatted API", "version": "1.0.0"},
+  "components": {
+    "schemas": {
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"}
+        }
+      }
+    }
+  }
+}
