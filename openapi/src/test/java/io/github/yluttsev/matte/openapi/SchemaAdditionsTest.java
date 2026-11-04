@@ -245,6 +245,7 @@ class SchemaAdditionsTest {
 
         assertInstanceOf(EditRejected.class, result.edit());
         assertTrue(result.source().isEmpty());
+        assertArrayEquals(imported.source().content(), result.state().source().content());
     }
 
     @Test

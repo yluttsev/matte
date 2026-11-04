@@ -25,7 +25,7 @@ public final class OpenApiSchemaEditor {
 
     public RenameResult rename(ImportResult imported, RenameSchemaComponent command) {
         OpenApiEditResult result = apply(imported, command);
-        return new RenameResult(result.edit(), result.source());
+        return new RenameResult(result.edit(), result.source(), result.state());
     }
 
     public OpenApiEditResult addProperty(ImportResult imported, AddSchemaProperty command) {
@@ -44,7 +44,7 @@ public final class OpenApiSchemaEditor {
         }
         EditResult edit = new DocumentEditor().apply(imported.document().orElseThrow(), command);
         if (!(edit instanceof EditSucceeded succeeded)) {
-            return new OpenApiEditResult(edit, Optional.empty());
+            return new OpenApiEditResult(edit, Optional.empty(), imported);
         }
         SourceFormat format = imported.format().orElseThrow();
         SourceDocument source = command instanceof RenameSchemaComponent
@@ -57,7 +57,9 @@ public final class OpenApiSchemaEditor {
         if (!(command instanceof RenameSchemaComponent)) {
             verifyAddition(imported, checked, succeeded.changeSet().changes().getFirst());
         }
-        return new OpenApiEditResult(edit, Optional.of(source));
+        ImportResult state = new ImportResult(source, checked.format(), checked.status(), checked.diagnostics(),
+                checked.version(), Optional.of(succeeded.document()));
+        return new OpenApiEditResult(edit, Optional.of(source), state);
     }
 
     private void verifyAddition(ImportResult before, ImportResult after, Change change) {
@@ -87,11 +89,12 @@ public final class OpenApiSchemaEditor {
         }
     }
 
-    public record RenameResult(EditResult edit, Optional<SourceDocument> source) {
+    public record RenameResult(EditResult edit, Optional<SourceDocument> source, ImportResult state) {
 
         public RenameResult {
             Objects.requireNonNull(edit, "edit");
             Objects.requireNonNull(source, "source");
+            Objects.requireNonNull(state, "state");
         }
     }
 }
