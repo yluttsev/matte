@@ -1,0 +1,8 @@
+openapi: 3.1.0
+info: {title: Test, version: 1.0.0}
+components:
+  schemas:
+    Old:
+      type: object # keep schema comment
+# keep tail comment
+x-note: unchanged

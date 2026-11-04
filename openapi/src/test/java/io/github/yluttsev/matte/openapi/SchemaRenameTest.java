@@ -100,6 +100,21 @@ class SchemaRenameTest {
     }
 
     @Test
+    void testRename_WhenYamlHasBomEmojiAndMixedLineEndings_ShouldPreserveOtherBytes() throws IOException {
+        String fixture = new String(TestFixtures.bytes("source-ranges-unicode.yaml"), StandardCharsets.UTF_8);
+        String source = Character.toString((char) 0xFEFF) + fixture.replaceFirst("\n", "\r\n");
+        ImportResult imported = importer.importDocument(source.getBytes(StandardCharsets.UTF_8),
+                ImportOptions.autoDetect());
+        SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
+
+        OpenApiSchemaEditor.RenameResult result = editor.rename(imported,
+                new RenameSchemaComponent(component.getId(), "New"));
+
+        assertArrayEquals(source.replace("Old:", "New:").getBytes(StandardCharsets.UTF_8),
+                result.source().orElseThrow().content());
+    }
+
+    @Test
     void testRename_WhenJsonHasUnicodeBeforeSchema_ShouldKeepOffsetsAccurate() throws IOException {
         String prefix = "{\"label\":\"😀\",";
         String sourceText = new String(TestFixtures.bytes("schema-rename.json"), StandardCharsets.UTF_8);

@@ -1,7 +1,9 @@
 package io.github.yluttsev.matte.openapi.patch;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
@@ -9,6 +11,7 @@ import org.snakeyaml.engine.v2.common.FlowStyle;
 import org.snakeyaml.engine.v2.nodes.MappingNode;
 import org.snakeyaml.engine.v2.nodes.Node;
 import org.snakeyaml.engine.v2.nodes.ScalarNode;
+import org.snakeyaml.engine.v2.nodes.SequenceNode;
 import tools.jackson.databind.ObjectMapper;
 
 final class YamlAdditionWriter implements SourceAdditionWriter {
@@ -20,6 +23,7 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
     public String add(String text, DocumentPath parent, DocumentPath requiredAncestor, String name,
             Map<String, Object> schema) {
         Node node = new Compose(SETTINGS).composeString(text).orElseThrow();
+        YamlSourceOffsets offsets = new YamlSourceOffsets(text);
         if (!(node instanceof MappingNode)) {
             throw new IllegalArgumentException("OpenAPI source root must be a mapping");
         }
@@ -45,12 +49,23 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
         }
         Map<String, Object> content = nested(parent, existingDepth, name, schema);
         if (mapping.getFlowStyle() == FlowStyle.FLOW) {
-            return insertFlow(text, mapping, content);
+            return insertFlow(text, mapping, content, offsets);
         }
-        return insertBlock(text, mapping, content);
+        return insertBlock(text, mapping, content, offsets);
     }
 
     private Node child(MappingNode mapping, String name) {
+        Set<String> names = new HashSet<>();
+        for (var entry : mapping.getValue()) {
+            if (entry.getKeyNode() instanceof ScalarNode key) {
+                if (!names.add(key.getValue())) {
+                    throw new IllegalArgumentException("Duplicate YAML source key: " + key.getValue());
+                }
+                if ("<<".equals(key.getValue())) {
+                    throw new IllegalArgumentException("Merge-based source mappings cannot be patched");
+                }
+            }
+        }
         for (var entry : mapping.getValue()) {
             if (entry.getKeyNode() instanceof ScalarNode key && name.equals(key.getValue())) {
                 Node value = entry.getValueNode();
@@ -74,23 +89,30 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
         return content;
     }
 
-    private String insertFlow(String text, MappingNode mapping, Map<String, Object> content) {
-        int position = mapping.getEndMark().orElseThrow().getIndex() - 1;
+    private String insertFlow(String text, MappingNode mapping, Map<String, Object> content,
+            YamlSourceOffsets offsets) {
+        int position = offsets.charOffset(mapping.getEndMark().orElseThrow().getIndex()) - 1;
         String serialized = JSON.writeValueAsString(content);
         String member = serialized.substring(1, serialized.length() - 1);
         String separator = mapping.getValue().isEmpty() ? "" : ", ";
         return text.substring(0, position) + separator + member + text.substring(position);
     }
 
-    private String insertBlock(String text, MappingNode mapping, Map<String, Object> content) {
+    private String insertBlock(String text, MappingNode mapping, Map<String, Object> content,
+            YamlSourceOffsets offsets) {
         if (mapping.getValue().isEmpty()) {
             throw new IllegalArgumentException("Empty block mapping cannot be patched");
         }
         var last = mapping.getValue().getLast();
-        int lastEnd = last.getValueNode().getEndMark().orElseThrow().getIndex();
+        if (last.getValueNode().getStartMark().orElseThrow().getIndex()
+                < last.getKeyNode().getEndMark().orElseThrow().getIndex()) {
+            throw new IllegalArgumentException("Alias-based source mappings cannot be patched");
+        }
+        int lastEnd = lastContentEnd(last.getValueNode(), offsets);
         int position = nextLine(text, lastEnd);
-        int indentation = indentation(text, last.getKeyNode().getStartMark().orElseThrow().getIndex());
-        String newline = text.contains("\r\n") ? "\r\n" : "\n";
+        int indentation = indentation(text,
+                offsets.charOffset(last.getKeyNode().getStartMark().orElseThrow().getIndex()));
+        String newline = SourceLineEndings.near(text, position);
         String prefix = position == text.length() && !text.endsWith("\n") ? newline : "";
         String addition = render(content, indentation, newline);
         return text.substring(0, position) + prefix + addition + text.substring(position);
@@ -106,6 +128,16 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
         }
         int newline = text.indexOf('\n', end);
         return newline < 0 ? text.length() : newline + 1;
+    }
+
+    private int lastContentEnd(Node node, YamlSourceOffsets offsets) {
+        if (node instanceof MappingNode mapping && !mapping.getValue().isEmpty()) {
+            return lastContentEnd(mapping.getValue().getLast().getValueNode(), offsets);
+        }
+        if (node instanceof SequenceNode sequence && !sequence.getValue().isEmpty()) {
+            return lastContentEnd(sequence.getValue().getLast(), offsets);
+        }
+        return offsets.charOffset(node.getEndMark().orElseThrow().getIndex());
     }
 
     private int indentation(String text, int position) {

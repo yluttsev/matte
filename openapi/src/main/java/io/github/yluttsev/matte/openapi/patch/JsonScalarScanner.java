@@ -1,7 +1,9 @@
 package io.github.yluttsev.matte.openapi.patch;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
@@ -37,8 +39,12 @@ final class JsonScalarScanner implements SourceScalarScanner {
     }
 
     private void visitObject(JsonParser parser, String text, DocumentPath path, List<SourceScalar> scalars) {
+        Set<String> names = new HashSet<>();
         while (parser.nextToken() == JsonToken.PROPERTY_NAME) {
             String name = parser.currentName();
+            if (!names.add(name)) {
+                throw new IllegalArgumentException("Duplicate JSON source key: " + name);
+            }
             DocumentPath child = path.child(name);
             scalars.add(scalar(parser, text, child, true, name));
             parser.nextToken();

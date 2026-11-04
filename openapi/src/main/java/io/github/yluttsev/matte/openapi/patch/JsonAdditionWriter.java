@@ -54,9 +54,9 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
     }
 
     private String insert(String text, JsonObject object, String key, String value) {
-        String newline = text.contains("\r\n") ? "\r\n" : "\n";
         boolean multiline = text.substring(object.open(), object.close()).contains("\n");
         int position = object.count() == 0 ? object.open() + 1 : object.lastValueEnd();
+        String newline = SourceLineEndings.near(text, position);
         String separator = object.count() == 0 ? "" : ",";
         String member = key + (multiline ? ": " : ":") + value;
         if (multiline) {
@@ -112,6 +112,9 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
         while (parser.nextToken() == JsonToken.PROPERTY_NAME) {
             lastKeyStart = Math.toIntExact(parser.currentTokenLocation().getCharOffset());
             String name = parser.currentName();
+            if (nodes.contains(path.child(name))) {
+                throw new IllegalArgumentException("Duplicate JSON source key: " + name);
+            }
             parser.nextToken();
             visit(parser, path.child(name), objects, nodes);
             lastValueEnd = Math.toIntExact(parser.currentLocation().getCharOffset());

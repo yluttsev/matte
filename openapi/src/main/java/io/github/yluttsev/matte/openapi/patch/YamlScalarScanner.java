@@ -2,6 +2,7 @@ package io.github.yluttsev.matte.openapi.patch;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
@@ -23,21 +24,27 @@ final class YamlScalarScanner implements SourceScalarScanner {
         Node root = new Compose(SETTINGS).composeString(text).orElseThrow();
         List<SourceScalar> scalars = new ArrayList<>();
         Set<Node> ancestors = Collections.newSetFromMap(new IdentityHashMap<>());
-        visit(root, DocumentPath.root(), false, scalars, ancestors);
+        Set<Node> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        YamlSourceOffsets offsets = new YamlSourceOffsets(text);
+        visit(root, DocumentPath.root(), false, scalars, ancestors, visited, offsets);
         return scalars;
     }
 
-    private void visit(Node node, DocumentPath path, boolean key, List<SourceScalar> scalars, Set<Node> ancestors) {
+    private void visit(Node node, DocumentPath path, boolean key, List<SourceScalar> scalars, Set<Node> ancestors,
+            Set<Node> visited, YamlSourceOffsets offsets) {
         if (!ancestors.add(node)) {
             throw new IllegalArgumentException("Cyclic YAML alias cannot be patched");
         }
         try {
+            if (!visited.add(node)) {
+                return;
+            }
             if (node instanceof ScalarNode scalar) {
-                scalars.add(scalar(path, key, scalar));
+                scalars.add(scalar(path, key, scalar, offsets));
             } else if (node instanceof MappingNode mapping) {
-                visitMapping(mapping, path, scalars, ancestors);
+                visitMapping(mapping, path, scalars, ancestors, visited, offsets);
             } else if (node instanceof SequenceNode sequence) {
-                visitSequence(sequence, path, scalars, ancestors);
+                visitSequence(sequence, path, scalars, ancestors, visited, offsets);
             }
         } finally {
             ancestors.remove(node);
@@ -48,15 +55,21 @@ final class YamlScalarScanner implements SourceScalarScanner {
             MappingNode mapping,
             DocumentPath path,
             List<SourceScalar> scalars,
-            Set<Node> ancestors
+            Set<Node> ancestors,
+            Set<Node> visited,
+            YamlSourceOffsets offsets
     ) {
+        Set<String> names = new HashSet<>();
         for (var entry : mapping.getValue()) {
             if (!(entry.getKeyNode() instanceof ScalarNode key)) {
                 throw new IllegalArgumentException("Non-scalar YAML key cannot be patched");
             }
+            if (!names.add(key.getValue())) {
+                throw new IllegalArgumentException("Duplicate YAML source key: " + key.getValue());
+            }
             DocumentPath child = path.child(key.getValue());
-            visit(key, child, true, scalars, ancestors);
-            visit(entry.getValueNode(), child, false, scalars, ancestors);
+            visit(key, child, true, scalars, ancestors, visited, offsets);
+            visit(entry.getValueNode(), child, false, scalars, ancestors, visited, offsets);
         }
     }
 
@@ -64,16 +77,19 @@ final class YamlScalarScanner implements SourceScalarScanner {
             SequenceNode sequence,
             DocumentPath path,
             List<SourceScalar> scalars,
-            Set<Node> ancestors
+            Set<Node> ancestors,
+            Set<Node> visited,
+            YamlSourceOffsets offsets
     ) {
         for (int index = 0; index < sequence.getValue().size(); index++) {
-            visit(sequence.getValue().get(index), path.child(Integer.toString(index)), false, scalars, ancestors);
+            visit(sequence.getValue().get(index), path.child(Integer.toString(index)), false,
+                    scalars, ancestors, visited, offsets);
         }
     }
 
-    private SourceScalar scalar(DocumentPath path, boolean key, ScalarNode node) {
-        int start = node.getStartMark().orElseThrow().getIndex();
-        int end = node.getEndMark().orElseThrow().getIndex();
+    private SourceScalar scalar(DocumentPath path, boolean key, ScalarNode node, YamlSourceOffsets offsets) {
+        int start = offsets.charOffset(node.getStartMark().orElseThrow().getIndex());
+        int end = offsets.charOffset(node.getEndMark().orElseThrow().getIndex());
         return new SourceScalar(path, key, node.getValue(), start, end, quoteStyle(node.getScalarStyle()));
     }
 
