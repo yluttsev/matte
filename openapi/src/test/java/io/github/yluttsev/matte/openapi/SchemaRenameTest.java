@@ -33,33 +33,13 @@ class SchemaRenameTest {
     }
 
     @Test
-    void testRename_ShouldLeaveExampleAndExtensionValuesUntouched() {
-        String source = """
-                openapi: 3.1.0
-                info:
-                  title: Test
-                  version: 1.0.0
-                components:
-                  schemas:
-                    Old:
-                      type: object
-                      example:
-                        $ref: '#/components/schemas/Old'
-                      x-vendor:
-                        $ref: '#/components/schemas/Old'
-                    UsesOld:
-                      $ref: '#/components/schemas/Old'
-                """;
-        ImportResult imported = importer.importDocument(source.getBytes(StandardCharsets.UTF_8),
-                ImportOptions.autoDetect());
-        SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
+    void testRename_WhenYamlNamesSchemaPropertiesExampleAndExtension_ShouldUseNodeRole() throws IOException {
+        assertRenameWithOpaqueValues("schema-reference-context.yaml", 6, 7);
+    }
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(imported,
-                new RenameSchemaComponent(component.getId(), "New"));
-
-        String patched = new String(result.source().orElseThrow().content(), StandardCharsets.UTF_8);
-        assertEquals(2, patched.split("#/components/schemas/Old", -1).length - 1);
-        assertEquals(1, patched.split("#/components/schemas/New", -1).length - 1);
+    @Test
+    void testRename_WhenJsonNamesSchemaPropertiesExampleAndExtension_ShouldUseNodeRole() throws IOException {
+        assertRenameWithOpaqueValues("schema-reference-context.json", 6, 7);
     }
 
     @Test
@@ -211,5 +191,27 @@ class SchemaRenameTest {
                 ImportOptions.autoDetect());
         assertEquals(ImportStatus.IMPORTED, checked.status());
         assertEquals("Client", checked.document().orElseThrow().getComponents().getSchemas().getFirst().getName());
+    }
+
+    private void assertRenameWithOpaqueValues(
+            String fixture,
+            int expectedNewReferences,
+            int expectedOldLiterals
+    )
+            throws IOException {
+        ImportResult imported = importer.importDocument(TestFixtures.bytes(fixture), ImportOptions.autoDetect());
+        SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
+
+        OpenApiSchemaEditor.RenameResult result = editor.rename(imported,
+                new RenameSchemaComponent(component.getId(), "New"));
+
+        String patched = new String(result.source().orElseThrow().content(), StandardCharsets.UTF_8);
+        assertEquals(expectedNewReferences, count(patched, "#/components/schemas/New"), patched);
+        assertEquals(expectedOldLiterals, count(patched, "#/components/schemas/Old"));
+        assertTrue(patched.contains("alias: New") || patched.contains("\"alias\": \"New\""));
+    }
+
+    private int count(String text, String value) {
+        return text.split(java.util.regex.Pattern.quote(value), -1).length - 1;
     }
 }
