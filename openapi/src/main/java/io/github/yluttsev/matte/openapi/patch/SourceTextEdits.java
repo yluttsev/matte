@@ -20,6 +20,10 @@ final class SourceTextEdits {
         edits.add(new TextEdit(scalar.start(), scalar.end(), formatValue(scalar.style(), value)));
     }
 
+    static String yamlScalar(String value) {
+        return formatValue(SourceScalar.QuoteStyle.PLAIN, value);
+    }
+
     String apply(String text) {
         edits.sort(Comparator.comparingInt(TextEdit::start).reversed());
         StringBuilder result = new StringBuilder(text);
