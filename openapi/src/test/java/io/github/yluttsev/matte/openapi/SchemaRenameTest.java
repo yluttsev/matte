@@ -39,6 +39,28 @@ class SchemaRenameTest {
     }
 
     @Test
+    void testRename_WhenOas30YamlContainsReferences_ShouldKeepSourceAndCoreConsistent() throws IOException {
+        byte[] source = TestFixtures.bytes("schema-import-3.0.yaml");
+        ImportResult imported = importer.importDocument(source, ImportOptions.autoDetect());
+        SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
+        ElementId componentId = component.getId();
+        ElementId propertyId = ((SchemaObject) component.getSchema()).getProperties().getFirst().getId();
+
+        OpenApiSchemaEditor.RenameResult result = editor.rename(imported,
+                new RenameSchemaComponent(componentId, "Client"));
+
+        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertArrayEquals(source, imported.source().content());
+        assertEquals(result.source().orElseThrow(), result.state().source());
+        SchemaComponent renamed = result.state().document().orElseThrow().getComponents().getSchemas().getFirst();
+        assertEquals(componentId, renamed.getId());
+        assertEquals("Client", renamed.getName());
+        assertEquals(propertyId, ((SchemaObject) renamed.getSchema()).getProperties().getFirst().getId());
+        assertTrue(new String(result.source().orElseThrow().content(), StandardCharsets.UTF_8)
+                .contains("#/components/schemas/Client"));
+    }
+
+    @Test
     void testRename_WhenYamlNamesSchemaPropertiesExampleAndExtension_ShouldUseNodeRole() throws IOException {
         assertRenameWithOpaqueValues("schema-reference-context.yaml", 6, 7);
     }

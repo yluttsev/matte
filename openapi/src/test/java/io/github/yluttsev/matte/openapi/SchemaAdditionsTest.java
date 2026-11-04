@@ -56,6 +56,22 @@ class SchemaAdditionsTest {
     }
 
     @Test
+    void testAddComponent_WhenOas30YamlHasSchemas_ShouldPreserveExistingFields() throws IOException {
+        ImportResult imported = importFixture("schema-import-3.0.yaml");
+        byte[] original = imported.source().content();
+
+        OpenApiEditResult result = editor.addComponent(imported, component("Address"));
+
+        assertEquals(ImportStatus.IMPORTED, result.state().status());
+        assertTrue(text(result).contains("    Address:\n      type: object\n"));
+        assertTrue(text(result).contains("      nullable: true"));
+        assertArrayEquals(original, imported.source().content());
+        assertEquals("Address", result.state().document().orElseThrow().getComponents().getSchemas()
+                .getLast().getName());
+        assertComponent(result, "Address");
+    }
+
+    @Test
     void testAddComponent_WhenComponentsIsFlowMapping_ShouldInsertIntoIt() throws IOException {
         ImportResult imported = importFixture("additions-sections.yaml");
 
@@ -161,6 +177,24 @@ class SchemaAdditionsTest {
     }
 
     @Test
+    void testAddProperty_WhenOas30YamlHasExistingProperties_ShouldKeepSourceAndCoreConsistent() throws IOException {
+        ImportResult imported = importFixture("schema-import-3.0.yaml");
+        byte[] original = imported.source().content();
+        SchemaObject schema = customer(imported);
+        ElementId propertyId = ElementId.random();
+
+        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(schema.getId(),
+                new SchemaProperty(propertyId, "email", stringSchema())));
+
+        assertTrue(text(result).contains("        email:\n          type: string\n"));
+        assertArrayEquals(original, imported.source().content());
+        SchemaObject edited = customer(result.state());
+        assertEquals(propertyId, edited.getProperties().getLast().getId());
+        assertEquals("email", edited.getProperties().getLast().getName());
+        assertProperty(result, "email");
+    }
+
+    @Test
     void testAddProperty_WhenSchemaIsNested_ShouldInsertAtItsOwnPath() throws IOException {
         ImportResult imported = importFixture("additions-nested.yaml");
         SchemaObject address = assertInstanceOf(SchemaObject.class,
@@ -186,6 +220,22 @@ class SchemaAdditionsTest {
         assertTrue(text(result).contains("\"email\":{\"type\":\"string\"}"));
         assertProperty(result, "email");
         assertArrayEquals(TestFixtures.bytes("schema-import.json"), imported.source().content());
+    }
+
+    @Test
+    void testAddProperty_WhenOas30JsonHasExistingProperties_ShouldPreserveNullableAndReferences() throws IOException {
+        ImportResult imported = importFixture("schema-import-3.0.json");
+        byte[] original = imported.source().content();
+        SchemaObject schema = customer(imported);
+
+        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(schema.getId(),
+                new SchemaProperty(ElementId.random(), "email", stringSchema())));
+
+        assertTrue(text(result).contains("\"email\":{\"type\":\"string\"}"));
+        assertTrue(text(result).contains("\"nullable\":true"));
+        assertTrue(text(result).contains("#/components/schemas/Customer"));
+        assertArrayEquals(original, imported.source().content());
+        assertProperty(result, "email");
     }
 
     @Test
@@ -256,6 +306,22 @@ class SchemaAdditionsTest {
 
         assertInstanceOf(EditRejected.class, result.edit());
         assertTrue(result.source().isEmpty());
+        assertArrayEquals(imported.source().content(), result.state().source().content());
+    }
+
+    @Test
+    void testAddComponent_WhenElementIdConflicts_ShouldNotPatchSource() throws IOException {
+        ImportResult imported = importFixture("schema-import.yaml");
+        SchemaComponent existing = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
+        byte[] original = imported.source().content();
+
+        OpenApiEditResult result = editor.addComponent(imported, new AddSchemaComponent(
+                new SchemaComponent(existing.getId(), "Address", stringSchema())));
+
+        assertInstanceOf(EditRejected.class, result.edit());
+        assertTrue(result.source().isEmpty());
+        assertArrayEquals(original, result.state().source().content());
+        assertEquals(1, result.state().document().orElseThrow().getComponents().getSchemas().size());
     }
 
     @Test
@@ -328,7 +394,8 @@ class SchemaAdditionsTest {
         ImportResult checked = importer.importDocument(result.source().orElseThrow().content(),
                 ImportOptions.autoDetect());
         assertEquals(ImportStatus.IMPORTED, checked.status());
-        assertEquals(name, checked.document().orElseThrow().getComponents().getSchemas().getFirst().getName());
+        assertTrue(checked.document().orElseThrow().getComponents().getSchemas().stream()
+                .anyMatch(component -> component.getName().equals(name)));
     }
 
     private void assertProperty(OpenApiEditResult result, String name) {
