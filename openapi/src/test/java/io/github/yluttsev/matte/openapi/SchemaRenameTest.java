@@ -33,6 +33,36 @@ class SchemaRenameTest {
     }
 
     @Test
+    void testRename_ShouldLeaveExampleAndExtensionValuesUntouched() {
+        String source = """
+                openapi: 3.1.0
+                info:
+                  title: Test
+                  version: 1.0.0
+                components:
+                  schemas:
+                    Old:
+                      type: object
+                      example:
+                        $ref: '#/components/schemas/Old'
+                      x-vendor:
+                        $ref: '#/components/schemas/Old'
+                    UsesOld:
+                      $ref: '#/components/schemas/Old'
+                """;
+        ImportResult imported = importer.importDocument(source.getBytes(StandardCharsets.UTF_8),
+                ImportOptions.autoDetect());
+        SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
+
+        OpenApiSchemaEditor.RenameResult result = editor.rename(imported,
+                new RenameSchemaComponent(component.getId(), "New"));
+
+        String patched = new String(result.source().orElseThrow().content(), StandardCharsets.UTF_8);
+        assertEquals(2, patched.split("#/components/schemas/Old", -1).length - 1);
+        assertEquals(1, patched.split("#/components/schemas/New", -1).length - 1);
+    }
+
+    @Test
     void testRename_WhenNewNameContainsPointerSeparator_ShouldEscapeReferenceAndQuoteYamlKey() throws IOException {
         ImportResult imported = importer.importDocument(TestFixtures.bytes("schema-rename.yaml"),
                 ImportOptions.autoDetect());
