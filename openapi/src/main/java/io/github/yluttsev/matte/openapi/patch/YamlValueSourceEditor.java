@@ -116,18 +116,29 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
 
     private String removeFlowField(String text, LocatedNode located) {
         List<NodeTuple> entries = located.parent().getValue();
-        int keyStart = charOffset(located.tuple().getKeyNode().getStartMark().orElseThrow().getIndex(),
-                located.offsets());
-        int valueEnd = charOffset(located.tuple().getValueNode().getEndMark().orElseThrow().getIndex(),
-                located.offsets());
-        int separatorStart = located.tupleIndex() < entries.size() - 1
-                ? valueEnd
-                : charOffset(entries.get(located.tupleIndex() - 1).getValueNode().getEndMark()
-                        .orElseThrow().getIndex(), located.offsets());
-        int separatorEnd = located.tupleIndex() < entries.size() - 1
-                ? charOffset(entries.get(located.tupleIndex() + 1).getKeyNode().getStartMark()
-                        .orElseThrow().getIndex(), located.offsets())
-                : keyStart;
+        int keyStart = charOffset(
+                located.tuple().getKeyNode().getStartMark().orElseThrow().getIndex(),
+                located.offsets()
+        );
+        int valueEnd = charOffset(
+                located.tuple().getValueNode().getEndMark().orElseThrow().getIndex(),
+                located.offsets()
+        );
+        int separatorStart;
+        int separatorEnd;
+        if (located.tupleIndex() < entries.size() - 1) {
+            separatorStart = valueEnd;
+            separatorEnd = charOffset(
+                    entries.get(located.tupleIndex() + 1).getKeyNode().getStartMark().orElseThrow().getIndex(),
+                    located.offsets()
+            );
+        } else {
+            separatorStart = charOffset(
+                    entries.get(located.tupleIndex() - 1).getValueNode().getEndMark().orElseThrow().getIndex(),
+                    located.offsets()
+            );
+            separatorEnd = keyStart;
+        }
         int comma = commaBetween(text, separatorStart, separatorEnd);
         ensureNoComment(text, separatorStart, separatorEnd);
         ensureNoInlineComment(text, valueEnd);
@@ -140,8 +151,10 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
     private String removeBlockField(String text, LocatedNode located) {
         Range value = range(located.node(), located.offsets());
         ensureNoInlineComment(text, value.end());
-        int keyStart = charOffset(located.tuple().getKeyNode().getStartMark().orElseThrow().getIndex(),
-                located.offsets());
+        int keyStart = charOffset(
+                located.tuple().getKeyNode().getStartMark().orElseThrow().getIndex(),
+                located.offsets()
+        );
         int start = lineStart(text, keyStart);
         int end = lineEnd(text, value.end());
         return text.substring(0, start) + text.substring(end);
@@ -184,7 +197,10 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
 
     private int lineEnd(String text, int position) {
         int newline = text.indexOf('\n', position);
-        return newline < 0 ? text.length() : newline + 1;
+        if (newline < 0) {
+            return text.length();
+        }
+        return newline + 1;
     }
 
     private record Range(int start, int end) {

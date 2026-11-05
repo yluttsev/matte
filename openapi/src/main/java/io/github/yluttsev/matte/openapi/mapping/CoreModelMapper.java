@@ -42,8 +42,11 @@ public final class CoreModelMapper {
         return map(openApi, version, Map.of());
     }
 
-    public ApiDocument map(OpenAPI openApi, OpenApiVersion version,
-            Map<DocumentPath, SchemaValueFields> schemaValues) {
+    public ApiDocument map(
+            OpenAPI openApi,
+            OpenApiVersion version,
+            Map<DocumentPath, SchemaValueFields> schemaValues
+    ) {
         Objects.requireNonNull(openApi, "openApi");
         Objects.requireNonNull(version, "version");
         Objects.requireNonNull(schemaValues, "schemaValues");
@@ -74,12 +77,20 @@ public final class CoreModelMapper {
     ) {
         List<SchemaComponent> schemas = new ArrayList<>();
         for (var entry : sourceSchemas.entrySet()) {
-            schemas.add(new SchemaComponent(
-                    ElementId.random(),
-                    entry.getKey(),
-                    mapSchema(entry.getValue(), Collections.newSetFromMap(new IdentityHashMap<>()), version,
-                            DocumentPath.schemaComponent(entry.getKey()), schemaValues)
-            ));
+            Schema schema = mapSchema(
+                    entry.getValue(),
+                    Collections.newSetFromMap(new IdentityHashMap<>()),
+                    version,
+                    DocumentPath.schemaComponent(entry.getKey()),
+                    schemaValues
+            );
+            schemas.add(
+                    new SchemaComponent(
+                            ElementId.random(),
+                            entry.getKey(),
+                            schema
+                    )
+            );
         }
         return Components.builder().schemas(schemas).build();
     }
@@ -102,30 +113,66 @@ public final class CoreModelMapper {
                 return new BooleanSchema(ElementId.random(), source.getBooleanSchemaValue());
             }
             SchemaValueFields values = schemaValues.get(path);
+            SchemaReference reference = null;
+            if (source.get$ref() != null) {
+                reference = new SchemaReference(source.get$ref());
+            }
+            DocumentValue defaultValue;
+            DocumentValue example;
+            List<DocumentValue> enumValues;
+            if (values != null) {
+                defaultValue = null;
+                example = null;
+                if (values.hasDefault()) {
+                    defaultValue = values.defaultValue();
+                }
+                if (values.hasExample()) {
+                    example = values.example();
+                }
+                enumValues = values.enumValues();
+            } else {
+                defaultValue = mapOptionalValue(source.getDefault(), source.getDefaultSetFlag());
+                example = mapOptionalValue(source.getExample(), source.getExampleSetFlag());
+                enumValues = mapValues(source.getEnum());
+            }
+            Set<String> required = Set.of();
+            if (source.getRequired() != null) {
+                required = new LinkedHashSet<>(source.getRequired());
+            }
             return SchemaObject.builder(ElementId.random())
                     .types(extractTypes(source, version))
                     .title(source.getTitle())
                     .description(source.getDescription())
                     .format(source.getFormat())
-                    .reference(source.get$ref() == null ? null : new SchemaReference(source.get$ref()))
-                    .defaultValue(values == null
-                            ? mapOptionalValue(source.getDefault(), source.getDefaultSetFlag())
-                            : values.hasDefault() ? values.defaultValue() : null)
-                    .example(values == null
-                            ? mapOptionalValue(source.getExample(), source.getExampleSetFlag())
-                            : values.hasExample() ? values.example() : null)
+                    .reference(reference)
+                    .defaultValue(defaultValue)
+                    .example(example)
                     .examples(mapExamples(source, values, version))
-                    .enumValues(values == null ? mapValues(source.getEnum()) : values.enumValues())
+                    .enumValues(enumValues)
                     .constValue(mapConst(source, values, version))
                     .deprecated(source.getDeprecated())
                     .readOnly(source.getReadOnly())
                     .writeOnly(source.getWriteOnly())
                     .properties(mapProperties(source.getProperties(), ancestors, version, path, schemaValues))
-                    .required(source.getRequired() == null ? Set.of() : new LinkedHashSet<>(source.getRequired()))
-                    .items(mapOptionalSchema(source.getItems(), ancestors, version, path.child("items"),
-                            schemaValues))
-                    .additionalProperties(mapAdditionalProperties(source.getAdditionalProperties(), ancestors, version,
-                            path.child("additionalProperties"), schemaValues))
+                    .required(required)
+                    .items(
+                    mapOptionalSchema(
+                            source.getItems(),
+                            ancestors,
+                            version,
+                            path.child("items"),
+                            schemaValues
+                    )
+            )
+                    .additionalProperties(
+                    mapAdditionalProperties(
+                            source.getAdditionalProperties(),
+                            ancestors,
+                            version,
+                            path.child("additionalProperties"),
+                            schemaValues
+                    )
+            )
                     .minProperties(integer(source.getMinProperties()))
                     .maxProperties(integer(source.getMaxProperties()))
                     .minItems(integer(source.getMinItems()))
@@ -185,12 +232,20 @@ public final class CoreModelMapper {
         }
         List<SchemaProperty> properties = new ArrayList<>();
         for (var entry : sourceProperties.entrySet()) {
-            properties.add(new SchemaProperty(
-                    ElementId.random(),
-                    entry.getKey(),
-                    mapSchema(entry.getValue(), ancestors, version,
-                            path.child("properties").child(entry.getKey()), schemaValues)
-            ));
+            Schema schema = mapSchema(
+                    entry.getValue(),
+                    ancestors,
+                    version,
+                    path.child("properties").child(entry.getKey()),
+                    schemaValues
+            );
+            properties.add(
+                    new SchemaProperty(
+                            ElementId.random(),
+                            entry.getKey(),
+                            schema
+                    )
+            );
         }
         return properties;
     }
@@ -207,8 +262,15 @@ public final class CoreModelMapper {
         }
         List<Schema> schemas = new ArrayList<>();
         for (int index = 0; index < sourceSchemas.size(); index++) {
-            schemas.add(mapSchema(sourceSchemas.get(index), ancestors, version,
-                    path.child(Integer.toString(index)), schemaValues));
+            schemas.add(
+                    mapSchema(
+                            sourceSchemas.get(index),
+                            ancestors,
+                            version,
+                            path.child(Integer.toString(index)),
+                            schemaValues
+                    )
+            );
         }
         return schemas;
     }
@@ -220,7 +282,10 @@ public final class CoreModelMapper {
             DocumentPath path,
             Map<DocumentPath, SchemaValueFields> schemaValues
     ) {
-        return source == null ? null : mapSchema(source, ancestors, version, path, schemaValues);
+        if (source == null) {
+            return null;
+        }
+        return mapSchema(source, ancestors, version, path, schemaValues);
     }
 
     private Schema mapAdditionalProperties(
@@ -254,7 +319,10 @@ public final class CoreModelMapper {
     }
 
     private DocumentValue mapOptionalValue(Object source, boolean present) {
-        return present ? mapValue(source) : null;
+        if (present) {
+            return mapValue(source);
+        }
+        return null;
     }
 
     private List<DocumentValue> mapValues(List<?> source) {
@@ -268,22 +336,35 @@ public final class CoreModelMapper {
         return values;
     }
 
-    private List<DocumentValue> mapExamples(io.swagger.v3.oas.models.media.Schema<?> source,
-            SchemaValueFields values, OpenApiVersion version) {
+    private List<DocumentValue> mapExamples(
+            io.swagger.v3.oas.models.media.Schema<?> source,
+            SchemaValueFields values,
+            OpenApiVersion version
+    ) {
         if (version == OpenApiVersion.V3_0) {
             return List.of();
         }
-        return values == null ? mapValues(source.getExamples()) : values.examples();
+        if (values == null) {
+            return mapValues(source.getExamples());
+        }
+        return values.examples();
     }
 
-    private DocumentValue mapConst(io.swagger.v3.oas.models.media.Schema<?> source,
-            SchemaValueFields values, OpenApiVersion version) {
+    private DocumentValue mapConst(
+            io.swagger.v3.oas.models.media.Schema<?> source,
+            SchemaValueFields values,
+            OpenApiVersion version
+    ) {
         if (version == OpenApiVersion.V3_0) {
             return null;
         }
-        return values == null
-                ? mapOptionalValue(source.getConst(), source.getConst() != null)
-                : values.hasConst() ? values.constValue() : null;
+        if (values == null) {
+            return mapOptionalValue(source.getConst(), source.getConst() != null);
+        }
+        if (values.hasConst()) {
+            return values.constValue();
+        }
+        return null;
     }
 
     private DocumentValue mapValue(Object source) {
@@ -304,36 +385,50 @@ public final class CoreModelMapper {
         }
         if (source instanceof Map<?, ?> properties) {
             Map<String, DocumentValue> values = new LinkedHashMap<>();
-            properties.forEach((name, value) -> {
-                if (!(name instanceof String stringName)) {
-                    throw new IllegalArgumentException("Schema value object keys must be strings");
-                }
-                values.put(stringName, mapValue(value));
-            });
+            properties.forEach(
+                    (name, value) -> {
+                        if (!(name instanceof String stringName)) {
+                            throw new IllegalArgumentException("Schema value object keys must be strings");
+                        }
+                        values.put(stringName, mapValue(value));
+                    }
+            );
             return new ObjectValue(values);
         }
         throw new IllegalArgumentException("Unsupported schema value: " + source.getClass());
     }
 
     private BigDecimal decimal(Number value) {
-        return value instanceof BigDecimal decimal ? decimal : new BigDecimal(value.toString());
+        if (value instanceof BigDecimal decimal) {
+            return decimal;
+        }
+        return new BigDecimal(value.toString());
     }
 
     private BigInteger integer(Integer value) {
-        return value == null ? null : BigInteger.valueOf(value.longValue());
+        if (value == null) {
+            return null;
+        }
+        return BigInteger.valueOf(value.longValue());
     }
 
     private BigDecimal exclusiveMinimum(io.swagger.v3.oas.models.media.Schema<?> source, OpenApiVersion version) {
         if (version == OpenApiVersion.V3_1) {
             return source.getExclusiveMinimumValue();
         }
-        return Boolean.TRUE.equals(source.getExclusiveMinimum()) ? source.getMinimum() : null;
+        if (Boolean.TRUE.equals(source.getExclusiveMinimum())) {
+            return source.getMinimum();
+        }
+        return null;
     }
 
     private BigDecimal exclusiveMaximum(io.swagger.v3.oas.models.media.Schema<?> source, OpenApiVersion version) {
         if (version == OpenApiVersion.V3_1) {
             return source.getExclusiveMaximumValue();
         }
-        return Boolean.TRUE.equals(source.getExclusiveMaximum()) ? source.getMaximum() : null;
+        if (Boolean.TRUE.equals(source.getExclusiveMaximum())) {
+            return source.getMaximum();
+        }
+        return null;
     }
 }

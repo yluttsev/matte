@@ -26,11 +26,17 @@ public final class SourceStructureReader {
     }
 
     public static Optional<String> version(String text, SourceFormat format) {
-        return format == SourceFormat.JSON ? jsonVersion(text) : yamlVersion(text);
+        if (format == SourceFormat.JSON) {
+            return jsonVersion(text);
+        }
+        return yamlVersion(text);
     }
 
     public static Set<String> schemaNames(String text, SourceFormat format) {
-        return format == SourceFormat.JSON ? jsonSchemaNames(text) : yamlSchemaNames(text);
+        if (format == SourceFormat.JSON) {
+            return jsonSchemaNames(text);
+        }
+        return yamlSchemaNames(text);
     }
 
     private static Set<String> jsonSchemaNames(String text) {
@@ -62,7 +68,10 @@ public final class SourceStructureReader {
 
     private static Optional<String> jsonString(JsonNode node, String field) {
         JsonNode value = node.get(field);
-        return value != null && value.isString() ? Optional.of(value.asString()) : Optional.empty();
+        if (value != null && value.isString()) {
+            return Optional.of(value.asString());
+        }
+        return Optional.empty();
     }
 
     private static Optional<String> yamlVersion(String text) {

@@ -21,8 +21,13 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
     private static final ObjectMapper JSON = new ObjectMapper();
 
     @Override
-    public String add(String text, DocumentPath parent, DocumentPath requiredAncestor, String name,
-            Object value) {
+    public String add(
+            String text,
+            DocumentPath parent,
+            DocumentPath requiredAncestor,
+            String name,
+            Object value
+    ) {
         Node node = new Compose(SETTINGS).composeString(text).orElseThrow();
         YamlSourceOffsets offsets = new YamlSourceOffsets(text);
         if (!(node instanceof MappingNode)) {
@@ -79,8 +84,12 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
         return null;
     }
 
-    private Map<String, Object> nested(DocumentPath parent, int existingDepth, String name,
-            Object value) {
+    private Map<String, Object> nested(
+            DocumentPath parent,
+            int existingDepth,
+            String name,
+            Object value
+    ) {
         Map<String, Object> content = new LinkedHashMap<>();
         content.put(name, value);
         for (int index = parent.segments().size() - 1; index >= existingDepth; index--) {
@@ -91,17 +100,28 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
         return content;
     }
 
-    private String insertFlow(String text, MappingNode mapping, Map<String, Object> content,
-            YamlSourceOffsets offsets) {
+    private String insertFlow(
+            String text,
+            MappingNode mapping,
+            Map<String, Object> content,
+            YamlSourceOffsets offsets
+    ) {
         int position = offsets.charOffset(mapping.getEndMark().orElseThrow().getIndex()) - 1;
         String serialized = JSON.writeValueAsString(content);
         String member = serialized.substring(1, serialized.length() - 1);
-        String separator = mapping.getValue().isEmpty() ? "" : ", ";
+        String separator = ", ";
+        if (mapping.getValue().isEmpty()) {
+            separator = "";
+        }
         return text.substring(0, position) + separator + member + text.substring(position);
     }
 
-    private String insertBlock(String text, MappingNode mapping, Map<String, Object> content,
-            YamlSourceOffsets offsets) {
+    private String insertBlock(
+            String text,
+            MappingNode mapping,
+            Map<String, Object> content,
+            YamlSourceOffsets offsets
+    ) {
         if (mapping.getValue().isEmpty()) {
             throw new IllegalArgumentException("Empty block mapping cannot be patched");
         }
@@ -112,10 +132,15 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
         }
         int lastEnd = lastContentEnd(last.getValueNode(), offsets);
         int position = nextLine(text, lastEnd);
-        int indentation = indentation(text,
-                offsets.charOffset(last.getKeyNode().getStartMark().orElseThrow().getIndex()));
+        int indentation = indentation(
+                text,
+                offsets.charOffset(last.getKeyNode().getStartMark().orElseThrow().getIndex())
+        );
         String newline = SourceLineEndings.near(text, position);
-        String prefix = position == text.length() && !text.endsWith("\n") ? newline : "";
+        String prefix = "";
+        if (position == text.length() && !text.endsWith("\n")) {
+            prefix = newline;
+        }
         String addition = render(content, indentation, newline);
         return text.substring(0, position) + prefix + addition + text.substring(position);
     }
@@ -129,7 +154,10 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
             return end;
         }
         int newline = text.indexOf('\n', end);
-        return newline < 0 ? text.length() : newline + 1;
+        if (newline < 0) {
+            return text.length();
+        }
+        return newline + 1;
     }
 
     private int lastContentEnd(Node node, YamlSourceOffsets offsets) {

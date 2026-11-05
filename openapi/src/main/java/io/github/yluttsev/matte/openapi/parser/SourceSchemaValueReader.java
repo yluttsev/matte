@@ -42,7 +42,10 @@ public final class SourceSchemaValueReader {
     }
 
     public static Map<DocumentPath, SchemaValueFields> read(String text, SourceFormat format, OpenApiVersion version) {
-        return format == SourceFormat.JSON ? readJson(text, version) : readYaml(text, version);
+        if (format == SourceFormat.JSON) {
+            return readJson(text, version);
+        }
+        return readYaml(text, version);
     }
 
     private static Map<DocumentPath, SchemaValueFields> readJson(String text, OpenApiVersion version) {
@@ -54,18 +57,32 @@ public final class SourceSchemaValueReader {
         return Map.copyOf(values);
     }
 
-    private static void collectJsonSchema(JsonNode schema, DocumentPath path,
-            Map<DocumentPath, SchemaValueFields> values, OpenApiVersion version) {
+    private static void collectJsonSchema(
+            JsonNode schema,
+            DocumentPath path,
+            Map<DocumentPath, SchemaValueFields> values,
+            OpenApiVersion version
+    ) {
         if (!schema.isObject()) {
             return;
         }
-        values.put(path, new SchemaValueFields(
-                schema.has("default"), jsonValue(schema.get("default")),
-                schema.has("example"), jsonValue(schema.get("example")),
-                version == OpenApiVersion.V3_1 ? jsonValues(schema.get("examples")) : List.of(),
+        List<DocumentValue> examples = List.of();
+        DocumentValue constValue = null;
+        if (version == OpenApiVersion.V3_1) {
+            examples = jsonValues(schema.get("examples"));
+            constValue = jsonValue(schema.get("const"));
+        }
+        SchemaValueFields fields = new SchemaValueFields(
+                schema.has("default"),
+                jsonValue(schema.get("default")),
+                schema.has("example"),
+                jsonValue(schema.get("example")),
+                examples,
                 jsonValues(schema.get("enum")),
                 version == OpenApiVersion.V3_1 && schema.has("const"),
-                version == OpenApiVersion.V3_1 ? jsonValue(schema.get("const")) : null));
+                constValue
+        );
+        values.put(path, fields);
 
         JsonNode properties = schema.get("properties");
         if (properties != null && properties.isObject()) {
@@ -80,15 +97,24 @@ public final class SourceSchemaValueReader {
             JsonNode branches = schema.get(field);
             if (branches != null && branches.isArray()) {
                 for (int index = 0; index < branches.size(); index++) {
-                    collectJsonSchema(branches.get(index), path.child(field).child(Integer.toString(index)),
-                            values, version);
+                    collectJsonSchema(
+                            branches.get(index),
+                            path.child(field).child(Integer.toString(index)),
+                            values,
+                            version
+                    );
                 }
             }
         }
     }
 
-    private static void collectJsonChild(JsonNode schema, String field, DocumentPath path,
-            Map<DocumentPath, SchemaValueFields> values, OpenApiVersion version) {
+    private static void collectJsonChild(
+            JsonNode schema,
+            String field,
+            DocumentPath path,
+            Map<DocumentPath, SchemaValueFields> values,
+            OpenApiVersion version
+    ) {
         JsonNode child = schema.get(field);
         if (child != null) {
             collectJsonSchema(child, path.child(field), values, version);
@@ -141,37 +167,61 @@ public final class SourceSchemaValueReader {
         if (schemas instanceof MappingNode mapping) {
             for (NodeTuple tuple : mapping.getValue()) {
                 if (tuple.getKeyNode() instanceof ScalarNode key) {
-                    collectYamlSchema(tuple.getValueNode(), DocumentPath.schemaComponent(key.getValue()),
-                            values, ancestors, version);
+                    collectYamlSchema(
+                            tuple.getValueNode(),
+                            DocumentPath.schemaComponent(key.getValue()),
+                            values,
+                            ancestors,
+                            version
+                    );
                 }
             }
         }
         return Map.copyOf(values);
     }
 
-    private static void collectYamlSchema(Node schema, DocumentPath path,
-            Map<DocumentPath, SchemaValueFields> values, Set<Node> ancestors, OpenApiVersion version) {
+    private static void collectYamlSchema(
+            Node schema,
+            DocumentPath path,
+            Map<DocumentPath, SchemaValueFields> values,
+            Set<Node> ancestors,
+            OpenApiVersion version
+    ) {
         if (!(schema instanceof MappingNode mapping) || !ancestors.add(schema)) {
             return;
         }
         try {
             Node defaultNode = mappingValue(mapping, "default");
             Node exampleNode = mappingValue(mapping, "example");
-            Node constNode = version == OpenApiVersion.V3_1 ? mappingValue(mapping, "const") : null;
-            values.put(path, new SchemaValueFields(
-                    defaultNode != null, yamlValueOrNull(defaultNode, ancestors),
-                    exampleNode != null, yamlValueOrNull(exampleNode, ancestors),
-                    version == OpenApiVersion.V3_1 ? yamlValues(mappingValue(mapping, "examples"), ancestors)
-                            : List.of(),
+            Node constNode = null;
+            List<DocumentValue> examples = List.of();
+            if (version == OpenApiVersion.V3_1) {
+                constNode = mappingValue(mapping, "const");
+                examples = yamlValues(mappingValue(mapping, "examples"), ancestors);
+            }
+            SchemaValueFields fields = new SchemaValueFields(
+                    defaultNode != null,
+                    yamlValueOrNull(defaultNode, ancestors),
+                    exampleNode != null,
+                    yamlValueOrNull(exampleNode, ancestors),
+                    examples,
                     yamlValues(mappingValue(mapping, "enum"), ancestors),
-                    constNode != null, yamlValueOrNull(constNode, ancestors)));
+                    constNode != null,
+                    yamlValueOrNull(constNode, ancestors)
+            );
+            values.put(path, fields);
 
             Node properties = mappingValue(mapping, "properties");
             if (properties instanceof MappingNode propertyMap) {
                 for (NodeTuple tuple : propertyMap.getValue()) {
                     if (tuple.getKeyNode() instanceof ScalarNode key) {
-                        collectYamlSchema(tuple.getValueNode(), path.child("properties").child(key.getValue()),
-                                values, ancestors, version);
+                        collectYamlSchema(
+                                tuple.getValueNode(),
+                                path.child("properties").child(key.getValue()),
+                                values,
+                                ancestors,
+                                version
+                        );
                     }
                 }
             }
@@ -182,8 +232,13 @@ public final class SourceSchemaValueReader {
                 Node branches = mappingValue(mapping, field);
                 if (branches instanceof SequenceNode sequence) {
                     for (int index = 0; index < sequence.getValue().size(); index++) {
-                        collectYamlSchema(sequence.getValue().get(index),
-                                path.child(field).child(Integer.toString(index)), values, ancestors, version);
+                        collectYamlSchema(
+                                sequence.getValue().get(index),
+                                path.child(field).child(Integer.toString(index)),
+                                values,
+                                ancestors,
+                                version
+                        );
                     }
                 }
             }
@@ -192,8 +247,14 @@ public final class SourceSchemaValueReader {
         }
     }
 
-    private static void collectYamlChild(MappingNode schema, String field, DocumentPath path,
-            Map<DocumentPath, SchemaValueFields> values, Set<Node> ancestors, OpenApiVersion version) {
+    private static void collectYamlChild(
+            MappingNode schema,
+            String field,
+            DocumentPath path,
+            Map<DocumentPath, SchemaValueFields> values,
+            Set<Node> ancestors,
+            OpenApiVersion version
+    ) {
         Node child = mappingValue(schema, field);
         if (child != null) {
             collectYamlSchema(child, path.child(field), values, ancestors, version);
@@ -212,7 +273,10 @@ public final class SourceSchemaValueReader {
     }
 
     private static DocumentValue yamlValueOrNull(Node node, Set<Node> ancestors) {
-        return node == null ? null : yamlValue(node, ancestors);
+        if (node == null) {
+            return null;
+        }
+        return yamlValue(node, ancestors);
     }
 
     private static DocumentValue yamlValue(Node node, Set<Node> ancestors) {

@@ -30,8 +30,15 @@ final class YamlScalarScanner implements SourceScalarScanner {
         return scalars;
     }
 
-    private void visit(Node node, DocumentPath path, boolean key, List<SourceScalar> scalars, Set<Node> ancestors,
-            Set<Node> visited, YamlSourceOffsets offsets) {
+    private void visit(
+            Node node,
+            DocumentPath path,
+            boolean key,
+            List<SourceScalar> scalars,
+            Set<Node> ancestors,
+            Set<Node> visited,
+            YamlSourceOffsets offsets
+    ) {
         if (!ancestors.add(node)) {
             throw new IllegalArgumentException("Cyclic YAML alias cannot be patched");
         }
@@ -82,8 +89,15 @@ final class YamlScalarScanner implements SourceScalarScanner {
             YamlSourceOffsets offsets
     ) {
         for (int index = 0; index < sequence.getValue().size(); index++) {
-            visit(sequence.getValue().get(index), path.child(Integer.toString(index)), false,
-                    scalars, ancestors, visited, offsets);
+            visit(
+                    sequence.getValue().get(index),
+                    path.child(Integer.toString(index)),
+                    false,
+                    scalars,
+                    ancestors,
+                    visited,
+                    offsets
+            );
         }
     }
 

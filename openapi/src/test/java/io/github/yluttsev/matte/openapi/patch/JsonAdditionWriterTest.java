@@ -19,8 +19,13 @@ class JsonAdditionWriterTest {
 
         String actual = writer.add(text, schemas, schemas, "New", Map.of("type", "object"));
 
-        assertEquals(text.replace("\"Old\":{\"type\":\"object\"}",
-                "\"Old\":{\"type\":\"object\"},\"New\":{\"type\":\"object\"}"), actual);
+        assertEquals(
+                text.replace(
+                        "\"Old\":{\"type\":\"object\"}",
+                        "\"Old\":{\"type\":\"object\"},\"New\":{\"type\":\"object\"}"
+                ),
+                actual
+        );
     }
 
     @Test
@@ -30,8 +35,13 @@ class JsonAdditionWriterTest {
 
         String actual = writer.add(text, properties, properties, "email", Map.of("type", "string"));
 
-        assertEquals(text.replace("\"id\": {\"type\": \"string\"}",
-                "\"id\": {\"type\": \"string\"},\n          \"email\": {\"type\":\"string\"}"), actual);
+        assertEquals(
+                text.replace(
+                        "\"id\": {\"type\": \"string\"}",
+                        "\"id\": {\"type\": \"string\"},\n          \"email\": {\"type\":\"string\"}"
+                ),
+                actual
+        );
     }
 
     private String fixture(String name) throws IOException {

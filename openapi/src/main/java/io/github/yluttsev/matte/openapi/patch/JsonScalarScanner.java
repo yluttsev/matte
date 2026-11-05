@@ -18,9 +18,10 @@ final class JsonScalarScanner implements SourceScalarScanner {
     @Override
     public List<SourceScalar> scan(String text) {
         List<SourceScalar> scalars = new ArrayList<>();
-        String parseable = !text.isEmpty() && text.charAt(0) == UTF8_BOM
-                ? " " + text.substring(1)
-                : text;
+        String parseable = text;
+        if (!text.isEmpty() && text.charAt(0) == UTF8_BOM) {
+            parseable = " " + text.substring(1);
+        }
         try (JsonParser parser = FACTORY.createParser(ObjectReadContext.empty(), parseable)) {
             parser.nextToken();
             visit(parser, text, DocumentPath.root(), scalars);

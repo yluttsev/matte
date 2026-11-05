@@ -64,6 +64,10 @@ class SourceRangeScannerTest {
                 .findFirst().orElseThrow();
 
         assertEquals(text.indexOf(token), key.start());
-        assertEquals(text.indexOf(token) + token.length() - (token.endsWith(":") ? 1 : 0), key.end());
+        int expectedEnd = text.indexOf(token) + token.length();
+        if (token.endsWith(":")) {
+            expectedEnd--;
+        }
+        assertEquals(expectedEnd, key.end());
     }
 }

@@ -69,8 +69,11 @@ class SchemaAdditionsTest {
         assertTrue(text(result).contains("    Address:\n      type: object\n"));
         assertTrue(text(result).contains("      nullable: true"));
         assertArrayEquals(original, imported.source().content());
-        assertEquals("Address", result.state().document().orElseThrow().getComponents().getSchemas()
-                .getLast().getName());
+        assertEquals(
+                "Address",
+                result.state().document().orElseThrow().getComponents().getSchemas()
+                .getLast().getName()
+        );
         assertComponent(result, "Address");
     }
 
@@ -103,8 +106,11 @@ class SchemaAdditionsTest {
         String original = new String(TestFixtures.bytes("schema-import.yaml"), StandardCharsets.UTF_8);
         String expected = original.replace("x-internal:", "    Address:\n      type: object\nx-internal:");
         assertEquals(expected, text(result));
-        assertEquals(2, importer.importDocument(result.source().orElseThrow().content(), ImportOptions.autoDetect())
-                .document().orElseThrow().getComponents().getSchemas().size());
+        assertEquals(
+                2,
+                importer.importDocument(result.source().orElseThrow().content(), ImportOptions.autoDetect())
+                .document().orElseThrow().getComponents().getSchemas().size()
+        );
     }
 
     @Test
@@ -116,12 +122,18 @@ class SchemaAdditionsTest {
                 .properties(List.of(new SchemaProperty(ElementId.random(), "email", stringSchema())))
                 .build();
 
-        OpenApiEditResult result = editor.addComponent(imported,
-                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Customer", schema)));
+        OpenApiEditResult result = editor.addComponent(
+                imported,
+                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Customer", schema))
+        );
 
         assertTrue(text(result).contains("        email:\n          type: string"));
-        SchemaObject added = customer(importer.importDocument(result.source().orElseThrow().content(),
-                ImportOptions.autoDetect()));
+        SchemaObject added = customer(
+                importer.importDocument(
+                        result.source().orElseThrow().content(),
+                        ImportOptions.autoDetect()
+                )
+        );
         assertEquals(Set.of("email"), added.getRequired());
         assertEquals("email", added.getProperties().getFirst().getName());
     }
@@ -132,8 +144,10 @@ class SchemaAdditionsTest {
         SchemaObject schema = SchemaObject.builder(ElementId.random())
                 .types(Set.of(JsonType.STRING, JsonType.NULL)).build();
 
-        OpenApiEditResult result = editor.addComponent(imported,
-                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "MaybeName", schema)));
+        OpenApiEditResult result = editor.addComponent(
+                imported,
+                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "MaybeName", schema))
+        );
 
         assertTrue(text(result).contains("\"type\":\"string\",\"nullable\":true"));
     }
@@ -144,8 +158,10 @@ class SchemaAdditionsTest {
         SchemaObject schema = SchemaObject.builder(ElementId.random())
                 .types(Set.of(JsonType.STRING, JsonType.NULL)).build();
 
-        OpenApiEditResult result = editor.addComponent(imported,
-                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "MaybeName", schema)));
+        OpenApiEditResult result = editor.addComponent(
+                imported,
+                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "MaybeName", schema))
+        );
 
         assertTrue(text(result).contains("type: ["));
         assertTrue(text(result).contains("\"null\""));
@@ -156,8 +172,13 @@ class SchemaAdditionsTest {
         ImportResult imported = importFixture("additions-no-properties.yaml");
         SchemaObject schema = customer(imported);
 
-        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(schema.getId(),
-                new SchemaProperty(ElementId.random(), "email", stringSchema())));
+        OpenApiEditResult result = editor.addProperty(
+                imported,
+                new AddSchemaProperty(
+                        schema.getId(),
+                        new SchemaProperty(ElementId.random(), "email", stringSchema())
+                )
+        );
 
         String expected = new String(TestFixtures.bytes("additions-no-properties.yaml"), StandardCharsets.UTF_8)
                 + "      properties:\n        email:\n          type: string\n";
@@ -177,14 +198,21 @@ class SchemaAdditionsTest {
                 .pattern("^[a-z]+$")
                 .build();
 
-        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(schema.getId(),
-                new SchemaProperty(ElementId.random(), "status", propertySchema)));
+        OpenApiEditResult result = editor.addProperty(
+                imported,
+                new AddSchemaProperty(
+                        schema.getId(),
+                        new SchemaProperty(ElementId.random(), "status", propertySchema)
+                )
+        );
 
         assertInstanceOf(EditSucceeded.class, result.edit());
         assertTrue(text(result).contains("default: null"));
         assertTrue(text(result).contains("pattern: \"^[a-z]+$\""));
-        SchemaObject added = assertInstanceOf(SchemaObject.class,
-                customer(result.state()).getProperties().getLast().getSchema());
+        SchemaObject added = assertInstanceOf(
+                SchemaObject.class,
+                customer(result.state()).getProperties().getLast().getSchema()
+        );
         assertEquals(new NullValue(), added.getDefaultValue());
         assertEquals(List.of(new StringValue("active"), new NullValue()), added.getEnumValues());
         assertEquals(BigInteger.ONE, added.getMinLength());
@@ -195,8 +223,13 @@ class SchemaAdditionsTest {
         ImportResult imported = importFixture("schema-import.yaml");
         SchemaObject schema = customer(imported);
 
-        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(schema.getId(),
-                new SchemaProperty(ElementId.random(), "email", stringSchema())));
+        OpenApiEditResult result = editor.addProperty(
+                imported,
+                new AddSchemaProperty(
+                        schema.getId(),
+                        new SchemaProperty(ElementId.random(), "email", stringSchema())
+                )
+        );
 
         String original = new String(TestFixtures.bytes("schema-import.yaml"), StandardCharsets.UTF_8);
         String expected = original.replace("x-internal:", "        email:\n          type: string\nx-internal:");
@@ -211,8 +244,13 @@ class SchemaAdditionsTest {
         SchemaObject schema = customer(imported);
         ElementId propertyId = ElementId.random();
 
-        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(schema.getId(),
-                new SchemaProperty(propertyId, "email", stringSchema())));
+        OpenApiEditResult result = editor.addProperty(
+                imported,
+                new AddSchemaProperty(
+                        schema.getId(),
+                        new SchemaProperty(propertyId, "email", stringSchema())
+                )
+        );
 
         assertTrue(text(result).contains("        email:\n          type: string\n"));
         assertArrayEquals(original, imported.source().content());
@@ -225,11 +263,18 @@ class SchemaAdditionsTest {
     @Test
     void testAddProperty_WhenSchemaIsNested_ShouldInsertAtItsOwnPath() throws IOException {
         ImportResult imported = importFixture("additions-nested.yaml");
-        SchemaObject address = assertInstanceOf(SchemaObject.class,
-                customer(imported).getProperties().getFirst().getSchema());
+        SchemaObject address = assertInstanceOf(
+                SchemaObject.class,
+                customer(imported).getProperties().getFirst().getSchema()
+        );
 
-        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(address.getId(),
-                new SchemaProperty(ElementId.random(), "city", stringSchema())));
+        OpenApiEditResult result = editor.addProperty(
+                imported,
+                new AddSchemaProperty(
+                        address.getId(),
+                        new SchemaProperty(ElementId.random(), "city", stringSchema())
+                )
+        );
 
         String expected = new String(TestFixtures.bytes("additions-nested.yaml"), StandardCharsets.UTF_8)
                 + "          properties:\n            city:\n              type: string\n";
@@ -242,8 +287,13 @@ class SchemaAdditionsTest {
         ImportResult imported = importFixture("schema-import.json");
         SchemaObject schema = customer(imported);
 
-        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(schema.getId(),
-                new SchemaProperty(ElementId.random(), "email", stringSchema())));
+        OpenApiEditResult result = editor.addProperty(
+                imported,
+                new AddSchemaProperty(
+                        schema.getId(),
+                        new SchemaProperty(ElementId.random(), "email", stringSchema())
+                )
+        );
 
         assertTrue(text(result).contains("\"email\":{\"type\":\"string\"}"));
         assertProperty(result, "email");
@@ -256,8 +306,13 @@ class SchemaAdditionsTest {
         byte[] original = imported.source().content();
         SchemaObject schema = customer(imported);
 
-        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(schema.getId(),
-                new SchemaProperty(ElementId.random(), "email", stringSchema())));
+        OpenApiEditResult result = editor.addProperty(
+                imported,
+                new AddSchemaProperty(
+                        schema.getId(),
+                        new SchemaProperty(ElementId.random(), "email", stringSchema())
+                )
+        );
 
         assertTrue(text(result).contains("\"email\":{\"type\":\"string\"}"));
         assertTrue(text(result).contains("\"nullable\":true"));
@@ -271,11 +326,18 @@ class SchemaAdditionsTest {
         String bom = Character.toString((char) 0xFEFF);
         String original = bom + new String(TestFixtures.bytes("additions-no-properties.yaml"), StandardCharsets.UTF_8)
                 .replace("\n", "\r\n");
-        ImportResult imported = importer.importDocument(original.getBytes(StandardCharsets.UTF_8),
-                ImportOptions.autoDetect());
+        ImportResult imported = importer.importDocument(
+                original.getBytes(StandardCharsets.UTF_8),
+                ImportOptions.autoDetect()
+        );
 
-        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(customer(imported).getId(),
-                new SchemaProperty(ElementId.random(), "email", stringSchema())));
+        OpenApiEditResult result = editor.addProperty(
+                imported,
+                new AddSchemaProperty(
+                        customer(imported).getId(),
+                        new SchemaProperty(ElementId.random(), "email", stringSchema())
+                )
+        );
 
         assertEquals(original + "      properties:\r\n        email:\r\n          type: string\r\n", text(result));
     }
@@ -284,8 +346,13 @@ class SchemaAdditionsTest {
     void testAddProperty_WhenJsonPropertiesIsEmpty_ShouldInsertIntoFlowObject() throws IOException {
         ImportResult imported = importFixture("additions-empty-properties.json");
 
-        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(customer(imported).getId(),
-                new SchemaProperty(ElementId.random(), "email", stringSchema())));
+        OpenApiEditResult result = editor.addProperty(
+                imported,
+                new AddSchemaProperty(
+                        customer(imported).getId(),
+                        new SchemaProperty(ElementId.random(), "email", stringSchema())
+                )
+        );
 
         assertTrue(text(result).contains("\"properties\":{\"email\":{\"type\":\"string\"}}"));
     }
@@ -294,12 +361,19 @@ class SchemaAdditionsTest {
     void testAddProperty_WhenJsonIsFormatted_ShouldKeepUnchangedWhitespace() throws IOException {
         ImportResult imported = importFixture("additions-formatted.json");
 
-        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(customer(imported).getId(),
-                new SchemaProperty(ElementId.random(), "email", stringSchema())));
+        OpenApiEditResult result = editor.addProperty(
+                imported,
+                new AddSchemaProperty(
+                        customer(imported).getId(),
+                        new SchemaProperty(ElementId.random(), "email", stringSchema())
+                )
+        );
 
         String original = new String(TestFixtures.bytes("additions-formatted.json"), StandardCharsets.UTF_8);
-        String expected = original.replace("\"id\": {\"type\": \"string\"}",
-                "\"id\": {\"type\": \"string\"},\n          \"email\": {\"type\":\"string\"}");
+        String expected = original.replace(
+                "\"id\": {\"type\": \"string\"}",
+                "\"id\": {\"type\": \"string\"},\n          \"email\": {\"type\":\"string\"}"
+        );
         assertEquals(expected, text(result));
     }
 
@@ -318,8 +392,13 @@ class SchemaAdditionsTest {
         ImportResult imported = importFixture("schema-import.yaml");
         SchemaObject schema = customer(imported);
 
-        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(schema.getId(),
-                new SchemaProperty(ElementId.random(), "id", stringSchema())));
+        OpenApiEditResult result = editor.addProperty(
+                imported,
+                new AddSchemaProperty(
+                        schema.getId(),
+                        new SchemaProperty(ElementId.random(), "id", stringSchema())
+                )
+        );
 
         assertInstanceOf(EditRejected.class, result.edit());
         assertTrue(result.source().isEmpty());
@@ -343,8 +422,12 @@ class SchemaAdditionsTest {
         SchemaComponent existing = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
         byte[] original = imported.source().content();
 
-        OpenApiEditResult result = editor.addComponent(imported, new AddSchemaComponent(
-                new SchemaComponent(existing.getId(), "Address", stringSchema())));
+        OpenApiEditResult result = editor.addComponent(
+                imported,
+                new AddSchemaComponent(
+                        new SchemaComponent(existing.getId(), "Address", stringSchema())
+                )
+        );
 
         assertInstanceOf(EditRejected.class, result.edit());
         assertTrue(result.source().isEmpty());
@@ -357,8 +440,13 @@ class SchemaAdditionsTest {
         ImportResult imported = importFixture("additions-no-properties.yaml");
         SchemaObject schema = customer(imported);
 
-        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(schema.getId(),
-                new SchemaProperty(schema.getId(), "email", stringSchema())));
+        OpenApiEditResult result = editor.addProperty(
+                imported,
+                new AddSchemaProperty(
+                        schema.getId(),
+                        new SchemaProperty(schema.getId(), "email", stringSchema())
+                )
+        );
 
         assertInstanceOf(EditRejected.class, result.edit());
         assertTrue(result.source().isEmpty());
@@ -367,12 +455,25 @@ class SchemaAdditionsTest {
     @Test
     void testAddProperty_WhenSourceAndModelDisagree_ShouldRejectPatch() throws IOException {
         ImportResult imported = importFixture("additions-no-properties.yaml");
-        ImportResult mismatched = new ImportResult(new SourceDocument(TestFixtures.bytes("additions-empty.yaml")),
-                imported.format(), imported.status(), imported.diagnostics(), imported.version(), imported.document());
+        ImportResult mismatched = new ImportResult(
+                new SourceDocument(TestFixtures.bytes("additions-empty.yaml")),
+                imported.format(),
+                imported.status(),
+                imported.diagnostics(),
+                imported.version(),
+                imported.document()
+        );
 
-        assertThrows(IllegalArgumentException.class, () -> editor.addProperty(mismatched,
-                new AddSchemaProperty(customer(imported).getId(),
-                        new SchemaProperty(ElementId.random(), "email", stringSchema()))));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> editor.addProperty(
+                        mismatched,
+                        new AddSchemaProperty(
+                                customer(imported).getId(),
+                                new SchemaProperty(ElementId.random(), "email", stringSchema())
+                        )
+                )
+        );
     }
 
     @Test
@@ -381,8 +482,10 @@ class SchemaAdditionsTest {
         SchemaObject schema = SchemaObject.builder(ElementId.random())
                 .types(Set.of(JsonType.STRING)).pattern("[a-z]+ ").build();
 
-        OpenApiEditResult result = editor.addComponent(imported,
-                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Name", schema)));
+        OpenApiEditResult result = editor.addComponent(
+                imported,
+                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Name", schema))
+        );
 
         assertInstanceOf(EditSucceeded.class, result.edit());
         assertTrue(text(result).contains("      pattern: \"[a-z]+ \""));
@@ -392,9 +495,19 @@ class SchemaAdditionsTest {
     void testAddComponent_WhenSchemaIsBoolean_ShouldRejectIncompleteParserRoundTrip() throws IOException {
         ImportResult imported = importFixture("additions-empty.yaml");
 
-        assertThrows(IllegalArgumentException.class, () -> editor.addComponent(imported,
-                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Always",
-                        new BooleanSchema(ElementId.random(), true)))));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> editor.addComponent(
+                        imported,
+                        new AddSchemaComponent(
+                                new SchemaComponent(
+                                        ElementId.random(),
+                                        "Always",
+                                        new BooleanSchema(ElementId.random(), true)
+                                )
+                        )
+                )
+        );
     }
 
     @Test
@@ -402,8 +515,10 @@ class SchemaAdditionsTest {
         ImportResult imported = importFixture("additions-empty.yaml");
         SchemaObject schema = customer(importFixture("schema-addition-rich-3.1.yaml"));
 
-        OpenApiEditResult result = editor.addComponent(imported,
-                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Rich", schema)));
+        OpenApiEditResult result = editor.addComponent(
+                imported,
+                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Rich", schema))
+        );
 
         assertInstanceOf(EditSucceeded.class, result.edit());
         assertTrue(text(result).contains("const: 2.5"));
@@ -411,8 +526,10 @@ class SchemaAdditionsTest {
         assertTrue(text(result).contains("allOf:"));
         assertTrue(text(result).contains("oneOf:"));
         assertTrue(text(result).contains("anyOf:"));
-        SchemaObject added = assertInstanceOf(SchemaObject.class,
-                result.state().document().orElseThrow().getComponents().getSchemas().getLast().getSchema());
+        SchemaObject added = assertInstanceOf(
+                SchemaObject.class,
+                result.state().document().orElseThrow().getComponents().getSchemas().getLast().getSchema()
+        );
         assertEquals(schema.getDefaultValue(), added.getDefaultValue());
         assertEquals(schema.getExamples(), added.getExamples());
         assertEquals(schema.getEnumValues(), added.getEnumValues());
@@ -429,8 +546,13 @@ class SchemaAdditionsTest {
     }
 
     private AddSchemaComponent component(String name) {
-        return new AddSchemaComponent(new SchemaComponent(ElementId.random(), name,
-                SchemaObject.builder(ElementId.random()).types(Set.of(JsonType.OBJECT)).build()));
+        return new AddSchemaComponent(
+                new SchemaComponent(
+                        ElementId.random(),
+                        name,
+                        SchemaObject.builder(ElementId.random()).types(Set.of(JsonType.OBJECT)).build()
+                )
+        );
     }
 
     private SchemaObject stringSchema() {
@@ -438,8 +560,10 @@ class SchemaAdditionsTest {
     }
 
     private SchemaObject customer(ImportResult imported) {
-        return assertInstanceOf(SchemaObject.class,
-                imported.document().orElseThrow().getComponents().getSchemas().getFirst().getSchema());
+        return assertInstanceOf(
+                SchemaObject.class,
+                imported.document().orElseThrow().getComponents().getSchemas().getFirst().getSchema()
+        );
     }
 
     private String text(OpenApiEditResult result) {
@@ -447,20 +571,30 @@ class SchemaAdditionsTest {
     }
 
     private void assertComponent(OpenApiEditResult result, String name) {
-        ImportResult checked = importer.importDocument(result.source().orElseThrow().content(),
-                ImportOptions.autoDetect());
+        ImportResult checked = importer.importDocument(
+                result.source().orElseThrow().content(),
+                ImportOptions.autoDetect()
+        );
         assertEquals(ImportStatus.IMPORTED, checked.status());
-        assertTrue(checked.document().orElseThrow().getComponents().getSchemas().stream()
-                .anyMatch(component -> component.getName().equals(name)));
+        assertTrue(
+                checked.document().orElseThrow().getComponents().getSchemas().stream()
+                .anyMatch(component -> component.getName().equals(name))
+        );
     }
 
     private void assertProperty(OpenApiEditResult result, String name) {
-        ImportResult checked = importer.importDocument(result.source().orElseThrow().content(),
-                ImportOptions.autoDetect());
+        ImportResult checked = importer.importDocument(
+                result.source().orElseThrow().content(),
+                ImportOptions.autoDetect()
+        );
         assertEquals(ImportStatus.IMPORTED, checked.status());
         SchemaObject schema = customer(checked);
         assertEquals(name, schema.getProperties().getLast().getName());
-        assertEquals(List.of(JsonType.STRING), List.copyOf(
-                assertInstanceOf(SchemaObject.class, schema.getProperties().getLast().getSchema()).getTypes()));
+        assertEquals(
+                List.of(JsonType.STRING),
+                List.copyOf(
+                        assertInstanceOf(SchemaObject.class, schema.getProperties().getLast().getSchema()).getTypes()
+                )
+        );
     }
 }

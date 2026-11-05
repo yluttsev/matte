@@ -8,7 +8,13 @@ final class SourceLineEndings {
     static String near(String text, int position) {
         int previous = text.lastIndexOf('\n', position - 1);
         int next = text.indexOf('\n', position);
-        int newline = previous >= 0 ? previous : next;
-        return newline > 0 && text.charAt(newline - 1) == '\r' ? "\r\n" : "\n";
+        int newline = next;
+        if (previous >= 0) {
+            newline = previous;
+        }
+        if (newline > 0 && text.charAt(newline - 1) == '\r') {
+            return "\r\n";
+        }
+        return "\n";
     }
 }

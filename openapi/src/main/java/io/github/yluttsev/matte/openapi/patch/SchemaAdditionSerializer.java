@@ -108,10 +108,20 @@ public final class SchemaAdditionSerializer {
 
     private void addNumericBounds(Map<String, Object> result, SchemaObject schema, OpenApiVersion version) {
         if (version == OpenApiVersion.V3_0) {
-            addExclusiveBound(result, "minimum", "exclusiveMinimum", schema.getMinimum(),
-                    schema.getExclusiveMinimum());
-            addExclusiveBound(result, "maximum", "exclusiveMaximum", schema.getMaximum(),
-                    schema.getExclusiveMaximum());
+            addExclusiveBound(
+                    result,
+                    "minimum",
+                    "exclusiveMinimum",
+                    schema.getMinimum(),
+                    schema.getExclusiveMinimum()
+            );
+            addExclusiveBound(
+                    result,
+                    "maximum",
+                    "exclusiveMaximum",
+                    schema.getMaximum(),
+                    schema.getExclusiveMaximum()
+            );
             return;
         }
         addIfPresent(result, "minimum", schema.getMinimum());
@@ -177,7 +187,11 @@ public final class SchemaAdditionSerializer {
         }
         if (!types.isEmpty()) {
             List<String> names = types.stream().map(this::typeName).toList();
-            result.put("type", names.size() == 1 ? names.getFirst() : names);
+            if (names.size() == 1) {
+                result.put("type", names.getFirst());
+            } else {
+                result.put("type", names);
+            }
         }
     }
 

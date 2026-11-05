@@ -4,6 +4,11 @@ import io.github.yluttsev.matte.core.navigation.DocumentPath;
 
 interface SourceAdditionWriter {
 
-    String add(String text, DocumentPath parent, DocumentPath requiredAncestor, String name,
-            Object value);
+    String add(
+            String text,
+            DocumentPath parent,
+            DocumentPath requiredAncestor,
+            String name,
+            Object value
+    );
 }

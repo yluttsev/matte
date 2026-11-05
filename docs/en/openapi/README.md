@@ -1,0 +1,19 @@
+# OpenAPI import and source editing
+
+[Русский](../../ru/openapi/README.md)
+
+The `openapi` module accepts document bytes and interprets YAML or JSON as OpenAPI. It depends on `core`; loading files, fetching URLs and saving documents belong to the caller. The source is retained independently of the partial semantic model, so unsupported document sections are not discarded on import.
+
+## Import
+
+Call `OpenApiImporter.importDocument(bytes, options)`, using `ImportOptions.autoDetect()` or an explicit `withFormat(...)` hint. The importer retains the original bytes, checks UTF-8 and syntax, detects duplicate keys, and accepts OpenAPI 3.0.x and 3.1.x. Scalar inputs can require an explicit format. `ImportResult` exposes the status, diagnostics, detected format and version when available, and an optional document. `IMPORTED` means a model was produced; parser diagnostics can still be present and do not imply full OpenAPI validation. An unsuccessful import retains the source but has no editable model. Returned source bytes and model snapshots are defensive copies.
+
+The current mapping covers selected `info` fields and schema components, including supported nested schema fields and values. It does not yet map paths, operations or all other OpenAPI objects. Source preservation does not mean these sections are represented in `core` or validated completely. External references are not resolved or fetched. Some inputs, including schemas the underlying parser fails to interpret, are rejected with a mapping diagnostic.
+
+## Editing
+
+`OpenApiSchemaEditor` supports schema component rename and addition, property addition, and schema-object update. Commands use the identifiers from the imported model. The editor applies the semantic command to a copy, patches the source and imports the result again. A successful result carries the new source and an `ImportResult` state whose model preserves the semantic result's identifiers; pass that state to the next operation. An unchanged rename or update preserves the original source bytes. Semantic rejection returns the original state and no source in the edit result. Invalid editor input, unsupported source changes, ambiguous YAML and failed source verification can instead throw `IllegalArgumentException`; no partial result is published. See [core editing](../core/editing.md) for command and change semantics.
+
+Updates patch changed fields rather than serializing the complete document. To avoid discarding unknown fields or comments, an update cannot replace or remove an existing `properties`, `items`, `additionalProperties`, `allOf`, `oneOf`, `anyOf`, `not` or `discriminator` value through its parent. Target an existing nested schema directly for its field updates, or use `addProperty` to add a property. Adding a previously absent nested field is supported when representable in the selected OpenAPI version. Other structural edits require future source-aware operations. Literal values explicitly replaced by a command are replaced as a whole.
+
+YAML aliases, merge keys, comments and flow mappings can make an edit ambiguous; affected operations may reject such input rather than modify it. The supported source edits are narrower than the set of valid OpenAPI documents, and import is not a promise that every subsequent edit can be applied.

@@ -74,13 +74,17 @@ class CoreImportTest {
 
     @Test
     void testImportDocument_WhenOas31HasTypeUnion_ShouldPreserveBothTypes() throws IOException {
-        ImportResult result = importer.importDocument(TestFixtures.bytes("schema-types-3.1.yaml"),
-                ImportOptions.autoDetect());
+        ImportResult result = importer.importDocument(
+                TestFixtures.bytes("schema-types-3.1.yaml"),
+                ImportOptions.autoDetect()
+        );
 
         assertEquals(ImportStatus.IMPORTED, result.status());
         assertEquals(Optional.of("3.1.2"), result.version());
-        SchemaObject schema = assertInstanceOf(SchemaObject.class,
-                result.document().orElseThrow().getComponents().getSchemas().getFirst().getSchema());
+        SchemaObject schema = assertInstanceOf(
+                SchemaObject.class,
+                result.document().orElseThrow().getComponents().getSchemas().getFirst().getSchema()
+        );
         assertEquals(List.of(JsonType.STRING, JsonType.NULL), List.copyOf(schema.getTypes()));
     }
 
@@ -110,8 +114,10 @@ class CoreImportTest {
 
     @Test
     void testImportDocument_WhenSwaggerTwoIsProvided_ShouldNotConvertIt() throws IOException {
-        ImportResult result = importer.importDocument(TestFixtures.bytes("swagger-2.yaml"),
-                ImportOptions.autoDetect());
+        ImportResult result = importer.importDocument(
+                TestFixtures.bytes("swagger-2.yaml"),
+                ImportOptions.autoDetect()
+        );
 
         assertEquals(ImportStatus.UNSUPPORTED_VERSION, result.status());
         assertEquals(Optional.of("2.0"), result.version());
@@ -120,8 +126,10 @@ class CoreImportTest {
 
     @Test
     void testImportDocument_WhenVersionIsMissing_ShouldKeepSourceWithoutModel() throws IOException {
-        ImportResult result = importer.importDocument(TestFixtures.bytes("missing-version.yaml"),
-                ImportOptions.autoDetect());
+        ImportResult result = importer.importDocument(
+                TestFixtures.bytes("missing-version.yaml"),
+                ImportOptions.autoDetect()
+        );
 
         assertEquals(ImportStatus.INVALID_OPENAPI, result.status());
         assertTrue(result.version().isEmpty());
@@ -131,8 +139,10 @@ class CoreImportTest {
 
     @Test
     void testImportDocument_WhenOasHasInvalidStructure_ShouldReturnDiagnostic() throws IOException {
-        ImportResult result = importer.importDocument(TestFixtures.bytes("invalid-oas.yaml"),
-                ImportOptions.autoDetect());
+        ImportResult result = importer.importDocument(
+                TestFixtures.bytes("invalid-oas.yaml"),
+                ImportOptions.autoDetect()
+        );
 
         assertEquals(Optional.of("3.1.0"), result.version());
         assertFalse(result.diagnostics().isEmpty());
@@ -152,14 +162,22 @@ class CoreImportTest {
     private static void assertCustomer(ApiDocument document) {
         assertEquals("Sample API", document.getInfo().getTitle());
         assertEquals("1.0.0", document.getInfo().getVersion());
-        assertEquals(List.of("Customer"), document.getComponents().getSchemas().stream()
-                .map(SchemaComponent::getName).toList());
-        SchemaObject customer = assertInstanceOf(SchemaObject.class,
-                document.getComponents().getSchemas().getFirst().getSchema());
+        assertEquals(
+                List.of("Customer"),
+                document.getComponents().getSchemas().stream()
+                .map(SchemaComponent::getName).toList()
+        );
+        SchemaObject customer = assertInstanceOf(
+                SchemaObject.class,
+                document.getComponents().getSchemas().getFirst().getSchema()
+        );
         assertEquals(List.of(JsonType.OBJECT), List.copyOf(customer.getTypes()));
         assertEquals("A customer", customer.getDescription());
-        assertEquals(List.of("id", "friend", "external"), customer.getProperties().stream()
-                .map(SchemaProperty::getName).toList());
+        assertEquals(
+                List.of("id", "friend", "external"),
+                customer.getProperties().stream()
+                .map(SchemaProperty::getName).toList()
+        );
         assertEquals(List.of("id"), List.copyOf(customer.getRequired()));
         SchemaObject friend = assertInstanceOf(SchemaObject.class, customer.getProperties().get(1).getSchema());
         assertEquals("#/components/schemas/Customer", friend.getReference().value());
@@ -169,8 +187,10 @@ class CoreImportTest {
 
     private static void assertNullableCustomer(ApiDocument document) {
         assertCustomer(document);
-        SchemaObject customer = assertInstanceOf(SchemaObject.class,
-                document.getComponents().getSchemas().getFirst().getSchema());
+        SchemaObject customer = assertInstanceOf(
+                SchemaObject.class,
+                document.getComponents().getSchemas().getFirst().getSchema()
+        );
         SchemaObject id = assertInstanceOf(SchemaObject.class, customer.getProperties().getFirst().getSchema());
         assertEquals(List.of(JsonType.STRING, JsonType.NULL), List.copyOf(id.getTypes()));
     }
@@ -183,8 +203,10 @@ class CoreImportTest {
         assertArrayEquals(source, result.source().content());
         SchemaObject rich = richSchema(result.document().orElseThrow());
         assertFalse(assertInstanceOf(BooleanSchema.class, property(rich, "noItems").getItems()).getValue());
-        assertTrue(assertInstanceOf(BooleanSchema.class, property(rich, "open").getAdditionalProperties())
-                .getValue());
+        assertTrue(
+                assertInstanceOf(BooleanSchema.class, property(rich, "open").getAdditionalProperties())
+                .getValue()
+        );
         assertEquals(new NullValue(), property(rich, "nullExample").getExample());
         SchemaObject list = property(rich, "list");
         assertEquals(BigInteger.ONE, list.getMinItems());
@@ -195,10 +217,17 @@ class CoreImportTest {
         SchemaObject dictionary = property(rich, "dictionary");
         assertEquals(BigInteger.ONE, dictionary.getMinProperties());
         assertEquals(BigInteger.valueOf(4), dictionary.getMaxProperties());
-        assertEquals(List.of(JsonType.STRING), List.copyOf(schemaObject(dictionary.getAdditionalProperties())
-                .getTypes()));
-        assertFalse(assertInstanceOf(BooleanSchema.class, property(rich, "closed").getAdditionalProperties())
-                .getValue());
+        assertEquals(
+                List.of(JsonType.STRING),
+                List.copyOf(
+                        schemaObject(dictionary.getAdditionalProperties())
+                .getTypes()
+                )
+        );
+        assertFalse(
+                assertInstanceOf(BooleanSchema.class, property(rich, "closed").getAdditionalProperties())
+                .getValue()
+        );
 
         SchemaObject text = property(rich, "text");
         assertEquals("password", text.getFormat());
@@ -206,13 +235,33 @@ class CoreImportTest {
         assertEquals(BigInteger.valueOf(12), text.getMaxLength());
         assertEquals("^[a-z]+$", text.getPattern());
         assertEquals(new NullValue(), text.getDefaultValue());
-        assertEquals(new ObjectValue(Map.of(
-                "marker", new StringValue("#/components/schemas/Base"),
-                "const", new NullValue())), text.getExample());
-        assertEquals(List.of(new NullValue(), new ObjectValue(Map.of(
-                "enabled", new BooleanValue(true),
-                "count", new NumberValue(BigDecimal.valueOf(3)),
-                "ratio", new NumberValue(new BigDecimal("1.25"))))), text.getExamples());
+        assertEquals(
+                new ObjectValue(
+                        Map.of(
+                                "marker",
+                                new StringValue("#/components/schemas/Base"),
+                                "const",
+                                new NullValue()
+                        )
+                ),
+                text.getExample()
+        );
+        assertEquals(
+                List.of(
+                        new NullValue(),
+                        new ObjectValue(
+                                Map.of(
+                                        "enabled",
+                                        new BooleanValue(true),
+                                        "count",
+                                        new NumberValue(BigDecimal.valueOf(3)),
+                                        "ratio",
+                                        new NumberValue(new BigDecimal("1.25"))
+                                )
+                        )
+                ),
+                text.getExamples()
+        );
         assertEquals(List.of(new NullValue(), new StringValue("active")), text.getEnumValues());
         assertEquals(new NullValue(), text.getConstValue());
         assertEquals(Boolean.FALSE, text.getDeprecated());
@@ -225,8 +274,12 @@ class CoreImportTest {
         assertEquals(new BigDecimal("1.5"), amount.getExclusiveMinimum());
         assertEquals(new BigDecimal("9"), amount.getExclusiveMaximum());
         assertEquals(new BigDecimal("0.25"), amount.getMultipleOf());
-        assertCompositionAndReferences(result.document().orElseThrow(), rich,
-                "#/components/schemas/Base", JsonType.NULL);
+        assertCompositionAndReferences(
+                result.document().orElseThrow(),
+                rich,
+                "#/components/schemas/Base",
+                JsonType.NULL
+        );
         assertAbsentValues(result.document().orElseThrow());
     }
 
@@ -246,17 +299,26 @@ class CoreImportTest {
         SchemaObject dictionary = property(rich, "dictionary");
         assertEquals(BigInteger.ONE, dictionary.getMinProperties());
         assertEquals(BigInteger.valueOf(4), dictionary.getMaxProperties());
-        assertEquals(List.of(JsonType.STRING), List.copyOf(schemaObject(dictionary.getAdditionalProperties())
-                .getTypes()));
-        assertFalse(assertInstanceOf(BooleanSchema.class, property(rich, "closed").getAdditionalProperties())
-                .getValue());
+        assertEquals(
+                List.of(JsonType.STRING),
+                List.copyOf(
+                        schemaObject(dictionary.getAdditionalProperties())
+                .getTypes()
+                )
+        );
+        assertFalse(
+                assertInstanceOf(BooleanSchema.class, property(rich, "closed").getAdditionalProperties())
+                .getValue()
+        );
 
         SchemaObject text = property(rich, "text");
         assertEquals(new NullValue(), property(rich, "nullExample").getExample());
         assertEquals(List.of(JsonType.STRING, JsonType.NULL), List.copyOf(text.getTypes()));
         assertEquals(new NullValue(), text.getDefaultValue());
-        assertEquals(new ObjectValue(Map.of("marker", new StringValue("#/components/schemas/Base"))),
-                text.getExample());
+        assertEquals(
+                new ObjectValue(Map.of("marker", new StringValue("#/components/schemas/Base"))),
+                text.getExample()
+        );
         assertTrue(text.getExamples().isEmpty());
         assertNull(text.getConstValue());
         assertEquals(List.of(new NullValue(), new StringValue("active")), text.getEnumValues());
@@ -274,8 +336,12 @@ class CoreImportTest {
         assertAbsentValues(result.document().orElseThrow());
     }
 
-    private void assertCompositionAndReferences(ApiDocument document, SchemaObject rich, String mappingValue,
-            JsonType notType) {
+    private void assertCompositionAndReferences(
+            ApiDocument document,
+            SchemaObject rich,
+            String mappingValue,
+            JsonType notType
+    ) {
         SchemaObject choice = property(rich, "choice");
         assertEquals(1, choice.getAllOf().size());
         assertEquals(1, choice.getOneOf().size());
@@ -288,17 +354,31 @@ class CoreImportTest {
         ReferenceIndex references = new ReferenceIndexBuilder().build(DocumentIndex.build(document));
         assertTrue(references.unresolvedUsages().isEmpty(), references.unresolvedUsages().toString());
         DocumentPath richPath = DocumentPath.schemaComponent("Rich");
-        assertTrue(references.findBySource(richPath.child("properties").child("list").child("items")
-                .child("$ref")).isPresent());
-        assertTrue(references.findBySource(richPath.child("properties").child("choice").child("allOf")
-                .child("0").child("$ref")).isPresent());
-        assertTrue(references.findBySource(richPath.child("properties").child("choice").child("discriminator")
-                .child("mapping").child("base")).isPresent());
+        assertTrue(
+                references.findBySource(
+                        richPath.child("properties").child("list").child("items")
+                .child("$ref")
+                ).isPresent()
+        );
+        assertTrue(
+                references.findBySource(
+                        richPath.child("properties").child("choice").child("allOf")
+                .child("0").child("$ref")
+                ).isPresent()
+        );
+        assertTrue(
+                references.findBySource(
+                        richPath.child("properties").child("choice").child("discriminator")
+                .child("mapping").child("base")
+                ).isPresent()
+        );
     }
 
     private void assertAbsentValues(ApiDocument document) {
-        SchemaObject base = assertInstanceOf(SchemaObject.class,
-                document.getComponents().getSchemas().getFirst().getSchema());
+        SchemaObject base = assertInstanceOf(
+                SchemaObject.class,
+                document.getComponents().getSchemas().getFirst().getSchema()
+        );
         assertNull(base.getDefaultValue());
         assertNull(base.getExample());
         assertNull(base.getConstValue());
