@@ -32,7 +32,7 @@ public final class OpenApiAdditionPatcher {
         Change change = changes.changes().getFirst();
         Addition addition = addition(imported, change);
         OpenApiVersion version = OpenApiVersion.supported(imported.version().orElseThrow()).orElseThrow();
-        Map<String, Object> schema = new SchemaAdditionSerializer().serialize(addition.schema(), version);
+        Object schema = new SchemaAdditionSerializer().serialize(addition.schema(), version);
         SourceFormat format = imported.format().orElseThrow();
         String text = decode(imported.source());
         String updated = WRITERS.get(format).add(text, addition.parent(), addition.requiredAncestor(),

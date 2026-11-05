@@ -1,0 +1,55 @@
+openapi: 3.1.0
+info:
+  title: Rich Schema Fixture
+  version: 1.0.0
+components:
+  schemas:
+    Rich:
+      type: object
+      title: Rich schema
+      description: Schema description
+      default:
+        enabled: true
+        missing: null
+      example: null
+      examples:
+        - ["item"]
+      enum: [null, "active"]
+      const: 2.5
+      deprecated: false
+      readOnly: true
+      writeOnly: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+        choice:
+          allOf:
+            - type: string
+          oneOf:
+            - type: string
+          anyOf:
+            - type: string
+          not:
+            type: string
+      required: [name]
+      additionalProperties: false
+      minProperties: 1
+      maxProperties: 10
+      items:
+        type: string
+      minItems: 1
+      maxItems: 3
+      uniqueItems: true
+      minLength: 2
+      maxLength: 12
+      pattern: "^[a-z]+$"
+      minimum: 1.25
+      maximum: 9.75
+      exclusiveMinimum: 1.5
+      exclusiveMaximum: 9
+      multipleOf: 0.25
+      discriminator:
+        propertyName: kind
+        mapping:
+          string: "#/components/schemas/StringValue"
