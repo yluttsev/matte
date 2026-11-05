@@ -19,8 +19,13 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
     private static final ObjectMapper JSON = new ObjectMapper();
 
     @Override
-    public String add(String text, DocumentPath parent, DocumentPath requiredAncestor, String name,
-            Object value) {
+    public String add(
+            String text,
+            DocumentPath parent,
+            DocumentPath requiredAncestor,
+            String name,
+            Object value
+    ) {
         Index index = index(text);
         if (!index.objects().containsKey(requiredAncestor)) {
             throw new IllegalArgumentException("Required source mapping was not found: " + requiredAncestor);
@@ -38,12 +43,20 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
         }
         Map<String, Object> content = nested(parent, existing, name, value);
         var entry = content.entrySet().iterator().next();
-        return insert(text, object, JSON.writeValueAsString(entry.getKey()),
-                JSON.writeValueAsString(entry.getValue()));
+        return insert(
+                text,
+                object,
+                JSON.writeValueAsString(entry.getKey()),
+                JSON.writeValueAsString(entry.getValue())
+        );
     }
 
-    private Map<String, Object> nested(DocumentPath parent, DocumentPath existing, String name,
-            Object value) {
+    private Map<String, Object> nested(
+            DocumentPath parent,
+            DocumentPath existing,
+            String name,
+            Object value
+    ) {
         Map<String, Object> current = new LinkedHashMap<>();
         current.put(name, value);
         for (int index = parent.segments().size() - 1; index >= existing.segments().size(); index--) {
@@ -56,14 +69,27 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
 
     private String insert(String text, JsonObject object, String key, String value) {
         boolean multiline = text.substring(object.open(), object.close()).contains("\n");
-        int position = object.count() == 0 ? object.open() + 1 : object.lastValueEnd();
+        int position = object.lastValueEnd();
+        if (object.count() == 0) {
+            position = object.open() + 1;
+        }
         String newline = SourceLineEndings.near(text, position);
-        String separator = object.count() == 0 ? "" : ",";
-        String member = key + (multiline ? ": " : ":") + value;
+        String separator = ",";
+        if (object.count() == 0) {
+            separator = "";
+        }
+        String colon = ":";
         if (multiline) {
-            int indent = object.count() == 0
-                    ? leadingSpaces(text, object.close()) + 2
-                    : leadingSpaces(text, object.lastKeyStart());
+            colon = ": ";
+        }
+        String member = key + colon + value;
+        if (multiline) {
+            int indent;
+            if (object.count() == 0) {
+                indent = leadingSpaces(text, object.close()) + 2;
+            } else {
+                indent = leadingSpaces(text, object.lastKeyStart());
+            }
             separator += newline + " ".repeat(indent);
         }
         return text.substring(0, position) + separator + member + text.substring(position);
@@ -79,7 +105,10 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
     }
 
     private Index index(String text) {
-        String parseable = !text.isEmpty() && text.charAt(0) == UTF8_BOM ? " " + text.substring(1) : text;
+        String parseable = text;
+        if (!text.isEmpty() && text.charAt(0) == UTF8_BOM) {
+            parseable = " " + text.substring(1);
+        }
         Map<DocumentPath, JsonObject> objects = new HashMap<>();
         Set<DocumentPath> nodes = new HashSet<>();
         try (JsonParser parser = FACTORY.createParser(ObjectReadContext.empty(), parseable)) {
@@ -89,8 +118,12 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
         return new Index(objects, nodes);
     }
 
-    private void visit(JsonParser parser, DocumentPath path, Map<DocumentPath, JsonObject> objects,
-            Set<DocumentPath> nodes) {
+    private void visit(
+            JsonParser parser,
+            DocumentPath path,
+            Map<DocumentPath, JsonObject> objects,
+            Set<DocumentPath> nodes
+    ) {
         nodes.add(path);
         if (parser.currentToken() == JsonToken.START_OBJECT) {
             visitObject(parser, path, objects, nodes);
@@ -104,8 +137,12 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
         }
     }
 
-    private void visitObject(JsonParser parser, DocumentPath path, Map<DocumentPath, JsonObject> objects,
-            Set<DocumentPath> nodes) {
+    private void visitObject(
+            JsonParser parser,
+            DocumentPath path,
+            Map<DocumentPath, JsonObject> objects,
+            Set<DocumentPath> nodes
+    ) {
         int open = Math.toIntExact(parser.currentTokenLocation().getCharOffset());
         int count = 0;
         int lastKeyStart = -1;

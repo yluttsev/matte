@@ -13,6 +13,7 @@ import io.github.yluttsev.matte.core.model.ElementId;
 import io.github.yluttsev.matte.core.model.schema.JsonType;
 import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
 import io.github.yluttsev.matte.core.model.schema.SchemaObject;
+import io.github.yluttsev.matte.core.model.schema.SchemaProperty;
 import io.github.yluttsev.matte.core.model.value.NullValue;
 import io.github.yluttsev.matte.core.model.value.StringValue;
 import io.github.yluttsev.matte.openapi.testing.TestFixtures;
@@ -47,8 +48,12 @@ class SchemaFieldEditingTest {
         assertTrue(text(result).contains("const: null"));
         assertTrue(text(result).contains("enum: [null,\"active\"]"));
         assertTrue(text(result).contains("x-note:\n        $ref: '#/components/schemas/Customer'"));
-        assertTrue(text(result).contains("properties:\n        name:\n          type: string\n"
-                + "          x-note:\n            $ref: '#/components/schemas/Customer'"));
+        assertTrue(
+                text(result).contains(
+                        "properties:\n        name:\n          type: string\n"
+                + "          x-note:\n            $ref: '#/components/schemas/Customer'"
+                )
+        );
         assertFalse(text(result).contains("default:"));
         assertFalse(text(result).contains("minLength:"));
         SchemaObject updated = customer(result.state());
@@ -80,8 +85,12 @@ class SchemaFieldEditingTest {
         assertTrue(text(result).contains("\"enum\": [null,\"active\"]"));
         assertTrue(text(result).contains("\"description\": \"Updated description\""));
         assertTrue(text(result).contains("\"x-note\": {\"$ref\": \"#/components/schemas/Customer\"}"));
-        assertTrue(text(result).contains("\"name\": {\n            \"type\": \"string\",\n"
-                + "            \"x-note\": {\"$ref\": \"#/components/schemas/Customer\"}\n          }"));
+        assertTrue(
+                text(result).contains(
+                        "\"name\": {\n            \"type\": \"string\",\n"
+                + "            \"x-note\": {\"$ref\": \"#/components/schemas/Customer\"}\n          }"
+                )
+        );
         assertFalse(text(result).contains("\"default\""));
         assertFalse(text(result).contains("\"minLength\""));
         SchemaObject updated = customer(result.state());
@@ -112,8 +121,12 @@ class SchemaFieldEditingTest {
     void testUpdateSchema_WhenAddedFieldsAreChangedAndCleared_ShouldKeepSourceAndCoreInSync() throws IOException {
         ImportResult imported = importFixture("additions-empty.yaml");
         SchemaObject schema = customer(importFixture("schema-field-editing-add-schema.yaml"));
-        OpenApiEditResult added = editor.addComponent(imported, new AddSchemaComponent(
-                new SchemaComponent(ElementId.random(), "Customer", schema)));
+        OpenApiEditResult added = editor.addComponent(
+                imported,
+                new AddSchemaComponent(
+                        new SchemaComponent(ElementId.random(), "Customer", schema)
+                )
+        );
         SchemaObject addedSchema = customer(added.state());
         SchemaObject replacement = SchemaObject.builder(addedSchema)
                 .title("After")
@@ -166,8 +179,10 @@ class SchemaFieldEditingTest {
         SchemaObject replacement = SchemaObject.builder(schema).constValue(new NullValue()).build();
         byte[] original = imported.source().content();
 
-        assertThrows(IllegalArgumentException.class,
-                () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement)));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement))
+        );
 
         assertArrayEquals(original, imported.source().content());
     }
@@ -179,10 +194,88 @@ class SchemaFieldEditingTest {
         SchemaObject replacement = SchemaObject.builder(schema).minLength(null).build();
         byte[] original = imported.source().content();
 
-        assertThrows(IllegalArgumentException.class,
-                () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement)));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement))
+        );
 
         assertArrayEquals(original, imported.source().content());
+    }
+
+    @Test
+    void testUpdateSchema_WhenParentReplacesNestedProperty_ShouldRejectWithoutChangingState() throws IOException {
+        for (String fixture : List.of("schema-field-editing-3.1.yaml", "schema-field-editing-3.1.json")) {
+            ImportResult imported = importFixture(fixture);
+            SchemaObject parent = customer(imported);
+            SchemaProperty property = parent.getProperties().getFirst();
+            SchemaObject nested = (SchemaObject) property.getSchema();
+            SchemaObject changed = SchemaObject.builder(nested).description("Changed").build();
+            SchemaProperty replacementProperty = new SchemaProperty(property.getId(), property.getName(), changed);
+            SchemaObject replacement = SchemaObject.builder(parent)
+                    .title("Also changed")
+                    .properties(List.of(replacementProperty))
+                    .build();
+            byte[] original = imported.source().content();
+
+            IllegalArgumentException error = assertThrows(
+                    IllegalArgumentException.class,
+                    () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement))
+            );
+
+            assertTrue(error.getMessage().contains("properties"));
+            assertArrayEquals(original, imported.source().content());
+            assertEquals("Existing title", customer(imported).getTitle());
+            assertNull(((SchemaObject) customer(imported).getProperties().getFirst().getSchema()).getDescription());
+        }
+    }
+
+    @Test
+    void testUpdateSchema_WhenNestedPropertyIsTargeted_ShouldPreserveUnknownFields() throws IOException {
+        for (String fixture : List.of("schema-field-editing-3.1.yaml", "schema-field-editing-3.1.json")) {
+            ImportResult imported = importFixture(fixture);
+            SchemaObject nested = (SchemaObject) customer(imported).getProperties().getFirst().getSchema();
+            SchemaObject replacement = SchemaObject.builder(nested).description("Changed").build();
+
+            OpenApiEditResult result = editor.updateSchema(imported, new UpdateSchemaObject(replacement));
+
+            assertInstanceOf(EditSucceeded.class, result.edit());
+            assertEquals(3, text(result).split("x-note", -1).length);
+            SchemaObject updated = (SchemaObject) customer(result.state()).getProperties().getFirst().getSchema();
+            assertEquals(nested.getId(), updated.getId());
+            assertEquals("Changed", updated.getDescription());
+        }
+    }
+
+    @Test
+    void testUpdateSchema_WhenExistingNestedFieldsAreRemoved_ShouldRejectWithoutChangingSource() throws IOException {
+        for (String fixture : List.of("schema-mapping-3.1.yaml", "schema-mapping-3.1.json")) {
+            ImportResult imported = importFixture(fixture);
+            SchemaObject rich = (SchemaObject) imported.document().orElseThrow().getComponents().getSchemas().stream()
+                    .filter(component -> component.getName().equals("Rich"))
+                    .findFirst().orElseThrow().getSchema();
+            SchemaObject list = nestedProperty(rich, "list");
+            SchemaObject choice = nestedProperty(rich, "choice");
+            List<SchemaObject> replacements = List.of(
+                    SchemaObject.builder(list).items(null).build(),
+                    SchemaObject.builder(choice).oneOf(List.of()).build(),
+                    SchemaObject.builder(choice).discriminator(null).build()
+            );
+            byte[] original = imported.source().content();
+
+            for (SchemaObject replacement : replacements) {
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement))
+                );
+                assertArrayEquals(original, imported.source().content());
+            }
+        }
+    }
+
+    private SchemaObject nestedProperty(SchemaObject schema, String name) {
+        return (SchemaObject) schema.getProperties().stream()
+                .filter(property -> property.getName().equals(name))
+                .findFirst().orElseThrow().getSchema();
     }
 
     private OpenApiEditResult updateSchemaFromFixture(String fixtureName) throws IOException {

@@ -25,8 +25,10 @@ public final class OpenApiImporter {
             "true|false|null|-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?|\"(?:[^\"\\\\]|\\\\.)*\""
     );
     private static final Map<SourceFormat, SyntaxParser> PARSERS = Map.of(
-            SourceFormat.JSON, new JsonSyntaxParser(),
-            SourceFormat.YAML, new YamlSyntaxParser()
+            SourceFormat.JSON,
+            new JsonSyntaxParser(),
+            SourceFormat.YAML,
+            new YamlSyntaxParser()
     );
 
     public ImportResult importDocument(byte[] content, ImportOptions options) {
@@ -57,8 +59,12 @@ public final class OpenApiImporter {
         }
         Optional<SourceFormat> format = options.formatHint().or(() -> detectFormat(trimmed));
         if (format.isEmpty()) {
-            return reject(source, format, ImportStatus.AMBIGUOUS_FORMAT,
-                    "Specify YAML or JSON for a scalar document");
+            return reject(
+                    source,
+                    format,
+                    ImportStatus.AMBIGUOUS_FORMAT,
+                    "Specify YAML or JSON for a scalar document"
+            );
         }
         return PARSERS.get(format.get()).validate(text)
                 .map(diagnostic -> reject(source, format, diagnostic))
@@ -73,8 +79,13 @@ public final class OpenApiImporter {
         String versionNumber = version.get();
         Optional<OpenApiVersion> supportedVersion = OpenApiVersion.supported(versionNumber);
         if (supportedVersion.isEmpty()) {
-            return reject(source, format, versionNumber, ImportStatus.UNSUPPORTED_VERSION,
-                    "Unsupported OpenAPI version: " + versionNumber);
+            return reject(
+                    source,
+                    format,
+                    versionNumber,
+                    ImportStatus.UNSUPPORTED_VERSION,
+                    "Unsupported OpenAPI version: " + versionNumber
+            );
         }
         return interpretModel(source, format, text, versionNumber, supportedVersion.get());
     }
@@ -93,10 +104,19 @@ public final class OpenApiImporter {
         if (parsed.getOpenAPI() == null) {
             return invalidParsedModel(source, format, version, diagnostics);
         }
-        return verifyParsedModel(parsed.getOpenAPI(), text, format, version)
-                .map(diagnostic -> reject(source, format, version, diagnostic))
-                .orElseGet(() -> mapModel(source, format, text, version, supportedVersion, parsed.getOpenAPI(),
-                        diagnostics));
+        Optional<ImportDiagnostic> issue = verifyParsedModel(parsed.getOpenAPI(), text, format, version);
+        if (issue.isPresent()) {
+            return reject(source, format, version, issue.get());
+        }
+        return mapModel(
+                source,
+                format,
+                text,
+                version,
+                supportedVersion,
+                parsed.getOpenAPI(),
+                diagnostics
+        );
     }
 
     private static ImportResult invalidParsedModel(
@@ -105,12 +125,23 @@ public final class OpenApiImporter {
             String version,
             List<ImportDiagnostic> diagnostics
     ) {
-        List<ImportDiagnostic> issues = diagnostics.isEmpty()
-                ? List.of(new ImportDiagnostic(ImportStatus.INVALID_OPENAPI,
-                        "OpenAPI document could not be interpreted"))
-                : diagnostics;
-        return new ImportResult(source, Optional.of(format), ImportStatus.INVALID_OPENAPI, issues,
-                Optional.of(version), Optional.empty());
+        List<ImportDiagnostic> issues = diagnostics;
+        if (issues.isEmpty()) {
+            issues = List.of(
+                    new ImportDiagnostic(
+                            ImportStatus.INVALID_OPENAPI,
+                            "OpenAPI document could not be interpreted"
+                    )
+            );
+        }
+        return new ImportResult(
+                source,
+                Optional.of(format),
+                ImportStatus.INVALID_OPENAPI,
+                issues,
+                Optional.of(version),
+                Optional.empty()
+        );
     }
 
     private static ImportResult mapModel(
@@ -123,10 +154,19 @@ public final class OpenApiImporter {
             List<ImportDiagnostic> diagnostics
     ) {
         try {
-            ApiDocument document = new CoreModelMapper().map(openApi, supportedVersion,
-                    SourceSchemaValueReader.read(text, format, supportedVersion));
-            return new ImportResult(source, Optional.of(format), ImportStatus.IMPORTED, diagnostics,
-                    Optional.of(version), Optional.of(document));
+            ApiDocument document = new CoreModelMapper().map(
+                    openApi,
+                    supportedVersion,
+                    SourceSchemaValueReader.read(text, format, supportedVersion)
+            );
+            return new ImportResult(
+                    source,
+                    Optional.of(format),
+                    ImportStatus.IMPORTED,
+                    diagnostics,
+                    Optional.of(version),
+                    Optional.of(document)
+            );
         } catch (IllegalArgumentException exception) {
             return reject(source, format, version, ImportStatus.MAPPING_ERROR, exception.getMessage());
         }
@@ -146,20 +186,25 @@ public final class OpenApiImporter {
             String expectedVersion
     ) {
         if (!expectedVersion.equals(openApi.getOpenapi())) {
-            return Optional.of(new ImportDiagnostic(
-                    ImportStatus.MAPPING_ERROR,
-                    "Parser changed the OpenAPI version"
-            ));
+            return Optional.of(
+                    new ImportDiagnostic(
+                            ImportStatus.MAPPING_ERROR,
+                            "Parser changed the OpenAPI version"
+                    )
+            );
         }
-        Map<String, ?> parsedSchemas = openApi.getComponents() == null
-                ? null
-                : openApi.getComponents().getSchemas();
+        Map<String, ?> parsedSchemas = null;
+        if (openApi.getComponents() != null) {
+            parsedSchemas = openApi.getComponents().getSchemas();
+        }
         for (String name : SourceStructureReader.schemaNames(text, format)) {
             if (parsedSchemas == null || !parsedSchemas.containsKey(name)) {
-                return Optional.of(new ImportDiagnostic(
-                        ImportStatus.MAPPING_ERROR,
-                        "Schema component was not interpreted: " + name
-                ));
+                return Optional.of(
+                        new ImportDiagnostic(
+                                ImportStatus.MAPPING_ERROR,
+                                "Schema component was not interpreted: " + name
+                        )
+                );
             }
         }
         return Optional.empty();

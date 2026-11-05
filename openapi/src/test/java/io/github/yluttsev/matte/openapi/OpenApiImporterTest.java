@@ -124,8 +124,10 @@ class OpenApiImporterTest {
 
     @Test
     void testImportDocument_WhenJsonHasTrailingComma_ShouldRejectIt() throws IOException {
-        ImportResult result = importer.importDocument(TestFixtures.bytes("trailing-comma.json"),
-                ImportOptions.autoDetect());
+        ImportResult result = importer.importDocument(
+                TestFixtures.bytes("trailing-comma.json"),
+                ImportOptions.autoDetect()
+        );
 
         assertEquals(ImportStatus.SYNTAX_ERROR, result.status());
     }
@@ -156,24 +158,30 @@ class OpenApiImporterTest {
 
     @Test
     void testImportDocument_WhenYamlHasCyclicAlias_ShouldNotLoop() throws IOException {
-        ImportResult result = importer.importDocument(TestFixtures.bytes("cyclic-alias.yaml"),
-                ImportOptions.withFormat(SourceFormat.YAML));
+        ImportResult result = importer.importDocument(
+                TestFixtures.bytes("cyclic-alias.yaml"),
+                ImportOptions.withFormat(SourceFormat.YAML)
+        );
 
         assertEquals(ImportStatus.IMPORTED, result.status());
     }
 
     @Test
     void testImportDocument_WhenYamlHasMultipleDocuments_ShouldRejectThem() throws IOException {
-        ImportResult result = importer.importDocument(TestFixtures.bytes("multiple-documents.yaml"),
-                ImportOptions.withFormat(SourceFormat.YAML));
+        ImportResult result = importer.importDocument(
+                TestFixtures.bytes("multiple-documents.yaml"),
+                ImportOptions.withFormat(SourceFormat.YAML)
+        );
 
         assertEquals(ImportStatus.MULTIPLE_DOCUMENTS, result.status());
     }
 
     @Test
     void testImportDocument_WhenJsonHasMultipleValues_ShouldRejectThem() throws IOException {
-        ImportResult result = importer.importDocument(TestFixtures.bytes("multiple-values.json"),
-                ImportOptions.withFormat(SourceFormat.JSON));
+        ImportResult result = importer.importDocument(
+                TestFixtures.bytes("multiple-values.json"),
+                ImportOptions.withFormat(SourceFormat.JSON)
+        );
 
         assertEquals(ImportStatus.MULTIPLE_DOCUMENTS, result.status());
     }

@@ -18,8 +18,16 @@ class YamlAdditionWriterTest {
         String text = fixture("source-ranges-alias.yaml");
         DocumentPath alias = DocumentPath.schemaComponent("Alias");
 
-        assertThrows(IllegalArgumentException.class, () -> writer.add(text, alias.child("properties"),
-                alias, "name", Map.of("type", "string")));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> writer.add(
+                        text,
+                        alias.child("properties"),
+                        alias,
+                        "name",
+                        Map.of("type", "string")
+                )
+        );
     }
 
     @Test
@@ -27,8 +35,10 @@ class YamlAdditionWriterTest {
         String text = fixture("source-ranges-alias.yaml");
         DocumentPath schemas = DocumentPath.parse("/components/schemas");
 
-        assertThrows(IllegalArgumentException.class,
-                () -> writer.add(text, schemas, schemas, "New", Map.of("type", "object")));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> writer.add(text, schemas, schemas, "New", Map.of("type", "object"))
+        );
     }
 
     @Test
@@ -36,8 +46,16 @@ class YamlAdditionWriterTest {
         String text = fixture("source-ranges-merge.yaml");
         DocumentPath old = DocumentPath.schemaComponent("Old");
 
-        assertThrows(IllegalArgumentException.class, () -> writer.add(text, old.child("properties"),
-                old, "name", Map.of("type", "string")));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> writer.add(
+                        text,
+                        old.child("properties"),
+                        old,
+                        "name",
+                        Map.of("type", "string")
+                )
+        );
     }
 
     @Test
@@ -47,8 +65,10 @@ class YamlAdditionWriterTest {
 
         String actual = writer.add(text, schemas, schemas, "New", Map.of("type", "object"));
 
-        assertEquals(text.replace("# keep tail comment", "    New:\n      type: object\n# keep tail comment"),
-                actual);
+        assertEquals(
+                text.replace("# keep tail comment", "    New:\n      type: object\n# keep tail comment"),
+                actual
+        );
     }
 
     @Test
@@ -58,8 +78,13 @@ class YamlAdditionWriterTest {
 
         String actual = writer.add(text, schemas, schemas, "New", Map.of("type", "object"));
 
-        assertEquals(text.replace("{Old: {type: object}}",
-                "{Old: {type: object}, \"New\":{\"type\":\"object\"}}"), actual);
+        assertEquals(
+                text.replace(
+                        "{Old: {type: object}}",
+                        "{Old: {type: object}, \"New\":{\"type\":\"object\"}}"
+                ),
+                actual
+        );
     }
 
     @Test
@@ -79,8 +104,10 @@ class YamlAdditionWriterTest {
 
         String actual = writer.add(text, schemas, schemas, "New", Map.of("type", "object"));
 
-        assertEquals(text.replace("# keep tail comment", "    New:\n      type: object\n# keep tail comment"),
-                actual);
+        assertEquals(
+                text.replace("# keep tail comment", "    New:\n      type: object\n# keep tail comment"),
+                actual
+        );
     }
 
     private String fixture(String name) throws IOException {

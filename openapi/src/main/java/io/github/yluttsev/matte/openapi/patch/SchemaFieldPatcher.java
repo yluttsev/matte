@@ -14,13 +14,27 @@ import io.github.yluttsev.matte.openapi.SourceFormat;
 
 public final class SchemaFieldPatcher {
 
+    private static final Set<String> NESTED_SCHEMA_FIELDS = Set.of(
+            "properties",
+            "items",
+            "additionalProperties",
+            "allOf",
+            "oneOf",
+            "anyOf",
+            "not",
+            "discriminator"
+    );
     private static final Map<SourceFormat, SourceAdditionWriter> ADDITION_WRITERS = Map.of(
-            SourceFormat.JSON, new JsonAdditionWriter(),
-            SourceFormat.YAML, new YamlAdditionWriter()
+            SourceFormat.JSON,
+            new JsonAdditionWriter(),
+            SourceFormat.YAML,
+            new YamlAdditionWriter()
     );
     private static final Map<SourceFormat, SchemaValueSourceEditor> VALUE_EDITORS = Map.of(
-            SourceFormat.JSON, new JsonValueSourceEditor(),
-            SourceFormat.YAML, new YamlValueSourceEditor()
+            SourceFormat.JSON,
+            new JsonValueSourceEditor(),
+            SourceFormat.YAML,
+            new YamlValueSourceEditor()
     );
 
     public SourceDocument apply(
@@ -37,6 +51,7 @@ public final class SchemaFieldPatcher {
         SchemaAdditionSerializer serializer = new SchemaAdditionSerializer();
         Map<String, Object> before = serializer.serialize(change.before(), version);
         Map<String, Object> after = serializer.serialize(change.after(), version);
+        rejectNestedReplacements(before, after);
         String original = decode(source);
         String text = original;
         for (String field : fields(before, after)) {
@@ -46,6 +61,14 @@ public final class SchemaFieldPatcher {
             return source;
         }
         return new SourceDocument(text.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void rejectNestedReplacements(Map<String, Object> before, Map<String, Object> after) {
+        for (String field : NESTED_SCHEMA_FIELDS) {
+            if (before.containsKey(field) && !Objects.equals(before.get(field), after.get(field))) {
+                throw new IllegalArgumentException("Cannot safely replace nested schema field: " + field);
+            }
+        }
     }
 
     private String updateField(

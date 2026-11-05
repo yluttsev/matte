@@ -50,7 +50,10 @@ final class JsonValueSourceEditor implements SchemaValueSourceEditor {
     }
 
     private Index index(String text) {
-        String parseable = !text.isEmpty() && text.charAt(0) == UTF8_BOM ? " " + text.substring(1) : text;
+        String parseable = text;
+        if (!text.isEmpty() && text.charAt(0) == UTF8_BOM) {
+            parseable = " " + text.substring(1);
+        }
         Map<DocumentPath, Range> values = new HashMap<>();
         Map<DocumentPath, ObjectRange> objects = new HashMap<>();
         try (JsonParser parser = FACTORY.createParser(ObjectReadContext.empty(), parseable)) {
@@ -60,8 +63,12 @@ final class JsonValueSourceEditor implements SchemaValueSourceEditor {
         return new Index(values, objects);
     }
 
-    private Range visit(JsonParser parser, DocumentPath path, Map<DocumentPath, Range> values,
-            Map<DocumentPath, ObjectRange> objects) {
+    private Range visit(
+            JsonParser parser,
+            DocumentPath path,
+            Map<DocumentPath, Range> values,
+            Map<DocumentPath, ObjectRange> objects
+    ) {
         int start = Math.toIntExact(parser.currentTokenLocation().getCharOffset());
         if (parser.currentToken() == JsonToken.START_OBJECT) {
             return visitObject(parser, path, start, values, objects);
@@ -77,8 +84,13 @@ final class JsonValueSourceEditor implements SchemaValueSourceEditor {
         return range;
     }
 
-    private Range visitObject(JsonParser parser, DocumentPath path, int start, Map<DocumentPath, Range> values,
-            Map<DocumentPath, ObjectRange> objects) {
+    private Range visitObject(
+            JsonParser parser,
+            DocumentPath path,
+            int start,
+            Map<DocumentPath, Range> values,
+            Map<DocumentPath, ObjectRange> objects
+    ) {
         List<MemberRange> members = new ArrayList<>();
         Set<String> names = new HashSet<>();
         while (parser.nextToken() == JsonToken.PROPERTY_NAME) {
@@ -97,8 +109,13 @@ final class JsonValueSourceEditor implements SchemaValueSourceEditor {
         return range;
     }
 
-    private Range visitArray(JsonParser parser, DocumentPath path, int start, Map<DocumentPath, Range> values,
-            Map<DocumentPath, ObjectRange> objects) {
+    private Range visitArray(
+            JsonParser parser,
+            DocumentPath path,
+            int start,
+            Map<DocumentPath, Range> values,
+            Map<DocumentPath, ObjectRange> objects
+    ) {
         int itemIndex = 0;
         while (parser.nextToken() != JsonToken.END_ARRAY) {
             visit(parser, path.child(Integer.toString(itemIndex++)), values, objects);

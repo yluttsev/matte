@@ -19,8 +19,10 @@ import io.github.yluttsev.matte.openapi.SourceFormat;
 public final class OpenApiAdditionPatcher {
 
     private static final Map<SourceFormat, SourceAdditionWriter> WRITERS = Map.of(
-            SourceFormat.JSON, new JsonAdditionWriter(),
-            SourceFormat.YAML, new YamlAdditionWriter()
+            SourceFormat.JSON,
+            new JsonAdditionWriter(),
+            SourceFormat.YAML,
+            new YamlAdditionWriter()
     );
 
     public SourceDocument apply(ImportResult imported, ChangeSet changes) {
@@ -35,8 +37,13 @@ public final class OpenApiAdditionPatcher {
         Object schema = new SchemaAdditionSerializer().serialize(addition.schema(), version);
         SourceFormat format = imported.format().orElseThrow();
         String text = decode(imported.source());
-        String updated = WRITERS.get(format).add(text, addition.parent(), addition.requiredAncestor(),
-                addition.name(), schema);
+        String updated = WRITERS.get(format).add(
+                text,
+                addition.parent(),
+                addition.requiredAncestor(),
+                addition.name(),
+                schema
+        );
         return new SourceDocument(updated.getBytes(StandardCharsets.UTF_8));
     }
 

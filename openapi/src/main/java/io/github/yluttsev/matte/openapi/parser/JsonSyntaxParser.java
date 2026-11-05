@@ -44,9 +44,10 @@ public final class JsonSyntaxParser implements SyntaxParser {
                 Math.max(1, location.getColumnNr())
         );
         String message = Objects.requireNonNullElse(exception.getOriginalMessage(), "Invalid JSON syntax");
-        ImportStatus status = message.startsWith(DUPLICATE_FIELD_PREFIX)
-                ? ImportStatus.DUPLICATE_KEY
-                : ImportStatus.SYNTAX_ERROR;
+        ImportStatus status = ImportStatus.SYNTAX_ERROR;
+        if (message.startsWith(DUPLICATE_FIELD_PREFIX)) {
+            status = ImportStatus.DUPLICATE_KEY;
+        }
         return new ImportDiagnostic(status, message, Optional.of(position));
     }
 }

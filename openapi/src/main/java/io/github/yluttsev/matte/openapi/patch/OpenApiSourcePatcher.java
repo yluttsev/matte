@@ -15,8 +15,10 @@ import io.github.yluttsev.matte.openapi.SourceFormat;
 public final class OpenApiSourcePatcher {
 
     private static final Map<SourceFormat, SourceScalarScanner> SCANNERS = Map.of(
-            SourceFormat.JSON, new JsonScalarScanner(),
-            SourceFormat.YAML, new YamlScalarScanner()
+            SourceFormat.JSON,
+            new JsonScalarScanner(),
+            SourceFormat.YAML,
+            new YamlScalarScanner()
     );
 
     public SourceDocument apply(SourceDocument source, SourceFormat format, ChangeSet changes) {
@@ -60,18 +62,23 @@ public final class OpenApiSourcePatcher {
     ) {
         for (Change change : changes.changes()) {
             if (change instanceof ReferenceChanged reference) {
+                String missingReference = "Reference was not found in source: " + reference.sourceBefore();
                 SourceScalar scalar = scalars.stream()
-                        .filter(item -> !item.key() && item.path().equals(reference.sourceBefore())
-                                && item.value().equals(reference.oldValue()))
+                        .filter(item -> matchesReference(item, reference))
                         .findFirst()
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "Reference was not found in source: " + reference.sourceBefore()));
+                        .orElseThrow(() -> new IllegalArgumentException(missingReference));
                 if (!relocator.updatedValue(scalar).equals(reference.newValue())) {
                     throw new IllegalArgumentException(
-                            "Reference update differs from model: " + reference.sourceBefore());
+                            "Reference update differs from model: " + reference.sourceBefore()
+                    );
                 }
             }
         }
+    }
+
+    private boolean matchesReference(SourceScalar scalar, ReferenceChanged reference) {
+        return !scalar.key() && scalar.path().equals(reference.sourceBefore())
+                && scalar.value().equals(reference.oldValue());
     }
 
     private SourceTextEdits edits(

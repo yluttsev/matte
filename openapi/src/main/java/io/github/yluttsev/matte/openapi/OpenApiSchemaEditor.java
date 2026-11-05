@@ -63,8 +63,14 @@ public final class OpenApiSchemaEditor {
         } else if (command instanceof UpdateSchemaObject) {
             verifyUpdate(checked, succeeded.changeSet().changes().getFirst(), version);
         }
-        ImportResult state = new ImportResult(source, checked.format(), checked.status(), checked.diagnostics(),
-                checked.version(), Optional.of(succeeded.document()));
+        ImportResult state = new ImportResult(
+                source,
+                checked.format(),
+                checked.status(),
+                checked.diagnostics(),
+                checked.version(),
+                Optional.of(succeeded.document())
+        );
         return new OpenApiEditResult(edit, Optional.of(source), state);
     }
 
@@ -99,16 +105,27 @@ public final class OpenApiSchemaEditor {
         } else {
             throw new IllegalArgumentException("Unsupported schema addition");
         }
-        new SchemaSourceVerifier().verifyAddedSchema(after.source(), after.format().orElseThrow(), path,
-                expected, version);
+        new SchemaSourceVerifier().verifyAddedSchema(
+                after.source(),
+                after.format().orElseThrow(),
+                path,
+                expected,
+                version
+        );
     }
 
     private void verifyUpdate(ImportResult imported, Change change, OpenApiVersion version) {
         if (!(change instanceof SchemaObjectUpdated update)) {
             throw new IllegalArgumentException("Unsupported schema update");
         }
-        new SchemaSourceVerifier().verifyUpdatedSchema(imported.source(), imported.format().orElseThrow(),
-                update.path(), update.before(), update.after(), version);
+        new SchemaSourceVerifier().verifyUpdatedSchema(
+                imported.source(),
+                imported.format().orElseThrow(),
+                update.path(),
+                update.before(),
+                update.after(),
+                version
+        );
     }
 
     public record RenameResult(EditResult edit, Optional<SourceDocument> source, ImportResult state) {

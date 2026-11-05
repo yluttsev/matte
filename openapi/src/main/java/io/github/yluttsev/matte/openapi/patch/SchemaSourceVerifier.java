@@ -58,8 +58,10 @@ public final class SchemaSourceVerifier {
     private Set<String> changedFields(Map<String, Object> before, Map<String, Object> after) {
         Set<String> fields = new LinkedHashSet<>(before.keySet());
         fields.addAll(after.keySet());
-        fields.removeIf(field -> before.containsKey(field) && after.containsKey(field)
-                && Objects.equals(normalize(before.get(field)), normalize(after.get(field))));
+        fields.removeIf(
+                field -> before.containsKey(field) && after.containsKey(field)
+                && Objects.equals(normalize(before.get(field)), normalize(after.get(field)))
+        );
         return fields;
     }
 
@@ -79,8 +81,10 @@ public final class SchemaSourceVerifier {
             boolean expectedPresent = expected.containsKey(field);
             boolean actualPresent = actual.containsKey(field);
             if (expectedPresent != actualPresent
-                    || expectedPresent && !Objects.equals(normalize(expected.get(field)),
-                            normalize(actual.get(field)))) {
+                    || expectedPresent && !Objects.equals(
+                            normalize(expected.get(field)),
+                            normalize(actual.get(field))
+                    )) {
                 throw new IllegalArgumentException("Schema field was not preserved: " + path.child(field));
             }
         }
@@ -151,7 +155,10 @@ public final class SchemaSourceVerifier {
     private String decode(SourceDocument source) {
         try {
             String text = source.decodeUtf8();
-            return !text.isEmpty() && text.charAt(0) == UTF8_BOM ? text.substring(1) : text;
+            if (!text.isEmpty() && text.charAt(0) == UTF8_BOM) {
+                return text.substring(1);
+            }
+            return text;
         } catch (CharacterCodingException exception) {
             throw new IllegalArgumentException("Source is not valid UTF-8", exception);
         }

@@ -14,9 +14,24 @@ final class SchemaReferenceRelocator {
     private static final String MAPPING_FIELD = "mapping";
     private static final Set<String> LITERAL_SCHEMA_FIELDS = Set.of("default", "enum", "const", "example");
     private static final Set<String> NAMED_MAP_FIELDS = Set.of(
-            "schemas", "properties", "patternProperties", "dependentSchemas", "definitions", "$defs",
-            "examples", "headers", "parameters", "responses", "requestBodies", "callbacks", "links",
-            "securitySchemes", "content", "encoding", "mapping");
+            "schemas",
+            "properties",
+            "patternProperties",
+            "dependentSchemas",
+            "definitions",
+            "$defs",
+            "examples",
+            "headers",
+            "parameters",
+            "responses",
+            "requestBodies",
+            "callbacks",
+            "links",
+            "securitySchemes",
+            "content",
+            "encoding",
+            "mapping"
+    );
 
     private final String oldName;
     private final String newName;
@@ -47,7 +62,10 @@ final class SchemaReferenceRelocator {
         }
         if (segments.size() >= 3 && MAPPING_FIELD.equals(segments.get(segments.size() - 2))
                 && DISCRIMINATOR_FIELD.equals(segments.get(segments.size() - 3))) {
-            return scalar.value().equals(oldName) ? newName : relocateReference(scalar.value());
+            if (scalar.value().equals(oldName)) {
+                return newName;
+            }
+            return relocateReference(scalar.value());
         }
         return scalar.value();
     }
