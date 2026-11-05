@@ -24,13 +24,23 @@ public final class ReferenceIndexBuilder {
         List<ReferenceUsage<?>> usages = new ArrayList<>();
         for (DocumentEntry entry : document.entries()) {
             if (entry.value() instanceof SchemaObject schema && schema.getReference() != null) {
-                usages.add(usage(document, entry.path().child(REF_SEGMENT), schema.getReference().value(),
-                        ReferenceKind.SCHEMA, Schema.class));
+                usages.add(usage(
+                        document,
+                        entry.path().child(REF_SEGMENT),
+                        schema.getReference().value(),
+                        ReferenceKind.SCHEMA,
+                        Schema.class
+                ));
             } else if (entry.value() instanceof ObjectReference<?> reference) {
                 Class<? extends CopyableModel<?>> type = ReferenceTypes.at(entry.path())
                         .orElseThrow(() -> new IllegalArgumentException("Unknown reference type at " + entry.path()));
-                usages.add(usage(document, entry.path().child(REF_SEGMENT), reference.value(),
-                        ReferenceKind.OBJECT, type));
+                usages.add(usage(
+                        document,
+                        entry.path().child(REF_SEGMENT),
+                        reference.value(),
+                        ReferenceKind.OBJECT,
+                        type
+                ));
             } else if (entry.value() instanceof Discriminator discriminator) {
                 addDiscriminatorUsages(document, entry.path(), discriminator, usages);
             }
@@ -44,18 +54,32 @@ public final class ReferenceIndexBuilder {
             Discriminator discriminator,
             List<ReferenceUsage<?>> usages
     ) {
-        discriminator.getMapping().forEach((name, reference) -> {
-            String original = reference.value();
-            String target = discriminatorTarget(document, original);
-            usages.add(new ReferenceUsage<>(path.child(MAPPING_SEGMENT).child(name), original,
-                    ReferenceKind.DISCRIMINATOR_MAPPING, Schema.class,
-                    resolver.resolve(document, target, Schema.class)));
-        });
+        discriminator.getMapping().forEach((name, reference) ->
+                usages.add(discriminatorUsage(document, path, name, reference.value())));
+    }
+
+    private ReferenceUsage<Schema> discriminatorUsage(
+            DocumentIndex document,
+            DocumentPath path,
+            String name,
+            String original
+    ) {
+        String target = discriminatorTarget(document, original);
+        return new ReferenceUsage<>(
+                path.child(MAPPING_SEGMENT).child(name),
+                original,
+                ReferenceKind.DISCRIMINATOR_MAPPING,
+                Schema.class,
+                resolver.resolve(document, target, Schema.class)
+        );
     }
 
     private String discriminatorTarget(DocumentIndex document, String mappingValue) {
         DocumentPath namedSchema = DocumentPath.schemaComponent(mappingValue);
-        return document.findByPath(namedSchema).isPresent() ? namedSchema.toFragment() : mappingValue;
+        if (document.findByPath(namedSchema).isPresent()) {
+            return namedSchema.toFragment();
+        }
+        return mappingValue;
     }
 
     private <T extends CopyableModel<?>> ReferenceUsage<T> usage(

@@ -18,8 +18,10 @@ public final class ReferenceUpdates {
             return value;
         }
         String updated = Objects.requireNonNull(transform.apply(reference.value()), "updated reference");
-        return updated.equals(reference.value()) ? value : (T) new ObjectReference<>(
-                reference.id(), updated, reference.summary(), reference.description());
+        if (updated.equals(reference.value())) {
+            return value;
+        }
+        return (T) new ObjectReference<>(reference.id(), updated, reference.summary(), reference.description());
     }
 
     public static <T extends CopyableModel<T>> void list(List<T> values, UnaryOperator<String> transform) {

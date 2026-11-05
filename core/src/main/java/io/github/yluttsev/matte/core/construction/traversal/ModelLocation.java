@@ -13,9 +13,10 @@ import io.github.yluttsev.matte.core.navigation.DocumentPath;
 record ModelLocation(String diagnosticPath, DocumentPath documentPath) {
 
     ModelLocation field(Object owner, String field) {
-        DocumentPath nextPath = omitsFieldInDocumentPath(owner, field)
-                ? documentPath
-                : documentPath.child(field);
+        DocumentPath nextPath = documentPath;
+        if (!omitsFieldInDocumentPath(owner, field)) {
+            nextPath = documentPath.child(field);
+        }
         return new ModelLocation(diagnosticPath + "." + field, nextPath);
     }
 

@@ -40,7 +40,6 @@ Use `SchemaObject.builder(existingSchema)` to prepare an update without losing u
 
 When a schema component is renamed, the `ChangeSet` records:
 - `SchemaComponentRenamed` — the component's `ElementId`, old name, and new name;
-- `SchemaObjectUpdated` — the schema's `ElementId`, `DocumentPath`, and immutable before/after schema snapshots;
 - `ReferenceChanged` — one entry per updated reference (recording `sourceBefore` and `sourceAfter` paths, old and new string values, and `ReferenceKind`). If the new name equals the current name, an isolated copy of the document and an empty `ChangeSet` are returned.
 
 ## Reference Rewriting (`ReferenceOwner`)
@@ -49,6 +48,6 @@ All model nodes that can hold direct references (`SchemaObject`, `Discriminator`
 
 When renaming a schema component:
 - local fragment pointers targeting `#/components/schemas/<OldName>` or nested paths `#/components/schemas/<OldName>/...` are rewritten to `<NewName>` with proper JSON Pointer and URI escaping;
-- short schema names in `Discriminator.mapping` matching the old name are replaced with the new name;
+- short schema names in `Discriminator.mapping` matching the old name are replaced with the new name; an existing schema name takes precedence over interpreting the same text as a URI;
 - rewritten `ObjectReference` instances preserve their `ElementId`, `summary`, and `description`;
 - external references, unsupported anchors, malformed pointers, indirect references (reaching the schema through an intermediate alias), and literal payloads inside `DocumentValue` (`example`, `default`) remain untouched.

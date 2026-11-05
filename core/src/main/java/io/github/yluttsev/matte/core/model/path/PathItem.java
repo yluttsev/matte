@@ -37,7 +37,7 @@ public final class PathItem implements IdentifiedElement, CopyableModel<PathItem
         this(source.id, source.path);
         summary = source.summary;
         description = source.description;
-        operations.putAll(ModelCopies.map(source.operations));
+        operations.putAll(ModelCopies.copyModelMap(source.operations));
         parameters.addAll(ModelCopies.list(source.parameters));
         servers.addAll(ModelCopies.list(source.servers));
     }
@@ -104,7 +104,7 @@ public final class PathItem implements IdentifiedElement, CopyableModel<PathItem
         }
 
         public Builder operations(Map<HttpMethod, Operation> operations) {
-            Map<HttpMethod, Operation> values = ModelCopies.valueMap(operations);
+            Map<HttpMethod, Operation> values = ModelCopies.copyMapEntries(operations);
             draft.operations.clear();
             draft.operations.putAll(values);
             return this;

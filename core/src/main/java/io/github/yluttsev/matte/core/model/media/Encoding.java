@@ -32,7 +32,7 @@ public final class Encoding implements IdentifiedElement, CopyableModel<Encoding
     private Encoding(Encoding source) {
         this(source.id);
         contentType = source.contentType;
-        headers.putAll(ModelCopies.map(source.headers));
+        headers.putAll(ModelCopies.copyModelMap(source.headers));
         style = source.style;
         explode = source.explode;
         allowReserved = source.allowReserved;
@@ -91,7 +91,7 @@ public final class Encoding implements IdentifiedElement, CopyableModel<Encoding
         }
 
         public Builder headers(Map<String, ReferenceOr<Header>> headers) {
-            Map<String, ReferenceOr<Header>> values = ModelCopies.valueMap(headers);
+            Map<String, ReferenceOr<Header>> values = ModelCopies.copyMapEntries(headers);
             draft.headers.clear();
             draft.headers.putAll(values);
             return this;

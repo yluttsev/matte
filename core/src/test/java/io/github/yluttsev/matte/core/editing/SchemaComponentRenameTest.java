@@ -17,6 +17,7 @@ import io.github.yluttsev.matte.core.model.path.Operation;
 import io.github.yluttsev.matte.core.model.path.PathItem;
 import io.github.yluttsev.matte.core.model.reference.ObjectReference;
 import io.github.yluttsev.matte.core.model.reference.ReferenceOr;
+import io.github.yluttsev.matte.core.model.schema.Discriminator;
 import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
 import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaReference;
@@ -37,6 +38,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SchemaComponentRenameTest {
 
     private final DocumentEditor editor = new DocumentEditor();
+
+    @Test
+    void testApply_WhenMappingMatchesAnotherSchemaName_ShouldNotRewriteMapping() {
+        String name = "#/components/schemas/A";
+        SchemaComponent target = new SchemaComponent(
+                ElementId.random(),
+                "A",
+                SchemaObject.builder(ElementId.random()).build()
+        );
+        SchemaObject other = SchemaObject.builder(ElementId.random()).discriminator(Discriminator.builder()
+                .mapping(Map.of("key", new SchemaReference(name))).build()).build();
+        SchemaComponent namedLikePointer = new SchemaComponent(ElementId.random(), name, other);
+        ApiDocument document = ApiDocument.builder(ElementId.random()).components(
+                Components.builder().schemas(List.of(target, namedLikePointer)).build()).build();
+
+        EditSucceeded result = assertInstanceOf(
+                EditSucceeded.class,
+                editor.apply(document, new RenameSchemaComponent(target.getId(), "B"))
+        );
+
+        SchemaObject updated = (SchemaObject) result.document().getComponents().getSchemas().get(1).getSchema();
+        assertEquals(name, updated.getDiscriminator().getMapping().get("key").value());
+        assertEquals(1, result.changeSet().changes().size());
+        assertEquals(name, other.getDiscriminator().getMapping().get("key").value());
+    }
 
     @Test
     void testApply_WhenRenamingComponent_ShouldPreserveIdsOrderAndOriginalDocument() {

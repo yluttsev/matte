@@ -40,7 +40,7 @@ public final class ReferenceResolver {
             } catch (URISyntaxException exception) {
                 return new UnresolvedReference<>(ReferenceFailure.INVALID_REFERENCE, traversed);
             }
-            if (isExternalReference(uri)) {
+            if (ReferenceUris.isExternal(uri)) {
                 return new UnresolvedReference<>(ReferenceFailure.EXTERNAL_REFERENCE, traversed);
             }
             if (isUnsupportedAnchor(uri)) {
@@ -71,17 +71,6 @@ public final class ReferenceResolver {
         }
     }
 
-    private static boolean isExternalReference(URI uri) {
-        return uri.getScheme() != null
-                || uri.getRawAuthority() != null
-                || uri.getRawQuery() != null
-                || hasNonEmptyPath(uri);
-    }
-
-    private static boolean hasNonEmptyPath(URI uri) {
-        return uri.getRawPath() != null && !uri.getRawPath().isEmpty();
-    }
-
     private static boolean isUnsupportedAnchor(URI uri) {
         String fragment = uri.getFragment();
         return fragment != null && !fragment.isEmpty() && !fragment.startsWith("/");
@@ -89,7 +78,10 @@ public final class ReferenceResolver {
 
     private static DocumentPath resolveTargetPath(URI uri) {
         String rawFragment = uri.getRawFragment();
-        return rawFragment == null ? DocumentPath.root() : DocumentPath.fromFragment("#" + rawFragment);
+        if (rawFragment == null) {
+            return DocumentPath.root();
+        }
+        return DocumentPath.fromFragment("#" + rawFragment);
     }
 
     private static boolean isCompatibleAlias(DocumentEntry entry, Class<?> expectedType) {

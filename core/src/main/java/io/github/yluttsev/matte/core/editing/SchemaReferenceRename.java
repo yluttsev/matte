@@ -8,9 +8,11 @@ import java.util.function.UnaryOperator;
 import io.github.yluttsev.matte.core.editing.change.Change;
 import io.github.yluttsev.matte.core.editing.change.ReferenceChanged;
 import io.github.yluttsev.matte.core.model.schema.Discriminator;
+import io.github.yluttsev.matte.core.navigation.DocumentIndex;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.core.reference.ReferenceIndex;
 import io.github.yluttsev.matte.core.reference.ReferenceKind;
+import io.github.yluttsev.matte.core.reference.ReferenceUris;
 import io.github.yluttsev.matte.core.reference.ReferenceUsage;
 
 final class SchemaReferenceRename {
@@ -19,33 +21,49 @@ final class SchemaReferenceRename {
     private final String newName;
     private final DocumentPath oldPath;
     private final DocumentPath newPath;
+    private final DocumentIndex document;
 
-    SchemaReferenceRename(String oldName, String newName) {
+    SchemaReferenceRename(String oldName, String newName, DocumentIndex document) {
         this.oldName = oldName;
         this.newName = newName;
         oldPath = DocumentPath.schemaComponent(oldName);
         newPath = DocumentPath.schemaComponent(newName);
+        this.document = document;
     }
 
     String reference(String value) {
         try {
             URI uri = new URI(value);
-            if (!isLocalFragmentReference(uri)) {
+            if (ReferenceUris.isExternal(uri) || uri.getRawFragment() == null) {
                 return value;
             }
             DocumentPath target = DocumentPath.fromFragment("#" + uri.getRawFragment());
-            return target.startsWith(oldPath) ? relocated(target).toFragment() : value;
+            if (target.startsWith(oldPath)) {
+                return relocated(target).toFragment();
+            }
+            return value;
         } catch (URISyntaxException | IllegalArgumentException exception) {
             return value;
         }
     }
 
     String mapping(String value) {
-        return value.equals(oldName) ? newName : reference(value);
+        if (value.equals(oldName)) {
+            return newName;
+        }
+        if (document.findByPath(DocumentPath.schemaComponent(value)).isPresent()) {
+            return value;
+        }
+        return reference(value);
     }
 
     void rewriteOwner(MutationAccess access, ReferenceOwner owner) {
-        UnaryOperator<String> transform = owner instanceof Discriminator ? this::mapping : this::reference;
+        UnaryOperator<String> transform;
+        if (owner instanceof Discriminator) {
+            transform = this::mapping;
+        } else {
+            transform = this::reference;
+        }
         owner.rewriteReferences(access, transform);
     }
 
@@ -54,25 +72,23 @@ final class SchemaReferenceRename {
         for (ReferenceUsage<?> usage : index.usages()) {
             String updated = rewriteUsage(usage);
             if (!updated.equals(usage.reference())) {
-                changes.add(new ReferenceChanged(usage.sourcePath(), relocated(usage.sourcePath()),
-                        usage.reference(), updated, usage.kind()));
+                changes.add(new ReferenceChanged(
+                        usage.sourcePath(),
+                        relocated(usage.sourcePath()),
+                        usage.reference(),
+                        updated,
+                        usage.kind()
+                ));
             }
         }
         return changes;
     }
 
     private String rewriteUsage(ReferenceUsage<?> usage) {
-        return usage.kind() == ReferenceKind.DISCRIMINATOR_MAPPING
-                ? mapping(usage.reference())
-                : reference(usage.reference());
-    }
-
-    private static boolean isLocalFragmentReference(URI uri) {
-        return uri.getScheme() == null
-                && uri.getRawAuthority() == null
-                && uri.getRawQuery() == null
-                && (uri.getRawPath() == null || uri.getRawPath().isEmpty())
-                && uri.getRawFragment() != null;
+        if (usage.kind() == ReferenceKind.DISCRIMINATOR_MAPPING) {
+            return mapping(usage.reference());
+        }
+        return reference(usage.reference());
     }
 
     private DocumentPath relocated(DocumentPath path) {

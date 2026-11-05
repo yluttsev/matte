@@ -17,6 +17,7 @@ public record DocumentPath(List<String> segments) {
 
     private static final String POINTER_SEPARATOR = "/";
     private static final String FRAGMENT_PREFIX = "#";
+    private static final int MAX_ASCII_CODE_POINT = 127;
     private static final String ESCAPED_TILDE = "~0";
     private static final String ESCAPED_SLASH = "~1";
     private static final DocumentPath SCHEMAS_PATH = new DocumentPath(List.of("components", "schemas"));
@@ -63,8 +64,10 @@ public record DocumentPath(List<String> segments) {
     }
 
     public Optional<DocumentPath> parent() {
-        return segments.isEmpty() ? Optional.empty()
-                : Optional.of(new DocumentPath(segments.subList(0, segments.size() - 1)));
+        if (segments.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(new DocumentPath(segments.subList(0, segments.size() - 1)));
     }
 
     public boolean startsWith(DocumentPath prefix) {
@@ -83,9 +86,12 @@ public record DocumentPath(List<String> segments) {
 
     @Override
     public String toString() {
+        if (segments.isEmpty()) {
+            return "";
+        }
         return segments.stream()
                 .map(DocumentPath::escape)
-                .collect(Collectors.joining(POINTER_SEPARATOR, segments.isEmpty() ? "" : POINTER_SEPARATOR, ""));
+                .collect(Collectors.joining(POINTER_SEPARATOR, POINTER_SEPARATOR, ""));
     }
 
     private static String escape(String segment) {
@@ -147,7 +153,10 @@ public record DocumentPath(List<String> segments) {
     }
 
     private static int parseAsciiHexDigit(char character) {
-        int digit = character <= 127 ? Character.digit(character, 16) : -1;
+        int digit = -1;
+        if (character <= MAX_ASCII_CODE_POINT) {
+            digit = Character.digit(character, 16);
+        }
         if (digit < 0) {
             throw new IllegalArgumentException("Invalid percent escape");
         }

@@ -20,7 +20,7 @@ public final class OAuthFlow implements CopyableModel<OAuthFlow> {
         authorizationUrl = source.authorizationUrl;
         tokenUrl = source.tokenUrl;
         refreshUrl = source.refreshUrl;
-        scopes.putAll(ModelCopies.valueMap(source.scopes));
+        scopes.putAll(ModelCopies.copyMapEntries(source.scopes));
     }
 
     public static Builder builder() {
@@ -71,7 +71,7 @@ public final class OAuthFlow implements CopyableModel<OAuthFlow> {
         }
 
         public Builder scopes(Map<String, String> scopes) {
-            Map<String, String> values = ModelCopies.valueMap(scopes);
+            Map<String, String> values = ModelCopies.copyMapEntries(scopes);
             draft.scopes.clear();
             draft.scopes.putAll(values);
             return this;

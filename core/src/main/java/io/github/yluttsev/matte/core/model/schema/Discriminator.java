@@ -19,7 +19,7 @@ public final class Discriminator implements CopyableModel<Discriminator>, Refere
 
     private Discriminator(Discriminator source) {
         propertyName = source.propertyName;
-        mapping.putAll(ModelCopies.valueMap(source.mapping));
+        mapping.putAll(ModelCopies.copyMapEntries(source.mapping));
     }
 
     public static Builder builder() {
@@ -58,7 +58,7 @@ public final class Discriminator implements CopyableModel<Discriminator>, Refere
         }
 
         public Builder mapping(Map<String, SchemaReference> mapping) {
-            Map<String, SchemaReference> values = ModelCopies.valueMap(mapping);
+            Map<String, SchemaReference> values = ModelCopies.copyMapEntries(mapping);
             draft.mapping.clear();
             draft.mapping.putAll(values);
             return this;

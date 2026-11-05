@@ -16,20 +16,29 @@ public final class ModelWalker {
             new SchemaChildren(),
             new PathChildren(),
             new PayloadChildren(),
-            new SecurityChildren());
+            new SecurityChildren()
+    );
 
     public void walk(CopyableModel<?> root, BiConsumer<CopyableModel<?>, String> visitor) {
         Objects.requireNonNull(root, "root");
         Objects.requireNonNull(visitor, "visitor");
-        visit(root, new ModelLocation("$", DocumentPath.root()),
-                (model, location) -> visitor.accept(model, location.diagnosticPath()), new IdentityHashMap<>());
+        visit(
+                root,
+                new ModelLocation("$", DocumentPath.root()),
+                (model, location) -> visitor.accept(model, location.diagnosticPath()),
+                new IdentityHashMap<>()
+        );
     }
 
     public void walkDocument(ApiDocument document, BiConsumer<CopyableModel<?>, DocumentPath> visitor) {
         Objects.requireNonNull(document, "document");
         Objects.requireNonNull(visitor, "visitor");
-        visit(document, new ModelLocation("$", DocumentPath.root()),
-                (model, location) -> visitor.accept(model, location.documentPath()), new IdentityHashMap<>());
+        visit(
+                document,
+                new ModelLocation("$", DocumentPath.root()),
+                (model, location) -> visitor.accept(model, location.documentPath()),
+                new IdentityHashMap<>()
+        );
     }
 
     private void visit(

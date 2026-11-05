@@ -13,7 +13,10 @@ public final class ModelCopies {
     }
 
     public static <T extends CopyableModel<T>> T copy(T value) {
-        return value == null ? null : value.copy();
+        if (value == null) {
+            return null;
+        }
+        return value.copy();
     }
 
     public static <T extends CopyableModel<T>> List<T> list(Collection<? extends T> values) {
@@ -24,19 +27,21 @@ public final class ModelCopies {
         return result;
     }
 
-    public static <K, T extends CopyableModel<T>> Map<K, T> map(Map<K, T> values) {
+    public static <K, T extends CopyableModel<T>> Map<K, T> copyModelMap(Map<K, T> values) {
         Map<K, T> result = new LinkedHashMap<>();
         values.forEach((key, value) -> result.put(
                 Objects.requireNonNull(key, "map key"),
-                Objects.requireNonNull(value, "map value").copy()));
+                Objects.requireNonNull(value, "map value").copy()
+        ));
         return result;
     }
 
-    public static <K, V> Map<K, V> valueMap(Map<K, V> values) {
+    public static <K, V> Map<K, V> copyMapEntries(Map<K, V> values) {
         Map<K, V> result = new LinkedHashMap<>();
         values.forEach((key, value) -> result.put(
                 Objects.requireNonNull(key, "map key"),
-                Objects.requireNonNull(value, "map value")));
+                Objects.requireNonNull(value, "map value")
+        ));
         return result;
     }
 }
