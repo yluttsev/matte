@@ -33,10 +33,14 @@ Rejection codes (`EditCode`):
 Supported schema editing commands:
 - `AddSchemaComponent` — appends a new schema to `components/schemas` and emits `SchemaComponentAdded`;
 - `AddSchemaProperty` — locates the target `SchemaObject` by its `ElementId` (whether a top-level component schema or a nested inline schema), appends a new property, and emits `SchemaPropertyAdded`;
+- `UpdateSchemaObject` — replaces the fields of an existing `SchemaObject` while preserving its `ElementId`; `SchemaObjectUpdated` records the schema path and before/after snapshots;
 - `RenameSchemaComponent` — locates a schema component by its `ElementId`, renames it, and automatically rewrites all applicable local references across the document that point to that component or its descendants.
+
+Use `SchemaObject.builder(existingSchema)` to prepare an update without losing unchanged fields or nested element identifiers. Pass `null` to a nullable builder field to remove that field, and use an empty collection to clear a list or set field. A literal null in `default`, `example`, `examples`, `enum`, or `const` is represented by `NullValue` and is different from removing the field.
 
 When a schema component is renamed, the `ChangeSet` records:
 - `SchemaComponentRenamed` — the component's `ElementId`, old name, and new name;
+- `SchemaObjectUpdated` — the schema's `ElementId`, `DocumentPath`, and immutable before/after schema snapshots;
 - `ReferenceChanged` — one entry per updated reference (recording `sourceBefore` and `sourceAfter` paths, old and new string values, and `ReferenceKind`). If the new name equals the current name, an isolated copy of the document and an empty `ChangeSet` are returned.
 
 ## Reference Rewriting (`ReferenceOwner`)

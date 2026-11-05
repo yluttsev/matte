@@ -10,11 +10,13 @@ import io.github.yluttsev.matte.core.editing.change.Change;
 import io.github.yluttsev.matte.core.editing.change.ChangeSet;
 import io.github.yluttsev.matte.core.editing.change.SchemaComponentAdded;
 import io.github.yluttsev.matte.core.editing.change.SchemaComponentRenamed;
+import io.github.yluttsev.matte.core.editing.change.SchemaObjectUpdated;
 import io.github.yluttsev.matte.core.editing.change.SchemaPropertyAdded;
 import io.github.yluttsev.matte.core.editing.command.AddSchemaComponent;
 import io.github.yluttsev.matte.core.editing.command.AddSchemaProperty;
 import io.github.yluttsev.matte.core.editing.command.EditCommand;
 import io.github.yluttsev.matte.core.editing.command.RenameSchemaComponent;
+import io.github.yluttsev.matte.core.editing.command.UpdateSchemaObject;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.ElementId;
 import io.github.yluttsev.matte.core.model.IdentifiedElement;
@@ -42,6 +44,9 @@ final class SchemaCommandHandler {
         }
         if (command instanceof RenameSchemaComponent rename) {
             return renameComponent(document, index, access, rename);
+        }
+        if (command instanceof UpdateSchemaObject update) {
+            return updateSchemaObject(document, index, access, update);
         }
         throw new IllegalArgumentException("Unsupported command: " + command.getClass());
     }
@@ -136,7 +141,44 @@ final class SchemaCommandHandler {
         return succeeded(document, changes);
     }
 
+    private EditResult updateSchemaObject(
+            ApiDocument document,
+            DocumentIndex index,
+            MutationAccess access,
+            UpdateSchemaObject command
+    ) {
+        SchemaObject replacement = command.schema();
+        DocumentEntry entry = index.findById(replacement.getId()).orElse(null);
+        if (entry == null) {
+            return rejected(EditCode.TARGET_NOT_FOUND, "Schema not found: " + replacement.getId().value());
+        }
+        if (!(entry.value() instanceof SchemaObject schema)) {
+            return rejected(EditCode.TARGET_TYPE_MISMATCH, "Target must be a SchemaObject");
+        }
+        if (hasBlankPropertyName(replacement)) {
+            return rejected(EditCode.INVALID_NAME, "Property name must not be blank");
+        }
+        Set<ElementId> reusableIds = elementIds(schema);
+        List<EditIssue> conflicts = idConflicts(index, replacement, reusableIds);
+        if (!conflicts.isEmpty()) {
+            return new EditRejected(conflicts);
+        }
+
+        SchemaObject before = schema.copy();
+        schema.replaceWith(access, replacement);
+        SchemaObjectUpdated change = new SchemaObjectUpdated(schema.getId(), entry.path(), before, schema);
+        return succeeded(document, List.of(change));
+    }
+
     private List<EditIssue> idConflicts(DocumentIndex index, CopyableModel<?> addition) {
+        return idConflicts(index, addition, Set.of());
+    }
+
+    private List<EditIssue> idConflicts(
+            DocumentIndex index,
+            CopyableModel<?> addition,
+            Set<ElementId> reusableIds
+    ) {
         Set<ElementId> seen = new HashSet<>();
         Set<ElementId> conflicts = new HashSet<>();
         List<EditIssue> issues = new ArrayList<>();
@@ -144,13 +186,23 @@ final class SchemaCommandHandler {
             if (node instanceof IdentifiedElement element) {
                 ElementId id = element.getId();
                 boolean duplicateInAddition = !seen.add(id);
-                boolean existsInDocument = index.findById(id).isPresent();
+                boolean existsInDocument = index.findById(id).isPresent() && !reusableIds.contains(id);
                 if ((duplicateInAddition || existsInDocument) && conflicts.add(id)) {
                     issues.add(new EditIssue(EditCode.ID_CONFLICT, "Element ID already exists: " + id.value()));
                 }
             }
         });
         return issues;
+    }
+
+    private Set<ElementId> elementIds(CopyableModel<?> model) {
+        Set<ElementId> ids = new HashSet<>();
+        new ModelWalker().walk(model, (node, path) -> {
+            if (node instanceof IdentifiedElement element) {
+                ids.add(element.getId());
+            }
+        });
+        return ids;
     }
 
     private boolean hasBlankPropertyName(CopyableModel<?> addition) {
