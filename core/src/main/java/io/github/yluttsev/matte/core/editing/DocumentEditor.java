@@ -9,6 +9,16 @@ import io.github.yluttsev.matte.core.navigation.DocumentIndex;
 
 public final class DocumentEditor {
 
+    private final SchemaCommandHandler commandHandler;
+
+    public DocumentEditor() {
+        this(DefaultSchemaCommandHandlers.create());
+    }
+
+    public DocumentEditor(List<EditCommandHandler<?>> handlers) {
+        commandHandler = new SchemaCommandHandler(handlers);
+    }
+
     public EditResult apply(ApiDocument document, EditCommand command) {
         Objects.requireNonNull(document, "document");
         Objects.requireNonNull(command, "command");
@@ -16,7 +26,7 @@ public final class DocumentEditor {
         DocumentIndex index = DocumentIndex.build(working);
         MutationAccess access = new MutationAccess(working);
         try {
-            EditResult result = new SchemaCommandHandler().apply(working, index, access, command);
+            EditResult result = commandHandler.apply(working, index, access, command);
             if (result instanceof EditRejected) {
                 return result;
             }

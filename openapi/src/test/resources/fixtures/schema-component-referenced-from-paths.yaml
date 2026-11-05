@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Referenced Component
+  version: 1.0.0
+paths:
+  /empty:
+    get:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+components:
+  schemas:
+    Empty:
+      type: object

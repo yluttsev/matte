@@ -6,5 +6,6 @@ public enum EditCode {
     INVALID_NAME,
     NAME_CONFLICT,
     ID_CONFLICT,
+    REFERENCED_TARGET,
     INVALID_STRUCTURE
 }
