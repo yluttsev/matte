@@ -30,8 +30,8 @@ public final class ApiResponse implements IdentifiedElement, CopyableModel<ApiRe
     private ApiResponse(ApiResponse source) {
         this(source.id);
         description = source.description;
-        headers.putAll(ModelCopies.map(source.headers));
-        content.putAll(ModelCopies.map(source.content));
+        headers.putAll(ModelCopies.copyModelMap(source.headers));
+        content.putAll(ModelCopies.copyModelMap(source.content));
     }
 
     public static Builder builder(ElementId id) {
@@ -79,14 +79,14 @@ public final class ApiResponse implements IdentifiedElement, CopyableModel<ApiRe
         }
 
         public Builder headers(Map<String, ReferenceOr<Header>> headers) {
-            Map<String, ReferenceOr<Header>> values = ModelCopies.valueMap(headers);
+            Map<String, ReferenceOr<Header>> values = ModelCopies.copyMapEntries(headers);
             draft.headers.clear();
             draft.headers.putAll(values);
             return this;
         }
 
         public Builder content(Map<String, MediaType> content) {
-            Map<String, MediaType> values = ModelCopies.valueMap(content);
+            Map<String, MediaType> values = ModelCopies.copyMapEntries(content);
             draft.content.clear();
             draft.content.putAll(values);
             return this;

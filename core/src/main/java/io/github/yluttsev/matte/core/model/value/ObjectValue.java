@@ -11,7 +11,8 @@ public record ObjectValue(Map<String, DocumentValue> properties) implements Docu
         Map<String, DocumentValue> copy = new LinkedHashMap<>();
         properties.forEach((name, value) -> copy.put(
                 Objects.requireNonNull(name, "name"),
-                Objects.requireNonNull(value, "value")));
+                Objects.requireNonNull(value, "value")
+        ));
         properties = Collections.unmodifiableMap(copy);
     }
 }

@@ -16,12 +16,19 @@ final class ReferenceTypes {
 
     private static final String REQUEST_BODY_FIELD = "requestBody";
     private static final Map<String, Class<? extends CopyableModel<?>>> COLLECTION_TYPES = Map.of(
-            "parameters", Parameter.class,
-            "requestBodies", RequestBody.class,
-            "responses", ApiResponse.class,
-            "headers", Header.class,
-            "securitySchemes", SecurityScheme.class,
-            "examples", Example.class);
+            "parameters",
+            Parameter.class,
+            "requestBodies",
+            RequestBody.class,
+            "responses",
+            ApiResponse.class,
+            "headers",
+            Header.class,
+            "securitySchemes",
+            SecurityScheme.class,
+            "examples",
+            Example.class
+    );
 
     private ReferenceTypes() {
     }
@@ -32,7 +39,10 @@ final class ReferenceTypes {
         if (collectionType.isPresent()) {
             return collectionType;
         }
-        return isRequestBodyField(segments) ? Optional.of(RequestBody.class) : Optional.empty();
+        if (isRequestBodyField(segments)) {
+            return Optional.of(RequestBody.class);
+        }
+        return Optional.empty();
     }
 
     private static Optional<Class<? extends CopyableModel<?>>> collectionEntryType(List<String> segments) {
@@ -44,6 +54,6 @@ final class ReferenceTypes {
     }
 
     private static boolean isRequestBodyField(List<String> segments) {
-        return !segments.isEmpty() && segments.get(segments.size() - 1).equals(REQUEST_BODY_FIELD);
+        return !segments.isEmpty() && segments.getLast().equals(REQUEST_BODY_FIELD);
     }
 }

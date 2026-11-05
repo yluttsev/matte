@@ -24,7 +24,7 @@ public final class RequestBody implements IdentifiedElement, CopyableModel<Reque
         this(source.id);
         description = source.description;
         required = source.required;
-        content.putAll(ModelCopies.map(source.content));
+        content.putAll(ModelCopies.copyModelMap(source.content));
     }
 
     public static Builder builder(ElementId id) {
@@ -71,7 +71,7 @@ public final class RequestBody implements IdentifiedElement, CopyableModel<Reque
         }
 
         public Builder content(Map<String, MediaType> content) {
-            Map<String, MediaType> values = ModelCopies.valueMap(content);
+            Map<String, MediaType> values = ModelCopies.copyMapEntries(content);
             draft.content.clear();
             draft.content.putAll(values);
             return this;

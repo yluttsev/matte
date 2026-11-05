@@ -53,7 +53,7 @@ public final class Operation implements IdentifiedElement, CopyableModel<Operati
         tags.addAll(source.tags);
         parameters.addAll(ModelCopies.list(source.parameters));
         requestBody = ModelCopies.copy(source.requestBody);
-        responses.putAll(ModelCopies.map(source.responses));
+        responses.putAll(ModelCopies.copyModelMap(source.responses));
         servers.addAll(ModelCopies.list(source.servers));
         securityOverride = source.securityOverride;
         security.addAll(ModelCopies.list(source.security));
@@ -181,7 +181,7 @@ public final class Operation implements IdentifiedElement, CopyableModel<Operati
         }
 
         public Builder responses(Map<ResponseKey, ReferenceOr<ApiResponse>> responses) {
-            Map<ResponseKey, ReferenceOr<ApiResponse>> values = ModelCopies.valueMap(responses);
+            Map<ResponseKey, ReferenceOr<ApiResponse>> values = ModelCopies.copyMapEntries(responses);
             draft.responses.clear();
             draft.responses.putAll(values);
             return this;

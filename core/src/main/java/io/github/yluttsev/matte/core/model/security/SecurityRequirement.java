@@ -43,7 +43,9 @@ public final class SecurityRequirement implements CopyableModel<SecurityRequirem
         public Builder schemes(Map<String, List<String>> schemes) {
             Map<String, List<String>> values = new LinkedHashMap<>();
             schemes.forEach((name, scopes) -> values.put(
-                    Objects.requireNonNull(name, "scheme name"), List.copyOf(scopes)));
+                    Objects.requireNonNull(name, "scheme name"),
+                    List.copyOf(scopes)
+            ));
             draft.schemes.clear();
             draft.schemes.putAll(values);
             return this;

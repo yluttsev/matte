@@ -61,10 +61,10 @@ final class SchemaCommandHandler {
         if (component.getName().isBlank()) {
             return rejected(EditCode.INVALID_NAME, "Schema component name must not be blank");
         }
-        if (hasBlankPropertyName(component)) {
+        if (containsBlankPropertyName(component)) {
             return rejected(EditCode.INVALID_NAME, "Property name must not be blank");
         }
-        if (hasName(document, component.getName())) {
+        if (hasSchemaComponentNamed(document, component.getName())) {
             return rejected(EditCode.NAME_CONFLICT, "Schema component already exists: " + component.getName());
         }
         List<EditIssue> conflicts = idConflicts(index, component);
@@ -73,7 +73,10 @@ final class SchemaCommandHandler {
         }
         document.getComponents().addSchemaComponent(access, component);
         return succeeded(document, List.of(new SchemaComponentAdded(
-                component.getId(), component.getName(), component.getSchema())));
+                component.getId(),
+                component.getName(),
+                component.getSchema()
+        )));
     }
 
     private EditResult addProperty(
@@ -90,7 +93,7 @@ final class SchemaCommandHandler {
             return rejected(EditCode.TARGET_TYPE_MISMATCH, "Target must be a SchemaObject");
         }
         SchemaProperty property = command.property();
-        if (hasBlankPropertyName(property)) {
+        if (containsBlankPropertyName(property)) {
             return rejected(EditCode.INVALID_NAME, "Property name must not be blank");
         }
         if (schema.getProperties().stream().anyMatch(existing -> existing.getName().equals(property.getName()))) {
@@ -102,7 +105,11 @@ final class SchemaCommandHandler {
         }
         schema.addProperty(access, property);
         return succeeded(document, List.of(new SchemaPropertyAdded(
-                schema.getId(), property.getId(), property.getName(), property.getSchema())));
+                schema.getId(),
+                property.getId(),
+                property.getName(),
+                property.getSchema()
+        )));
     }
 
     private EditResult renameComponent(
@@ -124,10 +131,10 @@ final class SchemaCommandHandler {
         if (component.getName().equals(command.newName())) {
             return succeeded(document, List.of());
         }
-        if (hasName(document, command.newName())) {
+        if (hasSchemaComponentNamed(document, command.newName())) {
             return rejected(EditCode.NAME_CONFLICT, "Schema component already exists: " + command.newName());
         }
-        SchemaReferenceRename rename = new SchemaReferenceRename(component.getName(), command.newName());
+        SchemaReferenceRename rename = new SchemaReferenceRename(component.getName(), command.newName(), index);
         ReferenceIndex references = new ReferenceIndexBuilder().build(index);
         List<Change> changes = new ArrayList<>();
         changes.add(new SchemaComponentRenamed(component.getId(), component.getName(), command.newName()));
@@ -155,7 +162,7 @@ final class SchemaCommandHandler {
         if (!(entry.value() instanceof SchemaObject schema)) {
             return rejected(EditCode.TARGET_TYPE_MISMATCH, "Target must be a SchemaObject");
         }
-        if (hasBlankPropertyName(replacement)) {
+        if (containsBlankPropertyName(replacement)) {
             return rejected(EditCode.INVALID_NAME, "Property name must not be blank");
         }
         Set<ElementId> reusableIds = elementIds(schema);
@@ -205,7 +212,7 @@ final class SchemaCommandHandler {
         return ids;
     }
 
-    private boolean hasBlankPropertyName(CopyableModel<?> addition) {
+    private boolean containsBlankPropertyName(CopyableModel<?> addition) {
         List<SchemaProperty> invalid = new ArrayList<>();
         new ModelWalker().walk(addition, (node, path) -> {
             if (node instanceof SchemaProperty property && property.getName().isBlank()) {
@@ -215,7 +222,7 @@ final class SchemaCommandHandler {
         return !invalid.isEmpty();
     }
 
-    private boolean hasName(ApiDocument document, String name) {
+    private boolean hasSchemaComponentNamed(ApiDocument document, String name) {
         return document.getComponents().getSchemas().stream().anyMatch(component -> component.getName().equals(name));
     }
 

@@ -24,7 +24,7 @@ public final class Server implements IdentifiedElement, CopyableModel<Server> {
         this(source.id);
         url = source.url;
         description = source.description;
-        variables.putAll(ModelCopies.map(source.variables));
+        variables.putAll(ModelCopies.copyModelMap(source.variables));
     }
 
     public static Builder builder(ElementId id) {
@@ -71,7 +71,7 @@ public final class Server implements IdentifiedElement, CopyableModel<Server> {
         }
 
         public Builder variables(Map<String, ServerVariable> variables) {
-            Map<String, ServerVariable> values = ModelCopies.valueMap(variables);
+            Map<String, ServerVariable> values = ModelCopies.copyMapEntries(variables);
             draft.variables.clear();
             draft.variables.putAll(values);
             return this;

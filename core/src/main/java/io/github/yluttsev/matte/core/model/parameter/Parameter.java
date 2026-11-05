@@ -52,8 +52,8 @@ public final class Parameter implements IdentifiedElement, CopyableModel<Paramet
         allowReserved = source.allowReserved;
         schema = ModelCopies.copy(source.schema);
         example = source.example;
-        examples.putAll(ModelCopies.map(source.examples));
-        content.putAll(ModelCopies.map(source.content));
+        examples.putAll(ModelCopies.copyModelMap(source.examples));
+        content.putAll(ModelCopies.copyModelMap(source.content));
     }
 
     public static Builder builder(ElementId id) {
@@ -191,14 +191,14 @@ public final class Parameter implements IdentifiedElement, CopyableModel<Paramet
         }
 
         public Builder examples(Map<String, ReferenceOr<Example>> examples) {
-            Map<String, ReferenceOr<Example>> values = ModelCopies.valueMap(examples);
+            Map<String, ReferenceOr<Example>> values = ModelCopies.copyMapEntries(examples);
             draft.examples.clear();
             draft.examples.putAll(values);
             return this;
         }
 
         public Builder content(Map<String, MediaType> content) {
-            Map<String, MediaType> values = ModelCopies.valueMap(content);
+            Map<String, MediaType> values = ModelCopies.copyMapEntries(content);
             draft.content.clear();
             draft.content.putAll(values);
             return this;

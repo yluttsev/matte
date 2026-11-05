@@ -32,8 +32,8 @@ public final class MediaType implements IdentifiedElement, CopyableModel<MediaTy
         this(source.id);
         schema = ModelCopies.copy(source.schema);
         example = source.example;
-        examples.putAll(ModelCopies.map(source.examples));
-        encoding.putAll(ModelCopies.map(source.encoding));
+        examples.putAll(ModelCopies.copyModelMap(source.examples));
+        encoding.putAll(ModelCopies.copyModelMap(source.encoding));
     }
 
     public static Builder builder(ElementId id) {
@@ -90,14 +90,14 @@ public final class MediaType implements IdentifiedElement, CopyableModel<MediaTy
         }
 
         public Builder examples(Map<String, ReferenceOr<Example>> examples) {
-            Map<String, ReferenceOr<Example>> values = ModelCopies.valueMap(examples);
+            Map<String, ReferenceOr<Example>> values = ModelCopies.copyMapEntries(examples);
             draft.examples.clear();
             draft.examples.putAll(values);
             return this;
         }
 
         public Builder encoding(Map<String, Encoding> encoding) {
-            Map<String, Encoding> values = ModelCopies.valueMap(encoding);
+            Map<String, Encoding> values = ModelCopies.copyMapEntries(encoding);
             draft.encoding.clear();
             draft.encoding.putAll(values);
             return this;
