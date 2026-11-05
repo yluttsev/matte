@@ -9,10 +9,15 @@ import io.github.yluttsev.matte.core.editing.change.Change;
 import io.github.yluttsev.matte.core.editing.change.ChangeSet;
 import io.github.yluttsev.matte.core.editing.change.ReferenceChanged;
 import io.github.yluttsev.matte.core.editing.change.SchemaComponentRenamed;
+import io.github.yluttsev.matte.core.editing.change.SchemaPropertyRenamed;
+import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.SourceDocument;
 import io.github.yluttsev.matte.openapi.SourceFormat;
 
 public final class OpenApiSourcePatcher {
+
+    private static final String PROPERTIES_FIELD = "properties";
+    private static final String REQUIRED_FIELD = "required";
 
     private static final Map<SourceFormat, SourceScalarScanner> SCANNERS = Map.of(
             SourceFormat.JSON,
@@ -28,23 +33,42 @@ public final class OpenApiSourcePatcher {
         if (changes.changes().isEmpty()) {
             return source;
         }
-        SchemaComponentRenamed rename = renameChange(changes);
+        Rename rename = renameChange(changes);
         String text = decode(source);
         List<SourceScalar> scalars = SCANNERS.get(format).scan(text);
-        SchemaReferenceRelocator relocator = new SchemaReferenceRelocator(rename.oldName(), rename.newName());
+        SchemaReferenceRelocator relocator = rename.relocator();
         validateChanges(changes, scalars, relocator);
         SourceTextEdits edits = edits(scalars, rename, relocator);
         return new SourceDocument(edits.apply(text).getBytes(StandardCharsets.UTF_8));
     }
 
-    private SchemaComponentRenamed renameChange(ChangeSet changes) {
-        SchemaComponentRenamed rename = null;
+    private Rename renameChange(ChangeSet changes) {
+        Rename rename = null;
         for (Change change : changes.changes()) {
             if (change instanceof SchemaComponentRenamed component) {
                 if (rename != null) {
                     throw new IllegalArgumentException("Only one schema rename can be patched at a time");
                 }
-                rename = component;
+                rename = new Rename(
+                        component.oldName(),
+                        component.newName(),
+                        DocumentPath.schemaComponent(component.oldName()),
+                        DocumentPath.schemaComponent(component.newName()),
+                        null
+                );
+            } else if (change instanceof SchemaPropertyRenamed property) {
+                if (rename != null) {
+                    throw new IllegalArgumentException("Only one schema rename can be patched at a time");
+                }
+                DocumentPath oldPath = property.schemaPath().child(PROPERTIES_FIELD).child(property.oldName());
+                DocumentPath newPath = property.schemaPath().child(PROPERTIES_FIELD).child(property.newName());
+                rename = new Rename(
+                        property.oldName(),
+                        property.newName(),
+                        oldPath,
+                        newPath,
+                        property.schemaPath().child(REQUIRED_FIELD)
+                );
             } else if (!(change instanceof ReferenceChanged)) {
                 throw new IllegalArgumentException("Unsupported source change: " + change.getClass().getSimpleName());
             }
@@ -83,7 +107,7 @@ public final class OpenApiSourcePatcher {
 
     private SourceTextEdits edits(
             List<SourceScalar> scalars,
-            SchemaComponentRenamed rename,
+            Rename rename,
             SchemaReferenceRelocator relocator
     ) {
         SourceTextEdits edits = new SourceTextEdits();
@@ -100,7 +124,7 @@ public final class OpenApiSourcePatcher {
             }
         }
         if (!found) {
-            throw new IllegalArgumentException("Schema component was not found in source: " + rename.oldName());
+            throw new IllegalArgumentException("Schema element was not found in source: " + rename.oldName());
         }
         return edits;
     }
@@ -110,6 +134,28 @@ public final class OpenApiSourcePatcher {
             return source.decodeUtf8();
         } catch (CharacterCodingException exception) {
             throw new IllegalArgumentException("Source is not valid UTF-8", exception);
+        }
+    }
+
+    private record Rename(
+            String oldName,
+            String newName,
+            DocumentPath oldPath,
+            DocumentPath newPath,
+            DocumentPath requiredPath
+    ) {
+
+        private SchemaReferenceRelocator relocator() {
+            if (requiredPath == null) {
+                return new SchemaReferenceRelocator(oldName, newName);
+            }
+            return new SchemaReferenceRelocator(
+                    oldPath,
+                    newPath,
+                    requiredPath,
+                    oldName,
+                    newName
+            );
         }
     }
 }

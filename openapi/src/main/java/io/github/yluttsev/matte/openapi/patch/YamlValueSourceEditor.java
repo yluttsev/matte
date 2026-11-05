@@ -110,8 +110,23 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
 
     private String removeOnlyField(String text, LocatedNode located, DocumentPath path) {
         Range parentRange = range(located.parent(), located.offsets());
-        ensureNoInlineComment(text, range(located.node(), located.offsets()).end());
-        return text.substring(0, parentRange.start()) + "{}" + text.substring(parentRange.end());
+        int keyStart = charOffset(
+                located.tuple().getKeyNode().getStartMark().orElseThrow().getIndex(),
+                located.offsets()
+        );
+        int valueEnd = range(located.node(), located.offsets()).end();
+        ensureNoInlineComment(text, valueEnd);
+        if (located.parent().getFlowStyle() == FlowStyle.FLOW) {
+            ensureNoComment(text, parentRange.start(), keyStart);
+            ensureNoComment(text, valueEnd, parentRange.end());
+        } else {
+            ensureNoLeadingComment(text, keyStart);
+        }
+        String suffix = text.substring(parentRange.end());
+        if (parentRange.end() == text.length()) {
+            suffix = trailingLineEndings(text);
+        }
+        return text.substring(0, parentRange.start()) + "{}" + suffix;
     }
 
     private String removeFlowField(String text, LocatedNode located) {
@@ -126,21 +141,32 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
         );
         int separatorStart;
         int separatorEnd;
+        Range mappingRange = range(located.parent(), located.offsets());
+        if (located.tupleIndex() > 0) {
+            int previousEnd = charOffset(
+                    entries.get(located.tupleIndex() - 1).getValueNode().getEndMark().orElseThrow().getIndex(),
+                    located.offsets()
+            );
+            ensureNoComment(text, previousEnd, keyStart);
+        } else {
+            ensureNoComment(text, mappingRange.start(), keyStart);
+        }
         if (located.tupleIndex() < entries.size() - 1) {
             separatorStart = valueEnd;
             separatorEnd = charOffset(
                     entries.get(located.tupleIndex() + 1).getKeyNode().getStartMark().orElseThrow().getIndex(),
                     located.offsets()
             );
+            ensureNoComment(text, separatorStart, separatorEnd);
         } else {
             separatorStart = charOffset(
                     entries.get(located.tupleIndex() - 1).getValueNode().getEndMark().orElseThrow().getIndex(),
                     located.offsets()
             );
             separatorEnd = keyStart;
+            ensureNoComment(text, valueEnd, mappingRange.end());
         }
         int comma = commaBetween(text, separatorStart, separatorEnd);
-        ensureNoComment(text, separatorStart, separatorEnd);
         ensureNoInlineComment(text, valueEnd);
         if (located.tupleIndex() < entries.size() - 1) {
             return text.substring(0, keyStart) + text.substring(comma + 1);
@@ -156,8 +182,34 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
                 located.offsets()
         );
         int start = lineStart(text, keyStart);
-        int end = lineEnd(text, value.end());
+        int end = removeEnd(text, value.end(), keyStart - start);
+        ensureNoLeadingComment(text, keyStart);
+        List<NodeTuple> entries = located.parent().getValue();
+        if (located.tupleIndex() < entries.size() - 1) {
+            int nextKey = charOffset(
+                    entries.get(located.tupleIndex() + 1).getKeyNode().getStartMark().orElseThrow().getIndex(),
+                    located.offsets()
+            );
+            ensureNoStandaloneComment(text, end, nextKey);
+        }
         return text.substring(0, start) + text.substring(end);
+    }
+
+    private int removeEnd(
+            String text,
+            int valueEnd,
+            int keyIndentation
+    ) {
+        int valueEndLineStart = lineStart(text, valueEnd);
+        boolean endsAtNextKey = valueEnd < text.length()
+                && text.substring(valueEndLineStart, valueEnd).isBlank()
+                && valueEnd - valueEndLineStart <= keyIndentation
+                && text.charAt(valueEnd) != '\n'
+                && text.charAt(valueEnd) != '\r';
+        if (endsAtNextKey) {
+            return valueEndLineStart;
+        }
+        return lineEnd(text, valueEnd);
     }
 
     private Range range(Node node, YamlSourceOffsets offsets) {
@@ -191,6 +243,38 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
         }
     }
 
+    private void ensureNoLeadingComment(String text, int keyStart) {
+        int keyLineStart = lineStart(text, keyStart);
+        int keyIndentation = keyStart - keyLineStart;
+        int previousLineEnd = keyLineStart;
+        while (previousLineEnd > 0) {
+            int previousLineStart = lineStart(text, previousLineEnd - 1);
+            String previousLine = text.substring(previousLineStart, previousLineEnd).stripTrailing();
+            String content = previousLine.stripLeading();
+            if (content.isEmpty()) {
+                previousLineEnd = previousLineStart;
+                continue;
+            }
+            int indentation = previousLine.length() - content.length();
+            if (content.startsWith("#") && indentation >= keyIndentation) {
+                throw new IllegalArgumentException("Leading comments around a YAML field cannot be moved safely");
+            }
+            return;
+        }
+    }
+
+    private void ensureNoStandaloneComment(String text, int start, int end) {
+        int lineStart = lineStart(text, start);
+        while (lineStart < end) {
+            int lineEnd = lineEnd(text, lineStart);
+            String line = text.substring(lineStart, Math.min(lineEnd, end)).stripLeading();
+            if (line.startsWith("#")) {
+                throw new IllegalArgumentException("Comments around a YAML field cannot be moved safely");
+            }
+            lineStart = lineEnd;
+        }
+    }
+
     private int lineStart(String text, int position) {
         return text.lastIndexOf('\n', position - 1) + 1;
     }
@@ -201,6 +285,18 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
             return text.length();
         }
         return newline + 1;
+    }
+
+    private String trailingLineEndings(String text) {
+        int start = text.length();
+        while (start > 0) {
+            char character = text.charAt(start - 1);
+            if (character != '\n' && character != '\r') {
+                break;
+            }
+            start--;
+        }
+        return text.substring(start);
     }
 
     private record Range(int start, int end) {

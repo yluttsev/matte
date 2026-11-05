@@ -1,0 +1,34 @@
+openapi: 3.1.0
+info:
+  title: Structural Editing
+  version: 1.0.0
+paths:
+  /users:
+    get:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer/properties/identifier'
+components:
+  schemas:
+    Customer:
+      type: object
+      required:
+        - identifier
+      properties:
+        identifier:
+          type: string
+          x-note: preserve
+        alias:
+          $ref: '#/components/schemas/Customer/properties/identifier'
+        unused:
+          type: string
+          description: removable
+    Consumer:
+      type: object
+      properties:
+        customer:
+          $ref: '#/components/schemas/Customer'

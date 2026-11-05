@@ -1,0 +1,12 @@
+openapi: 3.1.0
+info:
+  title: Property Removal
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Empty:
+      type: object
+      properties:
+        obsolete:
+          type: string

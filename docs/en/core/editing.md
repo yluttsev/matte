@@ -4,13 +4,15 @@
 
 This package handles atomic execution of semantic commands against a document, protects the model from uncontrolled mutation, and produces an ordered record of changes (`ChangeSet`).
 
+`DocumentEditor` accepts a list of `EditCommandHandler` instances through its constructor. The no-argument constructor supplies the current schema handlers for existing callers. An application composition root can construct and inject the handlers without changing the dispatcher; the dispatcher takes an immutable copy of the supplied list.
+
 ## Editing Session and Mutation Control
 
 `DocumentEditor.apply(document, command)` never mutates the input document instance. Every operation executes atomically in the following sequence:
 1. An independent deep working copy of the document is created and indexed with `DocumentIndex`.
 2. A package-private `MutationAccess` token is opened for the working copy, registering all node instances in that graph.
 3. Every mutating method on the domain model checks the `MutationAccess` token to verify that the session is still active and that the target node belongs to the current working copy.
-4. The command handler applies the command and collects `Change` records.
+4. The dispatcher requires exactly one registered handler to support the command's exact type, invokes that handler once, and collects its `Change` records. Missing handlers and overlapping registrations are configuration errors.
 5. The modified working copy is validated with `DocumentStructureValidator`. If the command is rejected or the resulting structure is invalid, the working copy is discarded.
 6. In a `finally` block, the `MutationAccess` token is closed; any subsequent attempt to invoke mutating methods on the returned document throws `IllegalStateException`.
 
@@ -26,6 +28,7 @@ Rejection codes (`EditCode`):
 - `INVALID_NAME` — a component or property name (including nested properties within an added subtree) is empty or blank;
 - `NAME_CONFLICT` — an element with the same name already exists in the target collection;
 - `ID_CONFLICT` — the added subtree contains an `ElementId` that already exists in the document or is duplicated within the added subtree itself;
+- `REFERENCED_TARGET` — deleting a schema component or property would leave an incoming reference unresolved; the diagnostic lists each reference location;
 - `INVALID_STRUCTURE` — the resulting document fails `DocumentStructureValidator` checks after applying the command.
 
 ## Commands (`EditCommand`) and Changes (`Change`)
@@ -33,6 +36,9 @@ Rejection codes (`EditCode`):
 Supported schema editing commands:
 - `AddSchemaComponent` — appends a new schema to `components/schemas` and emits `SchemaComponentAdded`;
 - `AddSchemaProperty` — locates the target `SchemaObject` by its `ElementId` (whether a top-level component schema or a nested inline schema), appends a new property, and emits `SchemaPropertyAdded`;
+- `RenameSchemaProperty` — locates a property by its `ElementId` within the specified `SchemaObject`, preserves its identity, renames it, updates the owning schema's matching `required` name, and rewrites local pointers to the property and its descendants;
+- `DeleteSchemaProperty` — removes a property by its `ElementId` when no reference from outside its subtree targets it, and emits `SchemaPropertyDeleted`;
+- `DeleteSchemaComponent` — removes a schema component when no reference from outside its subtree targets it, and emits `SchemaComponentDeleted`;
 - `UpdateSchemaObject` — replaces the fields of an existing `SchemaObject` while preserving its `ElementId`; `SchemaObjectUpdated` records the schema path and before/after snapshots;
 - `RenameSchemaComponent` — locates a schema component by its `ElementId`, renames it, and automatically rewrites all applicable local references across the document that point to that component or its descendants.
 
@@ -41,6 +47,10 @@ Use `SchemaObject.builder(existingSchema)` to prepare an update without losing u
 When a schema component is renamed, the `ChangeSet` records:
 - `SchemaComponentRenamed` — the component's `ElementId`, old name, and new name;
 - `ReferenceChanged` — one entry per updated reference (recording `sourceBefore` and `sourceAfter` paths, old and new string values, and `ReferenceKind`). If the new name equals the current name, an isolated copy of the document and an empty `ChangeSet` are returned.
+
+When a property is renamed, the `ChangeSet` records `SchemaPropertyRenamed` followed by one `ReferenceChanged` per relocated local reference. Pointers to nested schemas inside the property are relocated with the property, and the owning schema's `required` set is updated when it contains the old property name. Deleting a property leaves the schema's `required` set untouched: `required` is an independent declaration and may name properties that are inherited or not declared in the local `properties` list. References whose source is inside the deleted subtree are removed with it and do not block deletion; references from outside the subtree do.
+
+Schema source deletion retains an empty `properties` or `schemas` section as `{}` instead of removing the section. YAML deletion rejects ambiguous leading comments, trailing inline comments, flow-mapping separator comments, or standalone comments between the deleted node and its sibling. Comments inside the deleted node are removed with it. These source-level failures leave the caller's original source and model unchanged.
 
 ## Reference Rewriting (`ReferenceOwner`)
 

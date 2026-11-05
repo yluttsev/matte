@@ -53,6 +53,11 @@ public final class Components implements CopyableModel<Components> {
         schemas.add(Objects.requireNonNull(component, "component").copy());
     }
 
+    public void removeSchemaComponent(MutationAccess access, SchemaComponent component) {
+        access.require(this);
+        schemas.remove(Objects.requireNonNull(component, "component"));
+    }
+
     public List<SchemaComponent> getSchemas() {
         return Collections.unmodifiableList(schemas);
     }

@@ -277,6 +277,29 @@ public final class SchemaObject implements Schema, ReferenceOwner {
         properties.add(Objects.requireNonNull(property, "property").copy());
     }
 
+    public void renameProperty(MutationAccess access, ElementId propertyId, String name) {
+        access.require(this);
+        SchemaProperty property = findProperty(propertyId);
+        String oldName = property.getName();
+        property.rename(access, name);
+        if (required.remove(oldName)) {
+            required.add(name);
+        }
+    }
+
+    public void removeProperty(MutationAccess access, ElementId propertyId) {
+        access.require(this);
+        SchemaProperty property = findProperty(propertyId);
+        properties.remove(property);
+    }
+
+    private SchemaProperty findProperty(ElementId propertyId) {
+        return properties.stream()
+                .filter(property -> property.getId().equals(propertyId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Schema property was not found"));
+    }
+
     public void replaceWith(MutationAccess access, SchemaObject source) {
         access.require(this);
         SchemaObject replacement = Objects.requireNonNull(source, "source").copy();
