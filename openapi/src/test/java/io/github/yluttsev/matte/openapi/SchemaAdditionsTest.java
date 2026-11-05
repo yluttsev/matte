@@ -1,6 +1,7 @@
 package io.github.yluttsev.matte.openapi;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
@@ -14,6 +15,8 @@ import io.github.yluttsev.matte.core.model.schema.JsonType;
 import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
 import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaProperty;
+import io.github.yluttsev.matte.core.model.value.NullValue;
+import io.github.yluttsev.matte.core.model.value.StringValue;
 import io.github.yluttsev.matte.openapi.testing.TestFixtures;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -160,6 +163,31 @@ class SchemaAdditionsTest {
                 + "      properties:\n        email:\n          type: string\n";
         assertEquals(expected, text(result));
         assertProperty(result, "email");
+    }
+
+    @Test
+    void testAddProperty_WhenSchemaHasValuesAndConstraints_ShouldPreserveThem() throws IOException {
+        ImportResult imported = importFixture("additions-no-properties.yaml");
+        SchemaObject schema = customer(imported);
+        SchemaObject propertySchema = SchemaObject.builder(ElementId.random())
+                .types(Set.of(JsonType.STRING))
+                .defaultValue(new NullValue())
+                .enumValues(List.of(new StringValue("active"), new NullValue()))
+                .minLength(BigInteger.ONE)
+                .pattern("^[a-z]+$")
+                .build();
+
+        OpenApiEditResult result = editor.addProperty(imported, new AddSchemaProperty(schema.getId(),
+                new SchemaProperty(ElementId.random(), "status", propertySchema)));
+
+        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertTrue(text(result).contains("default: null"));
+        assertTrue(text(result).contains("pattern: \"^[a-z]+$\""));
+        SchemaObject added = assertInstanceOf(SchemaObject.class,
+                customer(result.state()).getProperties().getLast().getSchema());
+        assertEquals(new NullValue(), added.getDefaultValue());
+        assertEquals(List.of(new StringValue("active"), new NullValue()), added.getEnumValues());
+        assertEquals(BigInteger.ONE, added.getMinLength());
     }
 
     @Test
@@ -348,13 +376,16 @@ class SchemaAdditionsTest {
     }
 
     @Test
-    void testAddComponent_WhenSchemaContainsUnsupportedFields_ShouldFailClosed() throws IOException {
+    void testAddComponent_WhenSchemaHasPattern_ShouldPreserveField() throws IOException {
         ImportResult imported = importFixture("additions-empty.yaml");
         SchemaObject schema = SchemaObject.builder(ElementId.random())
                 .types(Set.of(JsonType.STRING)).pattern("[a-z]+ ").build();
 
-        assertThrows(IllegalArgumentException.class, () -> editor.addComponent(imported,
-                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Name", schema))));
+        OpenApiEditResult result = editor.addComponent(imported,
+                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Name", schema)));
+
+        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertTrue(text(result).contains("      pattern: \"[a-z]+ \""));
     }
 
     @Test
@@ -364,6 +395,31 @@ class SchemaAdditionsTest {
         assertThrows(IllegalArgumentException.class, () -> editor.addComponent(imported,
                 new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Always",
                         new BooleanSchema(ElementId.random(), true)))));
+    }
+
+    @Test
+    void testAddComponent_WhenSchemaHasExtendedFields_ShouldPreserveOas31ValuesAndConstraints() throws IOException {
+        ImportResult imported = importFixture("additions-empty.yaml");
+        SchemaObject schema = customer(importFixture("schema-addition-rich-3.1.yaml"));
+
+        OpenApiEditResult result = editor.addComponent(imported,
+                new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Rich", schema)));
+
+        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertTrue(text(result).contains("const: 2.5"));
+        assertTrue(text(result).contains("exclusiveMinimum: 1.5"));
+        assertTrue(text(result).contains("allOf:"));
+        assertTrue(text(result).contains("oneOf:"));
+        assertTrue(text(result).contains("anyOf:"));
+        SchemaObject added = assertInstanceOf(SchemaObject.class,
+                result.state().document().orElseThrow().getComponents().getSchemas().getLast().getSchema());
+        assertEquals(schema.getDefaultValue(), added.getDefaultValue());
+        assertEquals(schema.getExamples(), added.getExamples());
+        assertEquals(schema.getEnumValues(), added.getEnumValues());
+        assertEquals(schema.getConstValue(), added.getConstValue());
+        assertEquals(schema.getMaxProperties(), added.getMaxProperties());
+        assertEquals(schema.getItems().getId(), added.getItems().getId());
+        assertEquals(schema.getDiscriminator().getMapping(), added.getDiscriminator().getMapping());
     }
 
     private ImportResult importFixture(String name) throws IOException {

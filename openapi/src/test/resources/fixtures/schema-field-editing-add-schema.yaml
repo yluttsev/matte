@@ -1,0 +1,11 @@
+openapi: 3.1.0
+info:
+  title: Schema Fixture
+  version: 1.0.0
+components:
+  schemas:
+    Customer:
+      type: string
+      title: Before
+      default: draft
+      minLength: 1

@@ -65,6 +65,18 @@ public final class SchemaObject implements Schema, ReferenceOwner {
 
     private SchemaObject(SchemaObject source) {
         this(source.id);
+        copyFieldsFrom(source);
+    }
+
+    private void copyFieldsFrom(SchemaObject source) {
+        types.clear();
+        examples.clear();
+        enumValues.clear();
+        properties.clear();
+        required.clear();
+        allOf.clear();
+        oneOf.clear();
+        anyOf.clear();
         types.addAll(source.types);
         format = source.format;
         title = source.title;
@@ -104,6 +116,10 @@ public final class SchemaObject implements Schema, ReferenceOwner {
 
     public static Builder builder(ElementId id) {
         return new Builder(id);
+    }
+
+    public static Builder builder(SchemaObject source) {
+        return new Builder(Objects.requireNonNull(source, "source"));
     }
 
     @Override
@@ -261,6 +277,15 @@ public final class SchemaObject implements Schema, ReferenceOwner {
         properties.add(Objects.requireNonNull(property, "property").copy());
     }
 
+    public void replaceWith(MutationAccess access, SchemaObject source) {
+        access.require(this);
+        SchemaObject replacement = Objects.requireNonNull(source, "source").copy();
+        if (!id.equals(replacement.id)) {
+            throw new IllegalArgumentException("Replacement schema must preserve its element ID");
+        }
+        copyFieldsFrom(replacement);
+    }
+
     @Override
     public void rewriteReferences(MutationAccess access, UnaryOperator<String> transform) {
         access.require(this);
@@ -275,6 +300,10 @@ public final class SchemaObject implements Schema, ReferenceOwner {
 
         private Builder(ElementId id) {
             draft = new SchemaObject(id);
+        }
+
+        private Builder(SchemaObject source) {
+            draft = source.copy();
         }
 
         public Builder types(Set<JsonType> types) {

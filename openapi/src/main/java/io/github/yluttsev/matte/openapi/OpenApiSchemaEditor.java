@@ -7,19 +7,20 @@ import io.github.yluttsev.matte.core.editing.EditResult;
 import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.change.Change;
 import io.github.yluttsev.matte.core.editing.change.SchemaComponentAdded;
+import io.github.yluttsev.matte.core.editing.change.SchemaObjectUpdated;
 import io.github.yluttsev.matte.core.editing.change.SchemaPropertyAdded;
 import io.github.yluttsev.matte.core.editing.command.AddSchemaComponent;
 import io.github.yluttsev.matte.core.editing.command.AddSchemaProperty;
 import io.github.yluttsev.matte.core.editing.command.EditCommand;
 import io.github.yluttsev.matte.core.editing.command.RenameSchemaComponent;
+import io.github.yluttsev.matte.core.editing.command.UpdateSchemaObject;
 import io.github.yluttsev.matte.core.model.schema.Schema;
-import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
-import io.github.yluttsev.matte.core.model.schema.SchemaProperty;
 import io.github.yluttsev.matte.core.navigation.DocumentIndex;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.patch.OpenApiAdditionPatcher;
 import io.github.yluttsev.matte.openapi.patch.OpenApiSourcePatcher;
-import io.github.yluttsev.matte.openapi.patch.SchemaAdditionSerializer;
+import io.github.yluttsev.matte.openapi.patch.SchemaFieldPatcher;
+import io.github.yluttsev.matte.openapi.patch.SchemaSourceVerifier;
 
 public final class OpenApiSchemaEditor {
 
@@ -36,6 +37,10 @@ public final class OpenApiSchemaEditor {
         return apply(imported, command);
     }
 
+    public OpenApiEditResult updateSchema(ImportResult imported, UpdateSchemaObject command) {
+        return apply(imported, command);
+    }
+
     private OpenApiEditResult apply(ImportResult imported, EditCommand command) {
         Objects.requireNonNull(imported, "imported");
         Objects.requireNonNull(command, "command");
@@ -47,22 +52,40 @@ public final class OpenApiSchemaEditor {
             return new OpenApiEditResult(edit, Optional.empty(), imported);
         }
         SourceFormat format = imported.format().orElseThrow();
-        SourceDocument source = command instanceof RenameSchemaComponent
-                ? new OpenApiSourcePatcher().apply(imported.source(), format, succeeded.changeSet())
-                : new OpenApiAdditionPatcher().apply(imported, succeeded.changeSet());
+        OpenApiVersion version = OpenApiVersion.supported(imported.version().orElseThrow()).orElseThrow();
+        SourceDocument source = sourceAfterEdit(imported, command, succeeded, format, version);
         ImportResult checked = new OpenApiImporter().importDocument(source.content(), ImportOptions.withFormat(format));
         if (checked.status() != ImportStatus.IMPORTED || !checked.version().equals(imported.version())) {
             throw new IllegalArgumentException("Patched OpenAPI document could not be imported");
         }
-        if (!(command instanceof RenameSchemaComponent)) {
-            verifyAddition(imported, checked, succeeded.changeSet().changes().getFirst());
+        if (command instanceof AddSchemaComponent || command instanceof AddSchemaProperty) {
+            verifyAddition(imported, checked, succeeded.changeSet().changes().getFirst(), version);
+        } else if (command instanceof UpdateSchemaObject) {
+            verifyUpdate(checked, succeeded.changeSet().changes().getFirst(), version);
         }
         ImportResult state = new ImportResult(source, checked.format(), checked.status(), checked.diagnostics(),
                 checked.version(), Optional.of(succeeded.document()));
         return new OpenApiEditResult(edit, Optional.of(source), state);
     }
 
-    private void verifyAddition(ImportResult before, ImportResult after, Change change) {
+    private SourceDocument sourceAfterEdit(
+            ImportResult imported,
+            EditCommand command,
+            EditSucceeded succeeded,
+            SourceFormat format,
+            OpenApiVersion version
+    ) {
+        if (command instanceof RenameSchemaComponent) {
+            return new OpenApiSourcePatcher().apply(imported.source(), format, succeeded.changeSet());
+        }
+        if (command instanceof UpdateSchemaObject) {
+            SchemaObjectUpdated update = (SchemaObjectUpdated) succeeded.changeSet().changes().getFirst();
+            return new SchemaFieldPatcher().apply(imported.source(), format, version, update);
+        }
+        return new OpenApiAdditionPatcher().apply(imported, succeeded.changeSet());
+    }
+
+    private void verifyAddition(ImportResult before, ImportResult after, Change change, OpenApiVersion version) {
         DocumentPath path;
         Schema expected;
         if (change instanceof SchemaComponentAdded component) {
@@ -76,17 +99,16 @@ public final class OpenApiSchemaEditor {
         } else {
             throw new IllegalArgumentException("Unsupported schema addition");
         }
-        Object added = DocumentIndex.build(after.document().orElseThrow())
-                .findByPath(path).orElseThrow(() -> new IllegalArgumentException("Added schema was not imported"))
-                .value();
-        Schema actual = added instanceof SchemaComponent component ? component.getSchema()
-                : added instanceof SchemaProperty property ? property.getSchema()
-                        : added instanceof Schema schema ? schema : null;
-        OpenApiVersion version = OpenApiVersion.supported(before.version().orElseThrow()).orElseThrow();
-        SchemaAdditionSerializer serializer = new SchemaAdditionSerializer();
-        if (actual == null || !serializer.serialize(expected, version).equals(serializer.serialize(actual, version))) {
-            throw new IllegalArgumentException("Added schema was not preserved by the OpenAPI parser");
+        new SchemaSourceVerifier().verifyAddedSchema(after.source(), after.format().orElseThrow(), path,
+                expected, version);
+    }
+
+    private void verifyUpdate(ImportResult imported, Change change, OpenApiVersion version) {
+        if (!(change instanceof SchemaObjectUpdated update)) {
+            throw new IllegalArgumentException("Unsupported schema update");
         }
+        new SchemaSourceVerifier().verifyUpdatedSchema(imported.source(), imported.format().orElseThrow(),
+                update.path(), update.before(), update.after(), version);
     }
 
     public record RenameResult(EditResult edit, Optional<SourceDocument> source, ImportResult state) {

@@ -2,6 +2,7 @@ package io.github.yluttsev.matte.openapi.patch;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
@@ -21,7 +22,7 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
 
     @Override
     public String add(String text, DocumentPath parent, DocumentPath requiredAncestor, String name,
-            Map<String, Object> schema) {
+            Object value) {
         Node node = new Compose(SETTINGS).composeString(text).orElseThrow();
         YamlSourceOffsets offsets = new YamlSourceOffsets(text);
         if (!(node instanceof MappingNode)) {
@@ -47,7 +48,7 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
         if (existingDepth == parent.segments().size() && child(mapping, name) != null) {
             throw new IllegalArgumentException("Source already contains: " + parent.child(name));
         }
-        Map<String, Object> content = nested(parent, existingDepth, name, schema);
+        Map<String, Object> content = nested(parent, existingDepth, name, value);
         if (mapping.getFlowStyle() == FlowStyle.FLOW) {
             return insertFlow(text, mapping, content, offsets);
         }
@@ -79,8 +80,9 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
     }
 
     private Map<String, Object> nested(DocumentPath parent, int existingDepth, String name,
-            Map<String, Object> schema) {
-        Map<String, Object> content = Map.of(name, schema);
+            Object value) {
+        Map<String, Object> content = new LinkedHashMap<>();
+        content.put(name, value);
         for (int index = parent.segments().size() - 1; index >= existingDepth; index--) {
             Map<String, Object> wrapper = new LinkedHashMap<>();
             wrapper.put(parent.segments().get(index), content);
@@ -151,16 +153,42 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
 
     private String render(Map<String, Object> content, int indent, String newline) {
         StringBuilder builder = new StringBuilder();
+        renderMapping(builder, content, indent, newline);
+        return builder.toString();
+    }
+
+    private void renderMapping(StringBuilder builder, Map<String, Object> content, int indent, String newline) {
         for (var entry : content.entrySet()) {
             builder.append(" ".repeat(indent)).append(SourceTextEdits.yamlScalar(entry.getKey())).append(':');
             if (entry.getValue() instanceof Map<?, ?> children && !children.isEmpty()) {
                 builder.append(newline);
-                builder.append(render(castMap(children), indent + 2, newline));
+                renderMapping(builder, castMap(children), indent + 2, newline);
+            } else if (entry.getValue() instanceof List<?> values && containsComposite(values)) {
+                builder.append(newline);
+                renderSequence(builder, values, indent + 2, newline);
             } else {
                 builder.append(' ').append(scalar(entry.getValue())).append(newline);
             }
         }
-        return builder.toString();
+    }
+
+    private void renderSequence(StringBuilder builder, List<?> values, int indent, String newline) {
+        for (Object value : values) {
+            builder.append(" ".repeat(indent)).append('-');
+            if (value instanceof Map<?, ?> children && !children.isEmpty()) {
+                builder.append(newline);
+                renderMapping(builder, castMap(children), indent + 2, newline);
+            } else if (value instanceof List<?> children && containsComposite(children)) {
+                builder.append(newline);
+                renderSequence(builder, children, indent + 2, newline);
+            } else {
+                builder.append(' ').append(scalar(value)).append(newline);
+            }
+        }
+    }
+
+    private boolean containsComposite(List<?> values) {
+        return values.stream().anyMatch(value -> value instanceof Map<?, ?> || value instanceof List<?>);
     }
 
     private Map<String, Object> castMap(Map<?, ?> input) {

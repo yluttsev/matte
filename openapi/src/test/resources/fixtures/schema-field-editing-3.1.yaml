@@ -1,0 +1,19 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+components:
+  schemas:
+    Customer:
+      type: object
+      title: Existing title
+      description: Keep this description
+      default: null
+      minLength: 3
+      properties:
+        name:
+          type: string
+          x-note:
+            $ref: '#/components/schemas/Customer'
+      x-note:
+        $ref: '#/components/schemas/Customer'

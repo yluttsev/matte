@@ -20,7 +20,7 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
 
     @Override
     public String add(String text, DocumentPath parent, DocumentPath requiredAncestor, String name,
-            Map<String, Object> schema) {
+            Object value) {
         Index index = index(text);
         if (!index.objects().containsKey(requiredAncestor)) {
             throw new IllegalArgumentException("Required source mapping was not found: " + requiredAncestor);
@@ -36,15 +36,16 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
         if (index.nodes().contains(parent.child(name))) {
             throw new IllegalArgumentException("Source already contains: " + parent.child(name));
         }
-        Map<String, Object> content = nested(parent, existing, name, schema);
+        Map<String, Object> content = nested(parent, existing, name, value);
         var entry = content.entrySet().iterator().next();
         return insert(text, object, JSON.writeValueAsString(entry.getKey()),
                 JSON.writeValueAsString(entry.getValue()));
     }
 
     private Map<String, Object> nested(DocumentPath parent, DocumentPath existing, String name,
-            Map<String, Object> schema) {
-        Map<String, Object> current = Map.of(name, schema);
+            Object value) {
+        Map<String, Object> current = new LinkedHashMap<>();
+        current.put(name, value);
         for (int index = parent.segments().size() - 1; index >= existing.segments().size(); index--) {
             Map<String, Object> wrapped = new LinkedHashMap<>();
             wrapped.put(parent.segments().get(index), current);
