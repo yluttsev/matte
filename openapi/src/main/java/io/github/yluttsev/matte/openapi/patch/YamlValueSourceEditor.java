@@ -7,6 +7,7 @@ import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
 import org.snakeyaml.engine.v2.common.FlowStyle;
+import org.snakeyaml.engine.v2.common.ScalarStyle;
 import org.snakeyaml.engine.v2.nodes.MappingNode;
 import org.snakeyaml.engine.v2.nodes.Node;
 import org.snakeyaml.engine.v2.nodes.NodeTuple;
@@ -23,7 +24,33 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
     public String replace(String text, DocumentPath path, Object value) {
         LocatedNode located = locate(text, path);
         Range range = range(located.node(), located.offsets());
-        return text.substring(0, range.start()) + JSON.writeValueAsString(value) + text.substring(range.end());
+        int end = range.end();
+        if (located.node() instanceof ScalarNode scalar && isBlockScalar(scalar)) {
+            ensureNoInlineComment(text, range.start());
+            end = endBeforeTrailingLineEnding(text, range);
+        }
+        String prefix = "";
+        if (range.start() == range.end() && range.start() > 0 && text.charAt(range.start() - 1) == ':') {
+            ensureNoInlineComment(text, range.start());
+            prefix = " ";
+        }
+        return text.substring(0, range.start()) + prefix + JSON.writeValueAsString(value) + text.substring(end);
+    }
+
+    private boolean isBlockScalar(ScalarNode scalar) {
+        return scalar.getScalarStyle() == ScalarStyle.LITERAL
+                || scalar.getScalarStyle() == ScalarStyle.FOLDED;
+    }
+
+    private int endBeforeTrailingLineEnding(String text, Range range) {
+        int end = range.end();
+        if (end > range.start() && text.charAt(end - 1) == '\n') {
+            end--;
+            if (end > range.start() && text.charAt(end - 1) == '\r') {
+                end--;
+            }
+        }
+        return end;
     }
 
     @Override
