@@ -161,10 +161,14 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
     }
 
     private int lastContentEnd(Node node, YamlSourceOffsets offsets) {
-        if (node instanceof MappingNode mapping && !mapping.getValue().isEmpty()) {
+        if (node instanceof MappingNode mapping
+                && mapping.getFlowStyle() != FlowStyle.FLOW
+                && !mapping.getValue().isEmpty()) {
             return lastContentEnd(mapping.getValue().getLast().getValueNode(), offsets);
         }
-        if (node instanceof SequenceNode sequence && !sequence.getValue().isEmpty()) {
+        if (node instanceof SequenceNode sequence
+                && sequence.getFlowStyle() != FlowStyle.FLOW
+                && !sequence.getValue().isEmpty()) {
             return lastContentEnd(sequence.getValue().getLast(), offsets);
         }
         return offsets.charOffset(node.getEndMark().orElseThrow().getIndex());
