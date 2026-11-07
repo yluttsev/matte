@@ -1,0 +1,17 @@
+openapi: 3.1.0
+info:
+  title: YAML alias safety
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Shared: &sharedSchema
+      type: object
+      title: Shared schema
+      properties:
+        name:
+          type: string
+    Alias: *sharedSchema
+    Independent:
+      type: object
+      title: Independent

@@ -1,0 +1,17 @@
+openapi: 3.1.0
+info:
+  title: YAML alias safety
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Values:
+      type: object
+      default:
+        nested:
+          values: &sharedValues
+            - before
+            - preserved
+      example:
+        nested:
+          values: *sharedValues

@@ -33,6 +33,7 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
         if (!(node instanceof MappingNode)) {
             throw new IllegalArgumentException("OpenAPI source root must be a mapping");
         }
+        YamlAliasSafety.requireUniqueInsertionPath(node, parent);
         int existingDepth = 0;
         while (existingDepth < parent.segments().size()) {
             MappingNode mapping = (MappingNode) node;
