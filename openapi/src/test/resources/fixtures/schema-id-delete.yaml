@@ -1,0 +1,19 @@
+openapi: 3.1.0
+info:
+  title: URI scoped deletion
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Canonical:
+      $id: https://example.com/schemas/canonical.json
+      type: string
+    Scoped:
+      $id: schemas/scoped.json
+      properties:
+        nested:
+          $id: nested.json
+          type: string
+    Consumer:
+      $id: https://example.com/consumer.json
+      $ref: https://example.com/schemas/canonical.json

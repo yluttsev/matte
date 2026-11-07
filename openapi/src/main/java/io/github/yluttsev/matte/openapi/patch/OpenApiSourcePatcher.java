@@ -35,6 +35,9 @@ public final class OpenApiSourcePatcher {
         if (changes.changes().isEmpty()) {
             return source;
         }
+        if (changes.changes().stream().anyMatch(this::isSchemaRename)) {
+            SchemaIdScopeDetector.rejectIfPresent(source, format);
+        }
         Rename rename = renameChange(changes);
         String text = decode(source);
         List<SourceScalar> scalars = SCANNERS.get(format).scan(text);
@@ -42,6 +45,10 @@ public final class OpenApiSourcePatcher {
         validateChanges(changes, scalars, relocator);
         SourceTextEdits edits = edits(text, format, scalars, rename, relocator);
         return new SourceDocument(edits.apply(text).getBytes(StandardCharsets.UTF_8));
+    }
+
+    private boolean isSchemaRename(Change change) {
+        return change instanceof SchemaComponentRenamed || change instanceof SchemaPropertyRenamed;
     }
 
     private Rename renameChange(ChangeSet changes) {

@@ -32,6 +32,7 @@ public final class OpenApiSchemaDeletionPatcher {
         Objects.requireNonNull(source, "source");
         Objects.requireNonNull(format, "format");
         Objects.requireNonNull(targetPath, "targetPath");
+        SchemaIdScopeDetector.rejectIfPresent(source, format);
 
         String text = decode(source);
         SchemaReferenceRelocator matcher = new SchemaReferenceRelocator(targetPath, targetPath);
@@ -51,6 +52,7 @@ public final class OpenApiSchemaDeletionPatcher {
         Objects.requireNonNull(source, "source");
         Objects.requireNonNull(format, "format");
         Objects.requireNonNull(path, "path");
+        SchemaIdScopeDetector.rejectIfPresent(source, format);
 
         String text = decode(source);
         String updated = VALUE_EDITORS.get(format).remove(text, path);

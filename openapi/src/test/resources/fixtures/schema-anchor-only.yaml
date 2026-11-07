@@ -1,0 +1,16 @@
+openapi: 3.1.0
+info:
+  title: Anchor references
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    A:
+      type: string
+    Anchored:
+      $anchor: marker
+      x-vendor:
+        $id: https://example.com/extension.json
+        $ref: "#/components/schemas/A"
+    Outside:
+      $ref: "#/components/schemas/A"

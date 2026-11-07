@@ -33,6 +33,7 @@ import io.github.yluttsev.matte.openapi.patch.OpenApiAdditionPatcher;
 import io.github.yluttsev.matte.openapi.patch.OpenApiSchemaDeletionPatcher;
 import io.github.yluttsev.matte.openapi.patch.OpenApiSourcePatcher;
 import io.github.yluttsev.matte.openapi.patch.SchemaFieldPatcher;
+import io.github.yluttsev.matte.openapi.patch.SchemaIdScopeDetector;
 import io.github.yluttsev.matte.openapi.patch.SchemaSourceVerifier;
 
 public final class OpenApiSchemaEditor {
@@ -80,6 +81,15 @@ public final class OpenApiSchemaEditor {
         }
         SourceFormat format = imported.format().orElseThrow();
         OpenApiVersion version = OpenApiVersion.supported(imported.version().orElseThrow()).orElseThrow();
+        Optional<OpenApiEditResult> idScopeRejection = rejectUnsupportedIdScopes(
+                imported,
+                succeeded,
+                format,
+                version
+        );
+        if (idScopeRejection.isPresent()) {
+            return idScopeRejection.orElseThrow();
+        }
         Optional<OpenApiEditResult> sourceReferenceRejection = rejectUnmappedIncomingReferences(
                 imported,
                 succeeded,
@@ -114,6 +124,33 @@ public final class OpenApiSchemaEditor {
                 Optional.of(succeeded.document())
         );
         return new OpenApiEditResult(edit, Optional.of(source), state);
+    }
+
+    private Optional<OpenApiEditResult> rejectUnsupportedIdScopes(
+            ImportResult imported,
+            EditSucceeded succeeded,
+            SourceFormat format,
+            OpenApiVersion version
+    ) {
+        if (version != OpenApiVersion.V3_1
+                || succeeded.changeSet().changes().stream().noneMatch(this::changesSchemaReferenceScope)) {
+            return Optional.empty();
+        }
+        if (!SchemaIdScopeDetector.containsSchemaId(imported.source(), format)) {
+            return Optional.empty();
+        }
+        EditRejected rejection = new EditRejected(List.of(new EditIssue(
+                EditCode.INVALID_STRUCTURE,
+                SchemaIdScopeDetector.UNSUPPORTED_EDIT_MESSAGE
+        )));
+        return Optional.of(new OpenApiEditResult(rejection, Optional.empty(), imported));
+    }
+
+    private boolean changesSchemaReferenceScope(Change change) {
+        return change instanceof SchemaComponentRenamed
+                || change instanceof SchemaPropertyRenamed
+                || change instanceof SchemaComponentDeleted
+                || change instanceof SchemaPropertyDeleted;
     }
 
     private SourceDocument sourceAfterEdit(
