@@ -69,7 +69,8 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
     }
 
     private LocatedNode locate(String text, DocumentPath path) {
-        Node current = new Compose(SETTINGS).composeString(text).orElseThrow();
+        Node root = new Compose(SETTINGS).composeString(text).orElseThrow();
+        Node current = root;
         YamlSourceOffsets offsets = new YamlSourceOffsets(text);
         MappingNode parent = null;
         NodeTuple tuple = null;
@@ -78,11 +79,7 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
             if (current instanceof MappingNode mapping) {
                 tupleIndex = tupleIndex(mapping, segment);
                 tuple = mapping.getValue().get(tupleIndex);
-                Node key = tuple.getKeyNode();
                 Node value = tuple.getValueNode();
-                if (value.getStartMark().orElseThrow().getIndex() < key.getEndMark().orElseThrow().getIndex()) {
-                    throw new IllegalArgumentException("Alias-based source values cannot be patched: " + path);
-                }
                 parent = mapping;
                 current = value;
             } else if (current instanceof SequenceNode sequence) {
@@ -94,6 +91,7 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
                 throw new IllegalArgumentException("Source path does not point to a value: " + path);
             }
         }
+        YamlAliasSafety.requireUniqueChangedValue(root, path);
         return new LocatedNode(current, parent, tuple, tupleIndex, offsets);
     }
 
