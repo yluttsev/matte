@@ -1,0 +1,16 @@
+openapi: 3.1.0
+info:
+  title: Discriminator mapping
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+    Animal:
+      type: object
+      discriminator:
+        propertyName: kind
+        mapping:
+          "$ref": Cat
+          direct: '#/components/schemas/Cat'

@@ -2,9 +2,11 @@ package io.github.yluttsev.matte.openapi.patch;
 
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import io.github.yluttsev.matte.core.editing.change.Change;
 import io.github.yluttsev.matte.core.editing.change.ChangeSet;
 import io.github.yluttsev.matte.core.editing.change.ReferenceChanged;
@@ -38,7 +40,7 @@ public final class OpenApiSourcePatcher {
         List<SourceScalar> scalars = SCANNERS.get(format).scan(text);
         SchemaReferenceRelocator relocator = rename.relocator();
         validateChanges(changes, scalars, relocator);
-        SourceTextEdits edits = edits(scalars, rename, relocator);
+        SourceTextEdits edits = edits(text, format, scalars, rename, relocator);
         return new SourceDocument(edits.apply(text).getBytes(StandardCharsets.UTF_8));
     }
 
@@ -106,13 +108,19 @@ public final class OpenApiSourcePatcher {
     }
 
     private SourceTextEdits edits(
+            String text,
+            SourceFormat format,
             List<SourceScalar> scalars,
             Rename rename,
             SchemaReferenceRelocator relocator
     ) {
         SourceTextEdits edits = new SourceTextEdits();
+        Set<DocumentPath> removedRequiredItems = removeDuplicateRequiredItems(text, format, scalars, rename, edits);
         boolean found = false;
         for (SourceScalar scalar : scalars) {
+            if (removedRequiredItems.contains(scalar.path())) {
+                continue;
+            }
             if (scalar.key() && scalar.path().equals(relocator.oldPath())) {
                 found = true;
                 edits.replace(scalar, rename.newName());
@@ -127,6 +135,54 @@ public final class OpenApiSourcePatcher {
             throw new IllegalArgumentException("Schema element was not found in source: " + rename.oldName());
         }
         return edits;
+    }
+
+    private Set<DocumentPath> removeDuplicateRequiredItems(
+            String text,
+            SourceFormat format,
+            List<SourceScalar> scalars,
+            Rename rename,
+            SourceTextEdits edits
+    ) {
+        if (rename.requiredPath() == null || rename.oldName().equals(rename.newName())) {
+            return Set.of();
+        }
+        List<SourceScalar> requiredItems = scalars.stream()
+                .filter(scalar -> !scalar.key())
+                .filter(scalar -> scalar.path().parent().filter(rename.requiredPath()::equals).isPresent())
+                .sorted(Comparator.comparingInt(this::sequenceIndex))
+                .toList();
+        boolean newNameAlreadyExists = requiredItems.stream()
+                .anyMatch(item -> item.value().equals(rename.newName()));
+        if (!newNameAlreadyExists) {
+            return Set.of();
+        }
+        List<SourceScalar> oldItems = requiredItems.stream()
+                .filter(item -> item.value().equals(rename.oldName()))
+                .toList();
+        if (oldItems.isEmpty()) {
+            return Set.of();
+        }
+        return new RequiredArrayItemPatcher().remove(
+                text,
+                format,
+                rename.requiredPath(),
+                requiredItems,
+                oldItems,
+                edits
+        );
+    }
+
+    private int sequenceIndex(SourceScalar scalar) {
+        String segment = scalar.path().segments().getLast();
+        try {
+            return Integer.parseInt(segment);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(
+                    "Required entry does not have a sequence index: " + scalar.path(),
+                    exception
+            );
+        }
     }
 
     private String decode(SourceDocument source) {
