@@ -1,0 +1,19 @@
+openapi: 3.1.0
+info: {title: Test, version: 1.0.0}
+components:
+  schemas:
+    Literal:
+      description: |
+        first line
+        # literal content
+        second line
+      title: Keep literal title
+    Folded:
+      description: >
+        first line
+        second line
+      title: Keep folded title
+    Empty:
+      default: "Updated"
+      title: Keep empty title
+x-keep: unchanged

@@ -1,0 +1,9 @@
+openapi: 3.1.0
+info: {title: Test, version: 1.0.0}
+components:
+  schemas:
+    A:
+      minLength: 2
+    B:
+      type: string
+x-keep: unchanged

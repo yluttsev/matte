@@ -7,6 +7,7 @@ import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
 import org.snakeyaml.engine.v2.common.FlowStyle;
+import org.snakeyaml.engine.v2.common.ScalarStyle;
 import org.snakeyaml.engine.v2.nodes.MappingNode;
 import org.snakeyaml.engine.v2.nodes.Node;
 import org.snakeyaml.engine.v2.nodes.NodeTuple;
@@ -23,7 +24,33 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
     public String replace(String text, DocumentPath path, Object value) {
         LocatedNode located = locate(text, path);
         Range range = range(located.node(), located.offsets());
-        return text.substring(0, range.start()) + JSON.writeValueAsString(value) + text.substring(range.end());
+        int end = range.end();
+        if (located.node() instanceof ScalarNode scalar && isBlockScalar(scalar)) {
+            ensureNoInlineComment(text, range.start());
+            end = endBeforeTrailingLineEnding(text, range);
+        }
+        String prefix = "";
+        if (range.start() == range.end() && range.start() > 0 && text.charAt(range.start() - 1) == ':') {
+            ensureNoInlineComment(text, range.start());
+            prefix = " ";
+        }
+        return text.substring(0, range.start()) + prefix + JSON.writeValueAsString(value) + text.substring(end);
+    }
+
+    private boolean isBlockScalar(ScalarNode scalar) {
+        return scalar.getScalarStyle() == ScalarStyle.LITERAL
+                || scalar.getScalarStyle() == ScalarStyle.FOLDED;
+    }
+
+    private int endBeforeTrailingLineEnding(String text, Range range) {
+        int end = range.end();
+        if (end > range.start() && text.charAt(end - 1) == '\n') {
+            end--;
+            if (end > range.start() && text.charAt(end - 1) == '\r') {
+                end--;
+            }
+        }
+        return end;
     }
 
     @Override
@@ -122,11 +149,39 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
         } else {
             ensureNoLeadingComment(text, keyStart);
         }
-        String suffix = text.substring(parentRange.end());
-        if (parentRange.end() == text.length()) {
-            suffix = trailingLineEndings(text);
+        if (located.parent().getFlowStyle() == FlowStyle.FLOW) {
+            return text.substring(0, parentRange.start()) + "{}" + text.substring(parentRange.end());
         }
-        return text.substring(0, parentRange.start()) + "{}" + suffix;
+        int end = parentRange.end();
+        if (end == text.length()) {
+            return text.substring(0, parentRange.start()) + "{}" + trailingLineEndings(text);
+        }
+        int nextLineStart = lineStart(text, end);
+        if (!text.substring(nextLineStart, end).isBlank() || nextLineStart == 0) {
+            throw new IllegalArgumentException("YAML block mapping end is ambiguous: " + path);
+        }
+        int lineBreakStart = blockSeparatorStart(text, parentRange.start(), nextLineStart, path);
+        return text.substring(0, parentRange.start()) + "{}" + text.substring(lineBreakStart);
+    }
+
+    private int blockSeparatorStart(String text, int start, int nextLineStart, DocumentPath path) {
+        int position = nextLineStart;
+        while (position > start) {
+            int previousLineStart = lineStart(text, position - 1);
+            String line = text.substring(previousLineStart, position).strip();
+            if (line.startsWith("#")) {
+                throw new IllegalArgumentException("Comments around a YAML field cannot be moved safely: " + path);
+            }
+            if (!line.isEmpty()) {
+                int lineBreakStart = position - 1;
+                if (lineBreakStart > 0 && text.charAt(lineBreakStart - 1) == '\r') {
+                    lineBreakStart--;
+                }
+                return lineBreakStart;
+            }
+            position = previousLineStart;
+        }
+        throw new IllegalArgumentException("YAML block mapping end is ambiguous: " + path);
     }
 
     private String removeFlowField(String text, LocatedNode located) {
