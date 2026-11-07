@@ -20,6 +20,10 @@ final class SourceTextEdits {
         edits.add(new TextEdit(scalar.start(), scalar.end(), formatValue(scalar.style(), value)));
     }
 
+    void remove(int start, int end) {
+        edits.add(new TextEdit(start, end, ""));
+    }
+
     static String yamlScalar(String value) {
         return formatValue(SourceScalar.QuoteStyle.PLAIN, value);
     }

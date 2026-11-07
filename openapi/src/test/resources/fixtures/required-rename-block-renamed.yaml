@@ -1,0 +1,17 @@
+openapi: 3.1.0
+info:
+  title: Required rename
+  version: '1.0.0'
+paths: {}
+components:
+  schemas:
+    Customer:
+      type: object
+      properties:
+        newName:
+          type: string
+        later:
+          type: string
+      required:
+        - newName
+        - later
