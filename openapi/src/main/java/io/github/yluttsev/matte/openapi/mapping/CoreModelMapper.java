@@ -173,13 +173,13 @@ public final class CoreModelMapper {
                             schemaValues
                     )
             )
-                    .minProperties(integer(source.getMinProperties()))
-                    .maxProperties(integer(source.getMaxProperties()))
-                    .minItems(integer(source.getMinItems()))
-                    .maxItems(integer(source.getMaxItems()))
+                    .minProperties(integer(values, "minProperties", source.getMinProperties()))
+                    .maxProperties(integer(values, "maxProperties", source.getMaxProperties()))
+                    .minItems(integer(values, "minItems", source.getMinItems()))
+                    .maxItems(integer(values, "maxItems", source.getMaxItems()))
                     .uniqueItems(source.getUniqueItems())
-                    .minLength(integer(source.getMinLength()))
-                    .maxLength(integer(source.getMaxLength()))
+                    .minLength(integer(values, "minLength", source.getMinLength()))
+                    .maxLength(integer(values, "maxLength", source.getMaxLength()))
                     .pattern(source.getPattern())
                     .minimum(source.getMinimum())
                     .maximum(source.getMaximum())
@@ -405,7 +405,10 @@ public final class CoreModelMapper {
         return new BigDecimal(value.toString());
     }
 
-    private BigInteger integer(Integer value) {
+    private BigInteger integer(SchemaValueFields values, String field, Integer value) {
+        if (values != null && values.integerConstraints().containsKey(field)) {
+            return values.integerConstraints().get(field);
+        }
         if (value == null) {
             return null;
         }

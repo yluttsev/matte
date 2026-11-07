@@ -1,6 +1,8 @@
 package io.github.yluttsev.matte.openapi.mapping;
 
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 import io.github.yluttsev.matte.core.model.value.DocumentValue;
 
 public record SchemaValueFields(
@@ -11,11 +13,13 @@ public record SchemaValueFields(
         List<DocumentValue> examples,
         List<DocumentValue> enumValues,
         boolean hasConst,
-        DocumentValue constValue
+        DocumentValue constValue,
+        Map<String, BigInteger> integerConstraints
 ) {
 
     public SchemaValueFields {
         examples = List.copyOf(examples);
         enumValues = List.copyOf(enumValues);
+        integerConstraints = Map.copyOf(integerConstraints);
     }
 }
