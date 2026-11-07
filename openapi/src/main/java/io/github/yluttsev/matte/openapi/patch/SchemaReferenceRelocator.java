@@ -141,17 +141,17 @@ final class SchemaReferenceRelocator {
         if (isOpaqueValue(segments)) {
             return scalar.value();
         }
-        if (!segments.isEmpty() && REF_FIELD.equals(segments.getLast())) {
-            if (isReferenceLocation(segments)) {
-                return relocateReference(scalar.value());
-            }
-            return scalar.value();
-        }
         if (isDiscriminatorMapping(segments)) {
             if (oldMappingName != null && scalar.value().equals(oldMappingName)) {
                 return newMappingName;
             }
             return relocateReference(scalar.value());
+        }
+        if (!segments.isEmpty() && REF_FIELD.equals(segments.getLast())) {
+            if (isReferenceLocation(segments)) {
+                return relocateReference(scalar.value());
+            }
+            return scalar.value();
         }
         if (isRequiredValue(scalar) && scalar.value().equals(oldRequiredName)) {
             return newRequiredName;
@@ -167,16 +167,16 @@ final class SchemaReferenceRelocator {
             return false;
         }
         List<String> segments = scalar.path().segments();
-        if (!segments.isEmpty() && REF_FIELD.equals(segments.getLast())) {
-            return isReferenceLocation(segments) && pointsTo(scalar.value(), targetPath);
+        if (isDiscriminatorMapping(segments)) {
+            if (isSchemaComponentPath(targetPath) && scalar.value().equals(targetPath.segments().getLast())) {
+                return true;
+            }
+            return pointsTo(scalar.value(), targetPath);
         }
-        if (!isDiscriminatorMapping(segments)) {
-            return false;
-        }
-        if (isSchemaComponentPath(targetPath) && scalar.value().equals(targetPath.segments().getLast())) {
-            return true;
-        }
-        return pointsTo(scalar.value(), targetPath);
+        return !segments.isEmpty()
+                && REF_FIELD.equals(segments.getLast())
+                && isReferenceLocation(segments)
+                && pointsTo(scalar.value(), targetPath);
     }
 
     private static boolean isOpaqueValue(List<String> segments) {
