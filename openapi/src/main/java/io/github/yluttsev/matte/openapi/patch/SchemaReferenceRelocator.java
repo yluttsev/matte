@@ -10,6 +10,7 @@ import io.github.yluttsev.matte.core.navigation.DocumentPath;
 final class SchemaReferenceRelocator {
 
     private static final String REF_FIELD = "$ref";
+    private static final String ID_FIELD = "$id";
     private static final String COMPONENTS_FIELD = "components";
     private static final String SCHEMAS_FIELD = "schemas";
     private static final String DISCRIMINATOR_FIELD = "discriminator";
@@ -177,6 +178,12 @@ final class SchemaReferenceRelocator {
                 && REF_FIELD.equals(segments.getLast())
                 && isReferenceLocation(segments)
                 && pointsTo(scalar.value(), targetPath);
+    }
+
+    static boolean isPotentialSchemaId(SourceScalar scalar) {
+        return scalar.key()
+                && ID_FIELD.equals(scalar.value())
+                && !isOpaqueValue(scalar.path().segments());
     }
 
     private static boolean isOpaqueValue(List<String> segments) {
