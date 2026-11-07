@@ -105,6 +105,11 @@ public final class OpenApiSchemaEditor {
                     "Patched OpenAPI document could not be imported: " + checked.diagnostics()
             );
         }
+        new SchemaModelConsistencyVerifier().verify(
+                succeeded.document(),
+                checked.document().orElseThrow(),
+                version
+        );
         if (!succeeded.changeSet().changes().isEmpty()) {
             Change change = succeeded.changeSet().changes().getFirst();
             if (command instanceof AddSchemaComponent || command instanceof AddSchemaProperty) {
