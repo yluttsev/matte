@@ -1,0 +1,13 @@
+openapi: 3.1.0
+info:
+  title: Unknown reference context
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Old:
+      type: string
+    Holder:
+      type: object
+      custom-keyword:
+        $ref: '#/components/schemas/Old'

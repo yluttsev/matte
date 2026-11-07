@@ -34,6 +34,45 @@ final class SchemaReferenceRelocator {
             "encoding",
             "mapping"
     );
+    private static final Set<String> COMPONENT_REFERENCE_FIELDS = Set.of(
+            "callbacks",
+            "examples",
+            "headers",
+            "links",
+            "parameters",
+            "requestBodies",
+            "responses"
+    );
+    private static final Set<String> SINGLE_SCHEMA_FIELDS = Set.of(
+            "additionalProperties",
+            "contains",
+            "else",
+            "if",
+            "items",
+            "not",
+            "propertyNames",
+            "then",
+            "unevaluatedItems",
+            "unevaluatedProperties"
+    );
+    private static final Set<String> MAP_SCHEMA_FIELDS = Set.of(
+            "$defs",
+            "definitions",
+            "dependentSchemas",
+            "patternProperties",
+            "properties"
+    );
+    private static final Set<String> ARRAY_SCHEMA_FIELDS = Set.of("allOf", "anyOf", "oneOf", "prefixItems");
+    private static final Set<String> HTTP_METHODS = Set.of(
+            "get",
+            "put",
+            "post",
+            "delete",
+            "options",
+            "head",
+            "patch",
+            "trace"
+    );
 
     private final String oldMappingName;
     private final String newMappingName;
@@ -103,7 +142,10 @@ final class SchemaReferenceRelocator {
             return scalar.value();
         }
         if (!segments.isEmpty() && REF_FIELD.equals(segments.getLast())) {
-            return relocateReference(scalar.value());
+            if (isReferenceLocation(segments)) {
+                return relocateReference(scalar.value());
+            }
+            return scalar.value();
         }
         if (isDiscriminatorMapping(segments)) {
             if (oldMappingName != null && scalar.value().equals(oldMappingName)) {
@@ -126,7 +168,7 @@ final class SchemaReferenceRelocator {
         }
         List<String> segments = scalar.path().segments();
         if (!segments.isEmpty() && REF_FIELD.equals(segments.getLast())) {
-            return pointsTo(scalar.value(), targetPath);
+            return isReferenceLocation(segments) && pointsTo(scalar.value(), targetPath);
         }
         if (!isDiscriminatorMapping(segments)) {
             return false;
@@ -146,6 +188,138 @@ final class SchemaReferenceRelocator {
             }
         }
         return false;
+    }
+
+    private static boolean isReferenceLocation(List<String> segments) {
+        return isSchemaComponentReference(segments)
+                || isPathSchemaReference(segments)
+                || isComponentReferenceObject(segments)
+                || isPathReferenceObject(segments);
+    }
+
+    private static boolean isSchemaComponentReference(List<String> segments) {
+        int referenceIndex = segments.size() - 1;
+        for (int index = 0; index + 2 < referenceIndex; index++) {
+            if (COMPONENTS_FIELD.equals(segments.get(index))
+                    && SCHEMAS_FIELD.equals(segments.get(index + 1))) {
+                return isSchemaObjectPath(segments, index + 3, referenceIndex);
+            }
+        }
+        return false;
+    }
+
+    private static boolean isPathSchemaReference(List<String> segments) {
+        int referenceIndex = segments.size() - 1;
+        for (int index = 1; index < referenceIndex; index++) {
+            if ("schema".equals(segments.get(index))
+                    && isPathSchemaField(segments, index)
+                    && isSchemaObjectPath(segments, index + 1, referenceIndex)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isSchemaObjectPath(List<String> segments, int start, int end) {
+        int index = start;
+        while (index < end) {
+            String field = segments.get(index);
+            if (MAP_SCHEMA_FIELDS.contains(field)) {
+                if (index + 1 >= end) {
+                    return false;
+                }
+                index += 2;
+            } else if (ARRAY_SCHEMA_FIELDS.contains(field)) {
+                if (index + 1 >= end || !isArrayIndex(segments.get(index + 1))) {
+                    return false;
+                }
+                index += 2;
+            } else if (SINGLE_SCHEMA_FIELDS.contains(field)) {
+                index++;
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isPathSchemaField(List<String> segments, int schemaIndex) {
+        List<String> parent = segments.subList(0, schemaIndex);
+        if (isParameterOrHeader(parent)) {
+            return true;
+        }
+        int contentIndex = schemaIndex - 2;
+        if (contentIndex < 0 || !"content".equals(segments.get(contentIndex))) {
+            return false;
+        }
+        return isContentContainer(segments.subList(0, contentIndex));
+    }
+
+    private static boolean isParameterOrHeader(List<String> parent) {
+        if (parent.isEmpty()) {
+            return false;
+        }
+        if ("paths".equals(parent.getFirst())) {
+            return parent.size() == 4 && "parameters".equals(parent.get(2)) && isArrayIndex(parent.get(3))
+                    || parent.size() == 5 && HTTP_METHODS.contains(parent.get(2))
+                    && "parameters".equals(parent.get(3)) && isArrayIndex(parent.get(4))
+                    || parent.size() == 7 && HTTP_METHODS.contains(parent.get(2))
+                    && "responses".equals(parent.get(3)) && "headers".equals(parent.get(5));
+        }
+        if (parent.size() == 3 && COMPONENTS_FIELD.equals(parent.getFirst())) {
+            return Set.of("headers", "parameters").contains(parent.get(1));
+        }
+        return parent.size() == 5
+                && COMPONENTS_FIELD.equals(parent.getFirst())
+                && "responses".equals(parent.get(1))
+                && "headers".equals(parent.get(3));
+    }
+
+    private static boolean isContentContainer(List<String> parent) {
+        if (parent.isEmpty()) {
+            return false;
+        }
+        if ("paths".equals(parent.getFirst())) {
+            return parent.size() == 4 && HTTP_METHODS.contains(parent.get(2)) && "requestBody".equals(parent.get(3))
+                    || parent.size() == 5 && HTTP_METHODS.contains(parent.get(2))
+                    && "responses".equals(parent.get(3))
+                    || parent.size() == 4 && "parameters".equals(parent.get(2))
+                    || parent.size() == 5 && HTTP_METHODS.contains(parent.get(2))
+                    && "parameters".equals(parent.get(3))
+                    || parent.size() == 7 && HTTP_METHODS.contains(parent.get(2))
+                    && "responses".equals(parent.get(3)) && "headers".equals(parent.get(5));
+        }
+        return parent.size() == 3
+                && COMPONENTS_FIELD.equals(parent.getFirst())
+                && Set.of("headers", "parameters", "requestBodies", "responses").contains(parent.get(1))
+                || parent.size() == 5
+                && COMPONENTS_FIELD.equals(parent.getFirst())
+                && "responses".equals(parent.get(1)) && "headers".equals(parent.get(3));
+    }
+
+    private static boolean isComponentReferenceObject(List<String> segments) {
+        return segments.size() == 4
+                && COMPONENTS_FIELD.equals(segments.getFirst())
+                && COMPONENT_REFERENCE_FIELDS.contains(segments.get(1));
+    }
+
+    private static boolean isPathReferenceObject(List<String> segments) {
+        if (segments.size() < 3 || !"paths".equals(segments.getFirst())) {
+            return false;
+        }
+        List<String> parent = segments.subList(0, segments.size() - 1);
+        if (parent.size() == 2) {
+            return true;
+        }
+        return parent.size() == 4 && "parameters".equals(parent.get(2)) && isArrayIndex(parent.get(3))
+                || parent.size() == 5 && HTTP_METHODS.contains(parent.get(2))
+                && "parameters".equals(parent.get(3)) && isArrayIndex(parent.get(4))
+                || parent.size() == 4 && HTTP_METHODS.contains(parent.get(2))
+                && "requestBody".equals(parent.get(3))
+                || parent.size() == 5 && HTTP_METHODS.contains(parent.get(2))
+                && "responses".equals(parent.get(3))
+                || parent.size() == 7 && HTTP_METHODS.contains(parent.get(2))
+                && "responses".equals(parent.get(3)) && "headers".equals(parent.get(5));
     }
 
     private static boolean isLiteralSchemaField(List<String> segments, int index) {
