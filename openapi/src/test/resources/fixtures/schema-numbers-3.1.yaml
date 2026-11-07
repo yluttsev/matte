@@ -1,0 +1,29 @@
+openapi: 3.1.0
+info:
+  title: Numeric values
+  version: 1.0.0
+components:
+  schemas:
+    Numbers:
+      type: object
+      minProperties: 3
+      maxProperties: 2147483647
+      minItems: 2147483648
+      maxItems: 999999999999999999999
+      minLength: 2147483648
+      maxLength: 999999999999999999999
+      default:
+        nested: [0.12345678901234567890123456789, 999999999999999999999]
+      example: 0.12345678901234567890123456789
+      examples:
+        - nested: 0.12345678901234567890123456789
+      enum: [0.12345678901234567890123456789]
+      const:
+        nested: [0.12345678901234567890123456789]
+      properties:
+        value:
+          type: string
+          minLength: 2147483648
+      allOf:
+        - type: object
+          maxProperties: 2147483648

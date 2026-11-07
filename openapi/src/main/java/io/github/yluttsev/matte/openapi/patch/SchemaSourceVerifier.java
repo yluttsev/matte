@@ -16,13 +16,17 @@ import io.github.yluttsev.matte.openapi.SourceDocument;
 import io.github.yluttsev.matte.openapi.SourceFormat;
 import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 public final class SchemaSourceVerifier {
 
     private static final char UTF8_BOM = 0xFEFF;
     private static final LoadSettings YAML_SETTINGS = LoadSettings.builder().build();
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final ObjectMapper JSON = JsonMapper.builder()
+            .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+            .build();
 
     public void verifyAddedSchema(
             SourceDocument source,

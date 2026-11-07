@@ -1,6 +1,7 @@
 package io.github.yluttsev.matte.openapi.parser;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -27,15 +28,22 @@ import org.snakeyaml.engine.v2.nodes.NodeTuple;
 import org.snakeyaml.engine.v2.nodes.ScalarNode;
 import org.snakeyaml.engine.v2.nodes.SequenceNode;
 import org.snakeyaml.engine.v2.nodes.Tag;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 public final class SourceSchemaValueReader {
 
     private static final String COMPONENTS_KEY = "components";
     private static final String SCHEMAS_KEY = "schemas";
     private static final List<String> COMPOSITION_FIELDS = List.of("allOf", "oneOf", "anyOf");
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final List<String> INTEGER_CONSTRAINTS = List.of(
+            "minProperties", "maxProperties", "minItems", "maxItems", "minLength", "maxLength"
+    );
+    private static final ObjectMapper JSON = JsonMapper.builder()
+            .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+            .build();
     private static final LoadSettings YAML = LoadSettings.builder().build();
 
     private SourceSchemaValueReader() {
@@ -80,7 +88,8 @@ public final class SourceSchemaValueReader {
                 examples,
                 jsonValues(schema.get("enum")),
                 version == OpenApiVersion.V3_1 && schema.has("const"),
-                constValue
+                constValue,
+                jsonIntegerConstraints(schema)
         );
         values.put(path, fields);
 
@@ -159,6 +168,17 @@ public final class SourceSchemaValueReader {
         return new ObjectValue(properties);
     }
 
+    private static Map<String, BigInteger> jsonIntegerConstraints(JsonNode schema) {
+        Map<String, BigInteger> constraints = new LinkedHashMap<>();
+        for (String field : INTEGER_CONSTRAINTS) {
+            JsonNode node = schema.get(field);
+            if (node != null && node.isIntegralNumber()) {
+                constraints.put(field, new BigInteger(node.asString()));
+            }
+        }
+        return constraints;
+    }
+
     private static Map<DocumentPath, SchemaValueFields> readYaml(String text, OpenApiVersion version) {
         Node root = new Compose(YAML).composeString(text).orElse(null);
         Node schemas = mappingValue(mappingValue(root, COMPONENTS_KEY), SCHEMAS_KEY);
@@ -207,7 +227,8 @@ public final class SourceSchemaValueReader {
                     examples,
                     yamlValues(mappingValue(mapping, "enum"), ancestors),
                     constNode != null,
-                    yamlValueOrNull(constNode, ancestors)
+                    yamlValueOrNull(constNode, ancestors),
+                    yamlIntegerConstraints(mapping)
             );
             values.put(path, fields);
 
@@ -322,6 +343,22 @@ public final class SourceSchemaValueReader {
             return new NumberValue(new BigDecimal(value.replace("_", "")));
         }
         return new StringValue(value);
+    }
+
+    private static Map<String, BigInteger> yamlIntegerConstraints(MappingNode schema) {
+        Map<String, BigInteger> constraints = new LinkedHashMap<>();
+        for (String field : INTEGER_CONSTRAINTS) {
+            Node node = mappingValue(schema, field);
+            if (node instanceof ScalarNode scalar && Tag.INT.equals(scalar.getTag())) {
+                String value = scalar.getValue().replace("_", "");
+                try {
+                    constraints.put(field, new BigInteger(value));
+                } catch (NumberFormatException ignored) {
+                    // Preserve the parser's existing handling for non-decimal YAML integers.
+                }
+            }
+        }
+        return constraints;
     }
 
     private static Node mappingValue(Node node, String name) {

@@ -36,6 +36,8 @@ Schemas are not split into a rigid hierarchy of primitives, arrays, and objects.
 
 Required property names are stored separately from the property list (`Set<String> required`), allowing a schema to mark properties as required even if they have not yet been added to `properties` or are inherited through composition.
 
+The six object, array and string size constraints (`minProperties`, `maxProperties`, `minItems`, `maxItems`, `minLength`, `maxLength`) use `BigInteger`; the model has no 32-bit integer limit for these values. Schema literal numbers use `BigDecimal` through `NumberValue`.
+
 `JsonType.NULL` represents the JSON null type. OpenAPI 3.0 `nullable: true` is represented together with the declared type, while OpenAPI 3.1 type unions are represented by multiple `JsonType` values. `SchemaObject.builder(existingSchema)` starts from a deep copy, so changing one field can preserve the remaining values and nested element identities.
 
 ## Inline Objects and References (`core.model.reference`)
