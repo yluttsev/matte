@@ -157,9 +157,9 @@ class SchemaComponentRenameTest {
     }
 
     @Test
-    void testApply_WhenNamesContainReservedCharacters_ShouldRewriteEscapedPointers() {
+    void testApply_WhenOldNameContainsReservedCharacters_ShouldRewriteEscapedPointers() {
         String oldName = "A/B~ C%";
-        String newName = "D+E#имя";
+        String newName = "Valid.Name-123_";
         DocumentPath oldPath = DocumentPath.root().child("components").child("schemas").child(oldName);
         DocumentPath newPath = DocumentPath.root().child("components").child("schemas").child(newName);
         SchemaObject schema = SchemaObject.builder(ElementId.random())

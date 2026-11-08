@@ -1,0 +1,23 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Component name validation",
+    "version": "1.0"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "Legacy/Name": {
+        "type": "object",
+        "properties": {
+          "a/b~# имя": {
+            "type": "string"
+          }
+        }
+      },
+      "Holder": {
+        "$ref": "#/components/schemas/Legacy~1Name"
+      }
+    }
+  }
+}

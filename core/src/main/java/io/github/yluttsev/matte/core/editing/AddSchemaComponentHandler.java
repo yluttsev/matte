@@ -20,8 +20,8 @@ public final class AddSchemaComponentHandler implements EditCommandHandler<AddSc
         DocumentIndex index = context.index();
         MutationAccess access = context.access();
         SchemaComponent component = command.component();
-        if (component.getName().isBlank()) {
-            return EditResults.rejected(EditCode.INVALID_NAME, "Schema component name must not be blank");
+        if (!ComponentNameValidator.isValid(component.getName())) {
+            return EditResults.rejected(EditCode.INVALID_NAME, ComponentNameValidator.INVALID_NAME_MESSAGE);
         }
         if (SchemaPropertyChecks.containsBlankPropertyName(component)) {
             return EditResults.rejected(EditCode.INVALID_NAME, "Property name must not be blank");

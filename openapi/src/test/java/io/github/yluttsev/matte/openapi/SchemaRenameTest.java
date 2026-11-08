@@ -3,6 +3,7 @@ package io.github.yluttsev.matte.openapi;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
+import io.github.yluttsev.matte.core.editing.EditCode;
 import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.change.ReferenceChanged;
 import io.github.yluttsev.matte.core.editing.command.AddSchemaProperty;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -74,7 +76,7 @@ class SchemaRenameTest {
     }
 
     @Test
-    void testRename_WhenNewNameContainsPointerSeparator_ShouldEscapeReferenceAndQuoteYamlKey() throws IOException {
+    void testRename_WhenNewNameContainsPointerSeparator_ShouldRejectWithoutChangingState() throws IOException {
         ImportResult imported = importer.importDocument(
                 TestFixtures.bytes("schema-rename.yaml"),
                 ImportOptions.autoDetect()
@@ -86,11 +88,11 @@ class SchemaRenameTest {
                 new RenameSchemaComponent(component.getId(), "Client/Prime")
         );
 
-        String text = new String(result.source().orElseThrow().content(), StandardCharsets.UTF_8);
-        assertTrue(text.contains("\"Client/Prime\": # keep this comment about Customer"));
-        assertTrue(text.contains("$ref: '#/components/schemas/Client~1Prime'"));
-        assertTrue(text.contains("$ref: '#/components/schemas/Client~1Prime/properties/friend'"));
-        assertTrue(text.contains("https://example.invalid/api.yaml#/components/schemas/Customer"));
+        OpenApiEditResult.Rejected rejected = assertInstanceOf(OpenApiEditResult.Rejected.class, result);
+        assertEquals(EditCode.INVALID_NAME, rejected.edit().issues().getFirst().code());
+        assertSame(imported, rejected.state());
+        assertTrue(result.source().isEmpty());
+        assertArrayEquals(TestFixtures.bytes("schema-rename.yaml"), imported.source().content());
     }
 
     @Test
