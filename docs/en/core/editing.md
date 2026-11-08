@@ -27,7 +27,7 @@ Applying a command returns one of two implementations of the sealed interface `E
 Rejection codes (`EditCode`):
 - `TARGET_NOT_FOUND` — no element with the specified `ElementId` exists in the document;
 - `TARGET_TYPE_MISMATCH` — the target element exists, but its type is incompatible with the command (for example, passing the ID of a `BooleanSchema` or `SchemaComponent` instead of a `SchemaObject` when adding a property);
-- `INVALID_NAME` — a component or property name (including nested properties within an added subtree) is empty or blank;
+- `INVALID_NAME` — a new component name does not match `^[a-zA-Z0-9.\-_]+$`, or a property name (including nested properties within an added subtree) is empty or blank;
 - `NAME_CONFLICT` — an element with the same name already exists in the target collection;
 - `ID_CONFLICT` — the added subtree contains an `ElementId` that already exists in the document or is duplicated within the added subtree itself;
 - `REFERENCED_TARGET` — deleting a schema component or property would leave an incoming reference unresolved; the diagnostic lists each reference location;
@@ -43,6 +43,8 @@ Supported schema editing commands:
 - `DeleteSchemaComponent` — removes a schema component when no reference from outside its subtree targets it, and emits `SchemaComponentDeleted`;
 - `UpdateSchemaObject` — replaces the fields of an existing `SchemaObject` while preserving its `ElementId`; `SchemaObjectUpdated` records the schema path and before/after snapshots;
 - `RenameSchemaComponent` — locates a schema component by its `ElementId`, renames it, and automatically rewrites all applicable local references across the document that point to that component or its descendants.
+
+`AddSchemaComponent` and `RenameSchemaComponent` validate the destination name with a shared component-name validator. Names must contain one or more ASCII letters, digits, dots, hyphens or underscores, following the same OpenAPI component key pattern in OAS 3.0 and 3.1. Validation runs before the rename no-op check: an unchanged invalid name is rejected as well. This rule applies to editing commands, not model construction or import: existing invalid component names remain readable and can be renamed to valid names. Property names do not follow the component key pattern; their existing non-blank requirement remains unchanged. A rejected command leaves the original document untouched.
 
 Use `SchemaObject.builder(existingSchema)` to prepare an update without losing unchanged fields or nested element identifiers. Pass `null` to a nullable builder field to remove that field, and use an empty collection to clear a list or set field. A literal null in `default`, `example`, `examples`, `enum`, or `const` is represented by `NullValue` and is different from removing the field.
 

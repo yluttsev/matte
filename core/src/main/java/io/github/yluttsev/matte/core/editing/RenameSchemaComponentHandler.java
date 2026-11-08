@@ -33,8 +33,8 @@ public final class RenameSchemaComponentHandler implements EditCommandHandler<Re
         if (!(entry.value() instanceof SchemaComponent component)) {
             return EditResults.rejected(EditCode.TARGET_TYPE_MISMATCH, "Target must be a SchemaComponent");
         }
-        if (command.newName().isBlank()) {
-            return EditResults.rejected(EditCode.INVALID_NAME, "Schema component name must not be blank");
+        if (!ComponentNameValidator.isValid(command.newName())) {
+            return EditResults.rejected(EditCode.INVALID_NAME, ComponentNameValidator.INVALID_NAME_MESSAGE);
         }
         if (component.getName().equals(command.newName())) {
             return EditResults.succeeded(document, List.of());
