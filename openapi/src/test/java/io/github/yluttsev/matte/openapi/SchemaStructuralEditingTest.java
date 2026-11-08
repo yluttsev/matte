@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import io.github.yluttsev.matte.core.editing.EditCode;
 import io.github.yluttsev.matte.core.editing.EditRejected;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.DeleteSchemaComponent;
 import io.github.yluttsev.matte.core.editing.command.DeleteSchemaProperty;
 import io.github.yluttsev.matte.core.editing.command.RenameSchemaProperty;
@@ -14,17 +13,17 @@ import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaProperty;
 import io.github.yluttsev.matte.openapi.testing.TestFixtures;
 import org.junit.jupiter.api.Test;
+import static io.github.yluttsev.matte.openapi.testing.EditAssertions.assertRefused;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SchemaStructuralEditingTest {
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testRenameProperty_WhenYamlAndJsonHaveDirectPointers_ShouldUpdateRequiredAndSourcePointers() throws IOException {
@@ -38,7 +37,7 @@ class SchemaStructuralEditingTest {
                     new RenameSchemaProperty(customer.getId(), property.getId(), "identifier")
             );
 
-            assertInstanceOf(EditSucceeded.class, result.edit());
+            assertInstanceOf(OpenApiEditResult.Applied.class, result);
             assertArrayEquals(
                     TestFixtures.bytes("schema-structural-editing-3.1-renamed." + extension),
                     result.source().orElseThrow().content()
@@ -61,7 +60,7 @@ class SchemaStructuralEditingTest {
                     new DeleteSchemaProperty(customer.getId(), property.getId())
             );
 
-            assertInstanceOf(EditSucceeded.class, result.edit());
+            assertInstanceOf(OpenApiEditResult.Applied.class, result);
             assertArrayEquals(
                     TestFixtures.bytes("schema-structural-editing-3.1-deleted." + extension),
                     result.source().orElseThrow().content()
@@ -82,7 +81,7 @@ class SchemaStructuralEditingTest {
                 new DeleteSchemaProperty(schema.getId(), property.getId())
         );
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertArrayEquals(
                 TestFixtures.bytes("schema-property-removal-empty.yaml"),
                 result.source().orElseThrow().content()
@@ -97,7 +96,7 @@ class SchemaStructuralEditingTest {
 
         OpenApiEditResult result = editor.deleteComponent(imported, new DeleteSchemaComponent(component.getId()));
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertArrayEquals(
                 TestFixtures.bytes("schema-component-removal-empty.yaml"),
                 result.source().orElseThrow().content()
@@ -113,7 +112,7 @@ class SchemaStructuralEditingTest {
 
         OpenApiEditResult result = editor.deleteComponent(imported, new DeleteSchemaComponent(component.getId()));
 
-        EditRejected rejected = assertInstanceOf(EditRejected.class, result.edit());
+        EditRejected rejected = assertInstanceOf(OpenApiEditResult.Rejected.class, result).edit();
         assertEquals(EditCode.REFERENCED_TARGET, rejected.issues().getFirst().code());
         assertTrue(rejected.issues().getFirst().message().contains("$ref"));
         assertArrayEquals(source, imported.source().content());
@@ -128,12 +127,11 @@ class SchemaStructuralEditingTest {
         SchemaProperty property = property(schema, "obsolete");
         byte[] source = imported.source().content();
 
-        IllegalArgumentException error = assertThrows(
-                IllegalArgumentException.class,
-                () -> editor.deleteProperty(imported, new DeleteSchemaProperty(schema.getId(), property.getId()))
-        );
+        OpenApiEditResult.Refused error = assertRefused(
+                imported,
+                () -> editor.deleteProperty(imported, new DeleteSchemaProperty(schema.getId(), property.getId())));
 
-        assertTrue(error.getMessage().contains("comments"));
+        assertTrue(error.message().contains("comments"));
         assertArrayEquals(source, imported.source().content());
     }
 
@@ -148,7 +146,7 @@ class SchemaStructuralEditingTest {
                 new DeleteSchemaProperty(schema.getId(), property.getId())
         );
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertArrayEquals(
                 TestFixtures.bytes("schema-property-removal-empty.yaml"),
                 result.source().orElseThrow().content()
@@ -162,12 +160,11 @@ class SchemaStructuralEditingTest {
         SchemaProperty property = property(schema, "obsolete");
         byte[] source = imported.source().content();
 
-        IllegalArgumentException error = assertThrows(
-                IllegalArgumentException.class,
-                () -> editor.deleteProperty(imported, new DeleteSchemaProperty(schema.getId(), property.getId()))
-        );
+        OpenApiEditResult.Refused error = assertRefused(
+                imported,
+                () -> editor.deleteProperty(imported, new DeleteSchemaProperty(schema.getId(), property.getId())));
 
-        assertTrue(error.getMessage().contains("Comments"));
+        assertTrue(error.message().contains("Comments"));
         assertArrayEquals(source, imported.source().content());
     }
 

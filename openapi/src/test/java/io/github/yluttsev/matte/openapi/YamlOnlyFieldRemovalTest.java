@@ -1,7 +1,6 @@
 package io.github.yluttsev.matte.openapi;
 
 import java.io.IOException;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.DeleteSchemaComponent;
 import io.github.yluttsev.matte.core.editing.command.DeleteSchemaProperty;
 import io.github.yluttsev.matte.core.editing.command.UpdateSchemaObject;
@@ -10,17 +9,17 @@ import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaProperty;
 import io.github.yluttsev.matte.openapi.testing.TestFixtures;
 import org.junit.jupiter.api.Test;
+import static io.github.yluttsev.matte.openapi.testing.EditAssertions.assertRefused;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class YamlOnlyFieldRemovalTest {
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testDeleteProperty_WhenOnlyBlockEntryPrecedesAnotherSchema_ShouldPreserveNextKey() throws IOException {
@@ -65,10 +64,9 @@ class YamlOnlyFieldRemovalTest {
         SchemaProperty property = schema.getProperties().getFirst();
         byte[] source = imported.source().content();
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> editor.deleteProperty(imported, new DeleteSchemaProperty(schema.getId(), property.getId()))
-        );
+        assertRefused(
+                imported,
+                () -> editor.deleteProperty(imported, new DeleteSchemaProperty(schema.getId(), property.getId())));
 
         assertArrayEquals(source, imported.source().content());
         assertEquals(property.getId(), schema(imported).getProperties().getFirst().getId());
@@ -91,7 +89,7 @@ class YamlOnlyFieldRemovalTest {
             String expected
     )
             throws IOException {
-        assertInstanceOf(EditSucceeded.class, edited.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, edited);
         assertArrayEquals(TestFixtures.bytes(expected), edited.source().orElseThrow().content());
         assertArrayEquals(TestFixtures.bytes(input), imported.source().content());
         ImportResult reimported = importer.importDocument(

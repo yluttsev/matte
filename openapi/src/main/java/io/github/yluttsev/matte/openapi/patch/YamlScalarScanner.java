@@ -7,6 +7,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
+import io.github.yluttsev.matte.openapi.SourceEditCode;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
 import org.snakeyaml.engine.v2.common.ScalarStyle;
@@ -40,7 +41,7 @@ final class YamlScalarScanner implements SourceScalarScanner {
             YamlSourceOffsets offsets
     ) {
         if (!ancestors.add(node)) {
-            throw new IllegalArgumentException("Cyclic YAML alias cannot be patched");
+            throw new SourceEditRefusal(SourceEditCode.SHARED_YAML_NODE, "Cyclic YAML alias cannot be patched", path);
         }
         try {
             if (!visited.add(node)) {
@@ -69,10 +70,18 @@ final class YamlScalarScanner implements SourceScalarScanner {
         Set<String> names = new HashSet<>();
         for (var entry : mapping.getValue()) {
             if (!(entry.getKeyNode() instanceof ScalarNode key)) {
-                throw new IllegalArgumentException("Non-scalar YAML key cannot be patched");
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_LAYOUT,
+                        "Non-scalar YAML key cannot be patched",
+                        path
+                );
             }
             if (!names.add(key.getValue())) {
-                throw new IllegalArgumentException("Duplicate YAML source key: " + key.getValue());
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_LAYOUT,
+                        "Duplicate YAML source key: " + key.getValue(),
+                        path
+                );
             }
             DocumentPath child = path.child(key.getValue());
             visit(key, child, true, scalars, ancestors, visited, offsets);

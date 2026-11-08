@@ -7,17 +7,17 @@ import io.github.yluttsev.matte.core.editing.command.RenameSchemaComponent;
 import io.github.yluttsev.matte.core.model.schema.SchemaComponent;
 import io.github.yluttsev.matte.openapi.testing.TestFixtures;
 import org.junit.jupiter.api.Test;
+import static io.github.yluttsev.matte.openapi.testing.EditAssertions.assertRefused;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SchemaReferenceContextSafetyTest {
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testRename_WhenUnknownSchemaFieldContainsTargetRef_ShouldRefuseWithoutChangingState()
@@ -26,12 +26,12 @@ class SchemaReferenceContextSafetyTest {
             ImportResult imported = importFixture("schema-reference-unknown-keyword." + extension);
             SchemaComponent old = component(imported, "Old");
 
-            IllegalArgumentException refusal = assertThrows(IllegalArgumentException.class, () -> editor.rename(
+            OpenApiEditResult.Refused refusal = assertRefused(imported, () -> editor.rename(
                     imported,
                     new RenameSchemaComponent(old.getId(), "New")
             ));
 
-            assertTrue(refusal.getMessage().contains("custom-keyword"));
+            assertTrue(refusal.message().contains("custom-keyword"));
             assertArrayEquals(TestFixtures.bytes("schema-reference-unknown-keyword." + extension),
                     imported.source().content());
             assertEquals("Old", component(imported, "Old").getName());
@@ -46,7 +46,7 @@ class SchemaReferenceContextSafetyTest {
             SchemaComponent old = component(imported, "Old");
 
             OpenApiEditResult result = editor.deleteComponent(imported, new DeleteSchemaComponent(old.getId()));
-            EditRejected rejected = assertInstanceOf(EditRejected.class, result.edit());
+            EditRejected rejected = assertInstanceOf(OpenApiEditResult.Rejected.class, result).edit();
             assertTrue(rejected.issues().getFirst().message().contains("custom-keyword"));
             assertSame(imported, result.state());
             assertTrue(result.source().isEmpty());

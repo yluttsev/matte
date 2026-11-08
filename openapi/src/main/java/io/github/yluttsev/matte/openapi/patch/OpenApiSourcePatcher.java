@@ -14,7 +14,11 @@ import io.github.yluttsev.matte.core.editing.change.SchemaComponentRenamed;
 import io.github.yluttsev.matte.core.editing.change.SchemaPropertyRenamed;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.SourceDocument;
+import io.github.yluttsev.matte.openapi.SourceEditCode;
 import io.github.yluttsev.matte.openapi.SourceFormat;
+import org.snakeyaml.engine.v2.api.LoadSettings;
+import org.snakeyaml.engine.v2.api.lowlevel.Compose;
+import org.snakeyaml.engine.v2.nodes.Node;
 
 public final class OpenApiSourcePatcher {
 
@@ -44,8 +48,13 @@ public final class OpenApiSourcePatcher {
         SchemaReferenceRelocator relocator = rename.relocator();
         List<DocumentPath> unrecognized = relocator.unrecognizedReferences(scalars);
         if (!unrecognized.isEmpty()) {
-            throw new IllegalArgumentException("Unrecognized reference locations: " + unrecognized);
+            throw new SourceEditRefusal(
+                    SourceEditCode.UNRECOGNIZED_REFERENCE,
+                    "Unrecognized reference locations: " + unrecognized,
+                    unrecognized.getFirst()
+            );
         }
+        requireUnsharedReferences(text, format, changes);
         validateChanges(changes, scalars, relocator);
         SourceTextEdits edits = edits(text, format, scalars, rename, relocator);
         return new SourceDocument(edits.apply(text).getBytes(StandardCharsets.UTF_8));
@@ -53,6 +62,23 @@ public final class OpenApiSourcePatcher {
 
     private boolean isSchemaRename(Change change) {
         return change instanceof SchemaComponentRenamed || change instanceof SchemaPropertyRenamed;
+    }
+
+    private void requireUnsharedReferences(String text, SourceFormat format, ChangeSet changes) {
+        if (format != SourceFormat.YAML) {
+            return;
+        }
+        List<ReferenceChanged> references = changes.changes().stream()
+                .filter(ReferenceChanged.class::isInstance)
+                .map(ReferenceChanged.class::cast)
+                .toList();
+        if (references.isEmpty()) {
+            return;
+        }
+        Node root = new Compose(LoadSettings.builder().build()).composeString(text).orElseThrow();
+        for (ReferenceChanged reference : references) {
+            YamlAliasSafety.requireUniqueChangedValue(root, reference.sourceBefore());
+        }
     }
 
     private Rename renameChange(ChangeSet changes) {

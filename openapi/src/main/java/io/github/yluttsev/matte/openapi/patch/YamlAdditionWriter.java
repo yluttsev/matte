@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
+import io.github.yluttsev.matte.openapi.SourceEditCode;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
 import org.snakeyaml.engine.v2.common.FlowStyle;
@@ -31,7 +32,7 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
         Node node = new Compose(SETTINGS).composeString(text).orElseThrow();
         YamlSourceOffsets offsets = new YamlSourceOffsets(text);
         if (!(node instanceof MappingNode)) {
-            throw new IllegalArgumentException("OpenAPI source root must be a mapping");
+            throw new SourceEditRefusal(SourceEditCode.AMBIGUOUS_LAYOUT, "OpenAPI source root must be a mapping");
         }
         YamlAliasSafety.requireUniqueInsertionPath(node, parent);
         int existingDepth = 0;
@@ -42,17 +43,26 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
                 break;
             }
             if (!(child instanceof MappingNode)) {
-                throw new IllegalArgumentException("Source insertion target is not a mapping: " + parent);
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_LAYOUT,
+                        "Source insertion target is not a mapping: " + parent
+                );
             }
             node = child;
             existingDepth++;
         }
         if (existingDepth < requiredAncestor.segments().size()) {
-            throw new IllegalArgumentException("Required source mapping was not found: " + requiredAncestor);
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Required source mapping was not found: " + requiredAncestor
+            );
         }
         MappingNode mapping = (MappingNode) node;
         if (existingDepth == parent.segments().size() && child(mapping, name) != null) {
-            throw new IllegalArgumentException("Source already contains: " + parent.child(name));
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Source already contains: " + parent.child(name)
+            );
         }
         Map<String, Object> content = nested(parent, existingDepth, name, value);
         if (mapping.getFlowStyle() == FlowStyle.FLOW) {
@@ -66,10 +76,16 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
         for (var entry : mapping.getValue()) {
             if (entry.getKeyNode() instanceof ScalarNode key) {
                 if (!names.add(key.getValue())) {
-                    throw new IllegalArgumentException("Duplicate YAML source key: " + key.getValue());
+                    throw new SourceEditRefusal(
+                            SourceEditCode.AMBIGUOUS_LAYOUT,
+                            "Duplicate YAML source key: " + key.getValue()
+                    );
                 }
                 if ("<<".equals(key.getValue())) {
-                    throw new IllegalArgumentException("Merge-based source mappings cannot be patched");
+                    throw new SourceEditRefusal(
+                            SourceEditCode.MERGE_KEY,
+                            "Merge-based source mappings cannot be patched"
+                    );
                 }
             }
         }
@@ -77,7 +93,10 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
             if (entry.getKeyNode() instanceof ScalarNode key && name.equals(key.getValue())) {
                 Node value = entry.getValueNode();
                 if (value.getStartMark().orElseThrow().getIndex() < key.getEndMark().orElseThrow().getIndex()) {
-                    throw new IllegalArgumentException("Alias-based source mappings cannot be patched");
+                    throw new SourceEditRefusal(
+                            SourceEditCode.SHARED_YAML_NODE,
+                            "Alias-based source mappings cannot be patched"
+                    );
                 }
                 return value;
             }
@@ -124,12 +143,15 @@ final class YamlAdditionWriter implements SourceAdditionWriter {
             YamlSourceOffsets offsets
     ) {
         if (mapping.getValue().isEmpty()) {
-            throw new IllegalArgumentException("Empty block mapping cannot be patched");
+            throw new SourceEditRefusal(SourceEditCode.AMBIGUOUS_LAYOUT, "Empty block mapping cannot be patched");
         }
         var last = mapping.getValue().getLast();
         if (last.getValueNode().getStartMark().orElseThrow().getIndex()
                 < last.getKeyNode().getEndMark().orElseThrow().getIndex()) {
-            throw new IllegalArgumentException("Alias-based source mappings cannot be patched");
+            throw new SourceEditRefusal(
+                    SourceEditCode.SHARED_YAML_NODE,
+                    "Alias-based source mappings cannot be patched"
+            );
         }
         int lastEnd = lastContentEnd(last.getValueNode(), offsets);
         int position = nextLine(text, lastEnd);

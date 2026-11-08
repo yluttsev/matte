@@ -2,7 +2,6 @@ package io.github.yluttsev.matte.openapi;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.UpdateSchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.openapi.testing.TestFixtures;
@@ -14,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 class YamlFlowAdditionTest {
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testUpdateSchema_WhenLastFieldIsMultilineFlowArray_ShouldInsertAfterClosingBracket() throws IOException {
@@ -39,7 +38,7 @@ class YamlFlowAdditionTest {
 
         OpenApiEditResult edited = editor.updateSchema(imported, new UpdateSchemaObject(replacement));
 
-        assertInstanceOf(EditSucceeded.class, edited.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, edited);
         assertArrayEquals(fixture(expected, crlf), edited.source().orElseThrow().content());
         assertArrayEquals(source, imported.source().content());
         assertEquals("AddedTitle", schema(edited.state()).getTitle());

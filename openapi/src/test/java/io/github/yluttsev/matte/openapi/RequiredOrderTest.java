@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.AddSchemaComponent;
 import io.github.yluttsev.matte.core.editing.command.UpdateSchemaObject;
 import io.github.yluttsev.matte.core.model.ApiDocument;
@@ -23,7 +22,7 @@ class RequiredOrderTest {
     private static final List<String> UNSORTED_REQUIRED = List.of("z", "a");
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testAddComponent_WhenYamlRequiredIsNotSorted_ShouldSucceedAndKeepOrder() throws IOException {
@@ -58,7 +57,7 @@ class RequiredOrderTest {
                 new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Customer", schema))
         );
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertEquals(UNSORTED_REQUIRED, requiredOf(reimport(result, imported)));
         assertEquals(UNSORTED_REQUIRED, requiredOf(result.state().document().orElseThrow()));
     }
@@ -73,7 +72,7 @@ class RequiredOrderTest {
 
         OpenApiEditResult result = editor.updateSchema(imported, new UpdateSchemaObject(replacement));
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertEquals(UNSORTED_REQUIRED, requiredOf(reimport(result, imported)));
     }
 

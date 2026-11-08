@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
+import io.github.yluttsev.matte.openapi.SourceEditCode;
 import org.snakeyaml.engine.v2.nodes.MappingNode;
 import org.snakeyaml.engine.v2.nodes.Node;
 import org.snakeyaml.engine.v2.nodes.NodeTuple;
@@ -133,6 +134,10 @@ final class YamlAliasSafety {
     }
 
     private static void rejectAlias(DocumentPath path) {
-        throw new IllegalArgumentException("YAML aliases make source edits ambiguous at: " + path);
+        throw new SourceEditRefusal(
+                SourceEditCode.SHARED_YAML_NODE,
+                "YAML aliases make source edits ambiguous at: " + path,
+                path
+        );
     }
 }

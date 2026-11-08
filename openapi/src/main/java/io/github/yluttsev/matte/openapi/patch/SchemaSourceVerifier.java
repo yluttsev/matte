@@ -80,7 +80,7 @@ public final class SchemaSourceVerifier {
         Object document = readDocument(source, format);
         Object value = valueAt(document, path);
         if (!(value instanceof Map<?, ?> actual)) {
-            throw new IllegalArgumentException("Schema source was not preserved: " + path);
+            throw new IllegalStateException("Schema source was not preserved: " + path);
         }
         for (String field : fields) {
             boolean expectedPresent = expected.containsKey(field);
@@ -90,7 +90,7 @@ public final class SchemaSourceVerifier {
                             SchemaComparison.normalizeField(field, expected.get(field)),
                             SchemaComparison.normalizeField(field, actual.get(field))
                     )) {
-                throw new IllegalArgumentException("Schema field was not preserved: " + path.child(field));
+                throw new IllegalStateException("Schema field was not preserved: " + path.child(field));
             }
         }
     }
@@ -98,13 +98,13 @@ public final class SchemaSourceVerifier {
     private void verifyValue(SourceDocument source, SourceFormat format, DocumentPath path, Object expected) {
         Object actual = valueAt(readDocument(source, format), path);
         if (!Objects.equals(SchemaComparison.normalizeSchema(expected), SchemaComparison.normalizeSchema(actual))) {
-            throw new IllegalArgumentException("Schema source was not preserved: " + path);
+            throw new IllegalStateException("Schema source was not preserved: " + path);
         }
     }
 
     private Map<String, Object> stringKeyedMap(Object value) {
         if (!(value instanceof Map<?, ?> mapping)) {
-            throw new IllegalArgumentException("Schema object did not serialize as a mapping");
+            throw new IllegalStateException("Schema object did not serialize as a mapping");
         }
         Map<String, Object> fields = new LinkedHashMap<>();
         mapping.forEach((key, fieldValue) -> fields.put((String) key, fieldValue));
@@ -148,7 +148,7 @@ public final class SchemaSourceVerifier {
             }
             return text;
         } catch (CharacterCodingException exception) {
-            throw new IllegalArgumentException("Source is not valid UTF-8", exception);
+            throw new IllegalStateException("Source is not valid UTF-8", exception);
         }
     }
 }

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.AddSchemaProperty;
 import io.github.yluttsev.matte.core.editing.command.DeleteSchemaProperty;
 import io.github.yluttsev.matte.core.editing.command.UpdateSchemaObject;
@@ -17,16 +16,16 @@ import io.github.yluttsev.matte.core.model.value.ObjectValue;
 import io.github.yluttsev.matte.core.model.value.StringValue;
 import io.github.yluttsev.matte.openapi.testing.TestFixtures;
 import org.junit.jupiter.api.Test;
+import static io.github.yluttsev.matte.openapi.testing.EditAssertions.assertRefused;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class YamlAliasSafetyTest {
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testAddProperty_WhenSchemaNodeIsAnchoredAndAliased_ShouldRejectWithoutChangingSource() throws IOException {
@@ -158,18 +157,18 @@ class YamlAliasSafetyTest {
                 ImportOptions.autoDetect()
         );
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertEquals("Updated independent", schema(result.state(), "Independent").getTitle());
         assertEquals("Updated independent", schema(checked, "Independent").getTitle());
         assertEquals("Shared schema", schema(checked, "Alias").getTitle());
     }
 
-    private void assertAliasRefusal(ImportResult imported, Runnable edit) {
+    private void assertAliasRefusal(ImportResult imported, java.util.function.Supplier<OpenApiEditResult> edit) {
         byte[] originalSource = imported.source().content();
 
-        IllegalArgumentException error = assertThrows(IllegalArgumentException.class, edit::run);
+        OpenApiEditResult.Refused error = assertRefused(imported, edit);
 
-        assertTrue(error.getMessage().contains("YAML aliases"), error.getMessage());
+        assertTrue(error.message().contains("YAML aliases"), error.message());
         assertArrayEquals(originalSource, imported.source().content());
     }
 

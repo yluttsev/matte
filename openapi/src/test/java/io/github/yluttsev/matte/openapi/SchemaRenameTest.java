@@ -3,7 +3,6 @@ package io.github.yluttsev.matte.openapi;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
-import io.github.yluttsev.matte.core.editing.EditRejected;
 import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.change.ReferenceChanged;
 import io.github.yluttsev.matte.core.editing.command.AddSchemaProperty;
@@ -26,7 +25,7 @@ class SchemaRenameTest {
     private static final String UTF8_BOM = Character.toString((char) 0xFEFF);
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testRename_WhenYamlContainsReferences_ShouldPreserveUnchangedBytes() throws IOException {
@@ -46,12 +45,12 @@ class SchemaRenameTest {
         ElementId componentId = component.getId();
         ElementId propertyId = ((SchemaObject) component.getSchema()).getProperties().getFirst().getId();
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(componentId, "Client")
         );
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertArrayEquals(source, imported.source().content());
         assertEquals(result.source().orElseThrow(), result.state().source());
         SchemaComponent renamed = result.state().document().orElseThrow().getComponents().getSchemas().getFirst();
@@ -82,7 +81,7 @@ class SchemaRenameTest {
         );
         SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(component.getId(), "Client/Prime")
         );
@@ -102,7 +101,7 @@ class SchemaRenameTest {
         );
         SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(component.getId(), "null")
         );
@@ -117,7 +116,7 @@ class SchemaRenameTest {
         ImportResult imported = importer.importDocument(source, ImportOptions.autoDetect());
         SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(component.getId(), "Customer")
         );
@@ -135,7 +134,7 @@ class SchemaRenameTest {
         ImportResult imported = importer.importDocument(source, ImportOptions.autoDetect());
         SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(component.getId(), "Client")
         );
@@ -153,7 +152,7 @@ class SchemaRenameTest {
         );
         SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(component.getId(), "New")
         );
@@ -174,7 +173,7 @@ class SchemaRenameTest {
         SchemaObject originalSchema = (SchemaObject) originalComponent.getSchema();
         ElementId existingPropertyId = originalSchema.getProperties().getFirst().getId();
 
-        OpenApiSchemaEditor.RenameResult renamed = editor.rename(
+        OpenApiEditResult renamed = editor.rename(
                 imported,
                 new RenameSchemaComponent(originalComponent.getId(), "Client")
         );
@@ -231,7 +230,7 @@ class SchemaRenameTest {
         );
         SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(component.getId(), "Client")
         );
@@ -248,7 +247,7 @@ class SchemaRenameTest {
         ImportResult imported = importer.importDocument(original, ImportOptions.autoDetect());
         SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(component.getId(), "Client")
         );
@@ -269,12 +268,12 @@ class SchemaRenameTest {
         );
         SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(component.getId(), "Client")
         );
 
-        assertInstanceOf(EditRejected.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Rejected.class, result);
         assertTrue(result.source().isEmpty());
     }
 
@@ -335,12 +334,12 @@ class SchemaRenameTest {
         assertEquals(ImportStatus.IMPORTED, imported.status());
         SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(component.getId(), "Client")
         );
 
-        EditSucceeded edit = assertInstanceOf(EditSucceeded.class, result.edit());
+        EditSucceeded edit = assertInstanceOf(OpenApiEditResult.Applied.class, result).edit();
         assertTrue(edit.changeSet().changes().stream().anyMatch(ReferenceChanged.class::isInstance));
         assertArrayEquals(source, imported.source().content());
         assertArrayEquals(TestFixtures.bytes(expected), result.source().orElseThrow().content());
@@ -361,7 +360,7 @@ class SchemaRenameTest {
         ImportResult imported = importer.importDocument(TestFixtures.bytes(fixture), ImportOptions.autoDetect());
         SchemaComponent component = imported.document().orElseThrow().getComponents().getSchemas().getFirst();
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(component.getId(), "New")
         );

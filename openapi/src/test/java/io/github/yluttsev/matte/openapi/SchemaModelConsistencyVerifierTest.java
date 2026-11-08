@@ -34,7 +34,7 @@ class SchemaModelConsistencyVerifierTest {
         ApiDocument reimported = document("1.0", "https://example.com/target", "changed");
 
         assertThrows(
-                IllegalArgumentException.class,
+                IllegalStateException.class,
                 () -> verifier.verify(semanticResult, reimported, OpenApiVersion.V3_1)
         );
     }
@@ -45,7 +45,7 @@ class SchemaModelConsistencyVerifierTest {
         ApiDocument reimported = document("1.0", "https://example.com/actual", "nested");
 
         assertThrows(
-                IllegalArgumentException.class,
+                IllegalStateException.class,
                 () -> verifier.verify(semanticResult, reimported, OpenApiVersion.V3_1)
         );
     }
@@ -56,7 +56,7 @@ class SchemaModelConsistencyVerifierTest {
         ApiDocument reimported = document("2.0", "https://example.com/target", "nested");
 
         assertThrows(
-                IllegalArgumentException.class,
+                IllegalStateException.class,
                 () -> verifier.verify(semanticResult, reimported, OpenApiVersion.V3_1)
         );
     }

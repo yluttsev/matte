@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
+import io.github.yluttsev.matte.openapi.SourceEditCode;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
 import tools.jackson.core.ObjectReadContext;
@@ -28,7 +29,10 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
     ) {
         Index index = index(text);
         if (!index.objects().containsKey(requiredAncestor)) {
-            throw new IllegalArgumentException("Required source mapping was not found: " + requiredAncestor);
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Required source mapping was not found: " + requiredAncestor
+            );
         }
         DocumentPath existing = parent;
         while (!index.nodes().contains(existing)) {
@@ -36,10 +40,16 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
         }
         JsonObject object = index.objects().get(existing);
         if (object == null) {
-            throw new IllegalArgumentException("Source insertion target is not an object: " + existing);
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Source insertion target is not an object: " + existing
+            );
         }
         if (index.nodes().contains(parent.child(name))) {
-            throw new IllegalArgumentException("Source already contains: " + parent.child(name));
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Source already contains: " + parent.child(name)
+            );
         }
         Map<String, Object> content = nested(parent, existing, name, value);
         var entry = content.entrySet().iterator().next();
@@ -151,7 +161,7 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
             lastKeyStart = Math.toIntExact(parser.currentTokenLocation().getCharOffset());
             String name = parser.currentName();
             if (nodes.contains(path.child(name))) {
-                throw new IllegalArgumentException("Duplicate JSON source key: " + name);
+                throw new SourceEditRefusal(SourceEditCode.AMBIGUOUS_LAYOUT, "Duplicate JSON source key: " + name);
             }
             parser.nextToken();
             visit(parser, path.child(name), objects, nodes);

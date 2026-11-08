@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.AddSchemaComponent;
 import io.github.yluttsev.matte.core.editing.command.UpdateSchemaObject;
 import io.github.yluttsev.matte.core.model.ApiDocument;
@@ -18,25 +17,25 @@ import io.github.yluttsev.matte.core.model.value.NullValue;
 import io.github.yluttsev.matte.core.model.value.StringValue;
 import io.github.yluttsev.matte.openapi.testing.TestFixtures;
 import org.junit.jupiter.api.Test;
+import static io.github.yluttsev.matte.openapi.testing.EditAssertions.assertRefused;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SchemaFieldEditingTest {
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testUpdateSchema_WhenYamlFieldsAreSetAndCleared_ShouldPreserveOtherSourceFields() throws IOException {
         OpenApiEditResult result = updateSchemaFromFixture("schema-field-editing-3.1.yaml");
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertTrue(text(result).contains("title: \"Updated title\""));
         assertTrue(text(result).contains("type: [\"null\",\"string\"]"), text(result));
         assertTrue(text(result).contains("format: email"));
@@ -73,7 +72,7 @@ class SchemaFieldEditingTest {
     void testUpdateSchema_WhenJsonFieldsAreSetAndCleared_ShouldPreserveOtherSourceFields() throws IOException {
         OpenApiEditResult result = updateSchemaFromFixture("schema-field-editing-3.1.json");
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertTrue(text(result).contains("\"title\": \"Updated title\""));
         assertTrue(text(result).contains("\"type\": [\"null\",\"string\"]"), text(result));
         assertTrue(text(result).contains("\"format\": \"email\""));
@@ -136,7 +135,7 @@ class SchemaFieldEditingTest {
 
         OpenApiEditResult updated = editor.updateSchema(added.state(), new UpdateSchemaObject(replacement));
 
-        assertInstanceOf(EditSucceeded.class, updated.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, updated);
         assertTrue(text(updated).contains("title: \"After\""));
         assertFalse(text(updated).contains("default:"));
         assertFalse(text(updated).contains("minLength:"));
@@ -161,7 +160,7 @@ class SchemaFieldEditingTest {
 
         OpenApiEditResult result = editor.updateSchema(imported, new UpdateSchemaObject(replacement));
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertTrue(text(result).contains("\"minimum\": 1.5"), text(result));
         assertTrue(text(result).contains("\"exclusiveMinimum\": true"), text(result));
         assertTrue(text(result).contains("\"maximum\": 9"), text(result));
@@ -179,10 +178,7 @@ class SchemaFieldEditingTest {
         SchemaObject replacement = SchemaObject.builder(schema).constValue(new NullValue()).build();
         byte[] original = imported.source().content();
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement))
-        );
+        assertRefused(imported, () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement)));
 
         assertArrayEquals(original, imported.source().content());
     }
@@ -194,10 +190,7 @@ class SchemaFieldEditingTest {
         SchemaObject replacement = SchemaObject.builder(schema).minLength(null).build();
         byte[] original = imported.source().content();
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement))
-        );
+        assertRefused(imported, () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement)));
 
         assertArrayEquals(original, imported.source().content());
     }
@@ -217,12 +210,11 @@ class SchemaFieldEditingTest {
                     .build();
             byte[] original = imported.source().content();
 
-            IllegalArgumentException error = assertThrows(
-                    IllegalArgumentException.class,
-                    () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement))
-            );
+            OpenApiEditResult.Refused error = assertRefused(
+                    imported,
+                    () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement)));
 
-            assertTrue(error.getMessage().contains("properties"));
+            assertTrue(error.message().contains("properties"));
             assertArrayEquals(original, imported.source().content());
             assertEquals("Existing title", customer(imported).getTitle());
             assertNull(((SchemaObject) customer(imported).getProperties().getFirst().getSchema()).getDescription());
@@ -238,7 +230,7 @@ class SchemaFieldEditingTest {
 
             OpenApiEditResult result = editor.updateSchema(imported, new UpdateSchemaObject(replacement));
 
-            assertInstanceOf(EditSucceeded.class, result.edit());
+            assertInstanceOf(OpenApiEditResult.Applied.class, result);
             assertEquals(3, text(result).split("x-note", -1).length);
             SchemaObject updated = (SchemaObject) customer(result.state()).getProperties().getFirst().getSchema();
             assertEquals(nested.getId(), updated.getId());
@@ -263,10 +255,7 @@ class SchemaFieldEditingTest {
             byte[] original = imported.source().content();
 
             for (SchemaObject replacement : replacements) {
-                assertThrows(
-                        IllegalArgumentException.class,
-                        () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement))
-                );
+                assertRefused(imported, () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement)));
                 assertArrayEquals(original, imported.source().content());
             }
         }

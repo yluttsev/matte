@@ -3,9 +3,6 @@ package io.github.yluttsev.matte.openapi;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import io.github.yluttsev.matte.core.editing.EditCode;
-import io.github.yluttsev.matte.core.editing.EditRejected;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.DeleteSchemaComponent;
 import io.github.yluttsev.matte.core.editing.command.RenameSchemaComponent;
 import io.github.yluttsev.matte.core.model.ApiDocument;
@@ -21,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SchemaIdScopeSafetyTest {
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testRename_WhenAbsoluteAndNestedRelativeIdsScopeReferences_ShouldRejectAtomically() throws IOException {
@@ -30,14 +27,14 @@ class SchemaIdScopeSafetyTest {
             SchemaComponent component = component(imported.document().orElseThrow(), "A");
             byte[] original = imported.source().content();
 
-            OpenApiSchemaEditor.RenameResult result = editor.rename(
+            OpenApiEditResult result = editor.rename(
                     imported,
                     new RenameSchemaComponent(component.getId(), "Renamed")
             );
 
-            EditRejected rejection = assertInstanceOf(EditRejected.class, result.edit());
-            assertEquals(EditCode.INVALID_STRUCTURE, rejection.issues().getFirst().code());
-            assertTrue(rejection.issues().getFirst().message().contains("$id"));
+            OpenApiEditResult.Refused rejection = assertInstanceOf(OpenApiEditResult.Refused.class, result);
+            assertEquals(SourceEditCode.SCHEMA_ID_SCOPE, rejection.code());
+            assertTrue(rejection.message().contains("$id"));
             assertArrayEquals(original, imported.source().content());
             assertSame(imported, result.state());
             assertTrue(result.source().isEmpty());
@@ -53,9 +50,9 @@ class SchemaIdScopeSafetyTest {
 
         OpenApiEditResult result = editor.deleteComponent(imported, new DeleteSchemaComponent(component.getId()));
 
-        EditRejected rejection = assertInstanceOf(EditRejected.class, result.edit());
-        assertEquals(EditCode.INVALID_STRUCTURE, rejection.issues().getFirst().code());
-        assertTrue(rejection.issues().getFirst().message().contains("$id"));
+        OpenApiEditResult.Refused rejection = assertInstanceOf(OpenApiEditResult.Refused.class, result);
+        assertEquals(SourceEditCode.SCHEMA_ID_SCOPE, rejection.code());
+        assertTrue(rejection.message().contains("$id"));
         assertArrayEquals(original, imported.source().content());
         assertSame(imported, result.state());
         assertTrue(result.source().isEmpty());
@@ -67,12 +64,12 @@ class SchemaIdScopeSafetyTest {
         ImportResult imported = importFixture("schema-anchor-only.yaml");
         SchemaComponent component = component(imported.document().orElseThrow(), "A");
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(component.getId(), "Renamed")
         );
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         String updated = new String(result.source().orElseThrow().content(), StandardCharsets.UTF_8);
         assertTrue(updated.contains("$anchor: marker"));
         assertTrue(updated.contains("$id: https://example.com/extension.json"));

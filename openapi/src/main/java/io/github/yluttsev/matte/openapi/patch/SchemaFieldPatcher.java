@@ -11,6 +11,7 @@ import io.github.yluttsev.matte.core.editing.change.SchemaObjectUpdated;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.OpenApiVersion;
 import io.github.yluttsev.matte.openapi.SourceDocument;
+import io.github.yluttsev.matte.openapi.SourceEditCode;
 import io.github.yluttsev.matte.openapi.SourceFormat;
 
 public final class SchemaFieldPatcher {
@@ -53,7 +54,7 @@ public final class SchemaFieldPatcher {
         SchemaAdditionSerializer serializer = new SchemaAdditionSerializer();
         Map<String, Object> before = serializer.serialize(change.before(), version);
         Map<String, Object> after = serializer.serialize(change.after(), version);
-        rejectNestedReplacements(before, after);
+        rejectNestedReplacements(before, after, change.path());
         String original = decode(source);
         String text = original;
         for (String field : fields(before, after)) {
@@ -65,10 +66,18 @@ public final class SchemaFieldPatcher {
         return new SourceDocument(text.getBytes(StandardCharsets.UTF_8));
     }
 
-    private void rejectNestedReplacements(Map<String, Object> before, Map<String, Object> after) {
+    private void rejectNestedReplacements(
+            Map<String, Object> before,
+            Map<String, Object> after,
+            DocumentPath path
+    ) {
         for (String field : NESTED_SCHEMA_FIELDS) {
             if (before.containsKey(field) && !Objects.equals(before.get(field), after.get(field))) {
-                throw new IllegalArgumentException("Cannot safely replace nested schema field: " + field);
+                throw new SourceEditRefusal(
+                        SourceEditCode.NESTED_REPLACEMENT,
+                        "Cannot safely replace nested schema field: " + field,
+                        path.child(field)
+                );
             }
         }
     }

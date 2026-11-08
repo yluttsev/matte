@@ -1,7 +1,6 @@
 package io.github.yluttsev.matte.openapi;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import io.github.yluttsev.matte.core.editing.DocumentEditor;
@@ -35,14 +34,29 @@ import io.github.yluttsev.matte.openapi.patch.OpenApiSourcePatcher;
 import io.github.yluttsev.matte.openapi.patch.SchemaFieldPatcher;
 import io.github.yluttsev.matte.openapi.patch.SchemaIdScopeDetector;
 import io.github.yluttsev.matte.openapi.patch.SchemaSourceVerifier;
+import io.github.yluttsev.matte.openapi.patch.SourceEditRefusal;
 
-public final class OpenApiSchemaEditor {
+public final class OpenApiEditor {
 
     private static final String PROPERTIES_FIELD = "properties";
 
-    public RenameResult rename(ImportResult imported, RenameSchemaComponent command) {
-        OpenApiEditResult result = apply(imported, command);
-        return new RenameResult(result.edit(), result.source(), result.state());
+    private final DocumentEditor documentEditor;
+    private final OpenApiImporter importer;
+
+    public OpenApiEditor() {
+        this(new DocumentEditor(), new OpenApiImporter());
+    }
+
+    public OpenApiEditor(DocumentEditor documentEditor, OpenApiImporter importer) {
+        if (documentEditor == null || importer == null) {
+            throw new IllegalArgumentException("Editor and importer are required");
+        }
+        this.documentEditor = documentEditor;
+        this.importer = importer;
+    }
+
+    public OpenApiEditResult rename(ImportResult imported, RenameSchemaComponent command) {
+        return apply(imported, command);
     }
 
     public OpenApiEditResult addProperty(ImportResult imported, AddSchemaProperty command) {
@@ -69,32 +83,39 @@ public final class OpenApiSchemaEditor {
         return apply(imported, command);
     }
 
-    private OpenApiEditResult apply(ImportResult imported, EditCommand command) {
-        Objects.requireNonNull(imported, "imported");
-        Objects.requireNonNull(command, "command");
+    public OpenApiEditResult apply(ImportResult imported, EditCommand command) {
+        if (imported == null || command == null) {
+            throw new IllegalArgumentException("Imported state and command are required");
+        }
+        try {
+            return applyCommand(imported, command);
+        } catch (SourceEditRefusal refusal) {
+            DocumentPath path = refusal.path();
+            if (path.equals(DocumentPath.root())) {
+                path = commandPath(imported, command);
+            }
+            return new OpenApiEditResult.Refused(refusal.code(), refusal.getMessage(), path, imported);
+        }
+    }
+
+    private OpenApiEditResult applyCommand(ImportResult imported, EditCommand command) {
         if (imported.status() != ImportStatus.IMPORTED) {
             throw new IllegalArgumentException("Only imported OpenAPI documents can be edited");
         }
-        EditResult edit = new DocumentEditor().apply(imported.document().orElseThrow(), command);
+        EditResult edit = documentEditor.apply(imported.document().orElseThrow(), command);
         if (!(edit instanceof EditSucceeded succeeded)) {
             if (edit instanceof EditRejected rejected
                     && rejected.issues().stream().anyMatch(issue -> issue.code() == EditCode.REFERENCED_TARGET)) {
                 return sourceDeletionRejection(imported, command).orElseGet(
-                        () -> new OpenApiEditResult(edit, Optional.empty(), imported)
+                        () -> new OpenApiEditResult.Rejected((EditRejected) edit, imported)
                 );
             }
-            return new OpenApiEditResult(edit, Optional.empty(), imported);
+            return new OpenApiEditResult.Rejected((EditRejected) edit, imported);
         }
         SourceFormat format = imported.format().orElseThrow();
         OpenApiVersion version = OpenApiVersion.supported(imported.version().orElseThrow()).orElseThrow();
-        Optional<OpenApiEditResult> idScopeRejection = rejectUnsupportedIdScopes(
-                imported,
-                succeeded,
-                format,
-                version
-        );
-        if (idScopeRejection.isPresent()) {
-            return idScopeRejection.orElseThrow();
+        if (succeeded.changeSet().changes().stream().anyMatch(this::changesSchemaReferenceScope)) {
+            SchemaIdScopeDetector.rejectIfPresent(imported.source(), format);
         }
         Optional<OpenApiEditResult> sourceReferenceRejection = rejectUnmappedIncomingReferences(
                 imported,
@@ -104,9 +125,9 @@ public final class OpenApiSchemaEditor {
             return sourceReferenceRejection.orElseThrow();
         }
         SourceDocument source = sourceAfterEdit(imported, command, succeeded, format, version);
-        ImportResult checked = new OpenApiImporter().importDocument(source.content(), ImportOptions.withFormat(format));
+        ImportResult checked = importer.importDocument(source.content(), ImportOptions.withFormat(format));
         if (checked.status() != ImportStatus.IMPORTED || !checked.version().equals(imported.version())) {
-            throw new IllegalArgumentException(
+            throw new IllegalStateException(
                     "Patched OpenAPI document could not be imported: " + checked.diagnostics()
             );
         }
@@ -117,12 +138,14 @@ public final class OpenApiSchemaEditor {
         );
         if (!succeeded.changeSet().changes().isEmpty()) {
             Change change = succeeded.changeSet().changes().getFirst();
-            if (command instanceof AddSchemaComponent || command instanceof AddSchemaProperty) {
-                verifyAddition(imported, checked, change, version);
-            } else if (command instanceof UpdateSchemaObject) {
-                verifyUpdate(checked, change, version);
-            } else {
-                verifyStructuralEdit(checked, change);
+            switch (command) {
+                case AddSchemaComponent ignored -> verifyAddition(imported, checked, change, version);
+                case AddSchemaProperty ignored -> verifyAddition(imported, checked, change, version);
+                case UpdateSchemaObject ignored -> verifyUpdate(checked, change, version);
+                case RenameSchemaComponent ignored -> verifyStructuralEdit(checked, change);
+                case RenameSchemaProperty ignored -> verifyStructuralEdit(checked, change);
+                case DeleteSchemaComponent ignored -> verifyStructuralEdit(checked, change);
+                case DeleteSchemaProperty ignored -> verifyStructuralEdit(checked, change);
             }
         }
         ImportResult state = new ImportResult(
@@ -133,27 +156,7 @@ public final class OpenApiSchemaEditor {
                 checked.version(),
                 Optional.of(succeeded.document())
         );
-        return new OpenApiEditResult(edit, Optional.of(source), state);
-    }
-
-    private Optional<OpenApiEditResult> rejectUnsupportedIdScopes(
-            ImportResult imported,
-            EditSucceeded succeeded,
-            SourceFormat format,
-            OpenApiVersion version
-    ) {
-        if (version != OpenApiVersion.V3_1
-                || succeeded.changeSet().changes().stream().noneMatch(this::changesSchemaReferenceScope)) {
-            return Optional.empty();
-        }
-        if (!SchemaIdScopeDetector.containsSchemaId(imported.source(), format)) {
-            return Optional.empty();
-        }
-        EditRejected rejection = new EditRejected(List.of(new EditIssue(
-                EditCode.INVALID_STRUCTURE,
-                SchemaIdScopeDetector.UNSUPPORTED_EDIT_MESSAGE
-        )));
-        return Optional.of(new OpenApiEditResult(rejection, Optional.empty(), imported));
+        return new OpenApiEditResult.Applied(succeeded, source, state);
     }
 
     private boolean changesSchemaReferenceScope(Change change) {
@@ -170,19 +173,28 @@ public final class OpenApiSchemaEditor {
             SourceFormat format,
             OpenApiVersion version
     ) {
-        if (command instanceof RenameSchemaComponent || command instanceof RenameSchemaProperty) {
-            return new OpenApiSourcePatcher().apply(imported.source(), format, succeeded.changeSet());
-        }
-        if (command instanceof DeleteSchemaComponent || command instanceof DeleteSchemaProperty) {
-            Change change = succeeded.changeSet().changes().getFirst();
-            DocumentPath path = deletionPath(change);
-            return new OpenApiSchemaDeletionPatcher().remove(imported.source(), format, path);
-        }
-        if (command instanceof UpdateSchemaObject) {
-            SchemaObjectUpdated update = (SchemaObjectUpdated) succeeded.changeSet().changes().getFirst();
-            return new SchemaFieldPatcher().apply(imported.source(), format, version, update);
-        }
-        return new OpenApiAdditionPatcher().apply(imported, succeeded.changeSet());
+        return switch (command) {
+            case RenameSchemaComponent ignored -> patchRename(imported, succeeded, format);
+            case RenameSchemaProperty ignored -> patchRename(imported, succeeded, format);
+            case DeleteSchemaComponent ignored -> patchDeletion(imported, succeeded, format);
+            case DeleteSchemaProperty ignored -> patchDeletion(imported, succeeded, format);
+            case UpdateSchemaObject ignored -> new SchemaFieldPatcher().apply(
+                    imported.source(), format, version,
+                    (SchemaObjectUpdated) succeeded.changeSet().changes().getFirst()
+            );
+            case AddSchemaComponent ignored -> new OpenApiAdditionPatcher().apply(imported, succeeded.changeSet());
+            case AddSchemaProperty ignored -> new OpenApiAdditionPatcher().apply(imported, succeeded.changeSet());
+        };
+    }
+
+    private SourceDocument patchRename(ImportResult imported, EditSucceeded succeeded, SourceFormat format) {
+        return new OpenApiSourcePatcher().apply(imported.source(), format, succeeded.changeSet());
+    }
+
+    private SourceDocument patchDeletion(ImportResult imported, EditSucceeded succeeded, SourceFormat format) {
+        return new OpenApiSchemaDeletionPatcher().remove(
+                imported.source(), format, deletionPath(succeeded.changeSet().changes().getFirst())
+        );
     }
 
     private Optional<OpenApiEditResult> rejectUnmappedIncomingReferences(
@@ -234,7 +246,7 @@ public final class OpenApiSchemaEditor {
                 EditCode.REFERENCED_TARGET,
                 "Cannot delete " + target + "; incoming references: " + locations
         )));
-        return Optional.of(new OpenApiEditResult(rejection, Optional.empty(), imported));
+        return Optional.of(new OpenApiEditResult.Rejected(rejection, imported));
     }
 
     private String deletionDescription(Change change) {
@@ -244,7 +256,7 @@ public final class OpenApiSchemaEditor {
         if (change instanceof SchemaPropertyDeleted property) {
             return "schema property '" + property.name() + "'";
         }
-        throw new IllegalArgumentException("Unsupported schema deletion");
+        throw new IllegalStateException("Unsupported schema deletion");
     }
 
     private boolean isDeletion(Change change) {
@@ -258,7 +270,7 @@ public final class OpenApiSchemaEditor {
         if (change instanceof SchemaPropertyDeleted property) {
             return property.path();
         }
-        throw new IllegalArgumentException("Unsupported schema deletion");
+        throw new IllegalStateException("Unsupported schema deletion");
     }
 
     private void verifyStructuralEdit(ImportResult imported, Change change) {
@@ -267,13 +279,13 @@ public final class OpenApiSchemaEditor {
             DocumentPath oldPath = property.schemaPath().child(PROPERTIES_FIELD).child(property.oldName());
             DocumentPath newPath = property.schemaPath().child(PROPERTIES_FIELD).child(property.newName());
             if (index.findByPath(oldPath).isPresent() || index.findByPath(newPath).isEmpty()) {
-                throw new IllegalArgumentException("Renamed schema property was not preserved in source");
+                throw new IllegalStateException("Renamed schema property was not preserved in source");
             }
             return;
         }
         if (isDeletion(change)) {
             if (index.findByPath(deletionPath(change)).isPresent()) {
-                throw new IllegalArgumentException("Deleted schema element was not removed from source");
+                throw new IllegalStateException("Deleted schema element was not removed from source");
             }
             return;
         }
@@ -281,11 +293,11 @@ public final class OpenApiSchemaEditor {
             DocumentPath oldPath = DocumentPath.schemaComponent(component.oldName());
             DocumentPath newPath = DocumentPath.schemaComponent(component.newName());
             if (index.findByPath(oldPath).isPresent() || index.findByPath(newPath).isEmpty()) {
-                throw new IllegalArgumentException("Renamed schema component was not preserved in source");
+                throw new IllegalStateException("Renamed schema component was not preserved in source");
             }
             return;
         }
-        throw new IllegalArgumentException("Unsupported structural schema change");
+        throw new IllegalStateException("Unsupported structural schema change");
     }
 
     private void verifyAddition(ImportResult before, ImportResult after, Change change, OpenApiVersion version) {
@@ -300,7 +312,7 @@ public final class OpenApiSchemaEditor {
             path = schema.child(PROPERTIES_FIELD).child(property.name());
             expected = property.schema();
         } else {
-            throw new IllegalArgumentException("Unsupported schema addition");
+            throw new IllegalStateException("Unsupported schema addition");
         }
         new SchemaSourceVerifier().verifyAddedSchema(
                 after.source(),
@@ -313,7 +325,7 @@ public final class OpenApiSchemaEditor {
 
     private void verifyUpdate(ImportResult imported, Change change, OpenApiVersion version) {
         if (!(change instanceof SchemaObjectUpdated update)) {
-            throw new IllegalArgumentException("Unsupported schema update");
+            throw new IllegalStateException("Unsupported schema update");
         }
         new SchemaSourceVerifier().verifyUpdatedSchema(
                 imported.source(),
@@ -325,12 +337,17 @@ public final class OpenApiSchemaEditor {
         );
     }
 
-    public record RenameResult(EditResult edit, Optional<SourceDocument> source, ImportResult state) {
-
-        public RenameResult {
-            Objects.requireNonNull(edit, "edit");
-            Objects.requireNonNull(source, "source");
-            Objects.requireNonNull(state, "state");
-        }
+    private DocumentPath commandPath(ImportResult imported, EditCommand command) {
+        DocumentIndex index = DocumentIndex.build(imported.document().orElseThrow());
+        return switch (command) {
+            case AddSchemaComponent addition -> DocumentPath.schemaComponent(addition.component().getName());
+            case AddSchemaProperty addition -> index.findById(addition.schemaId()).orElseThrow().path()
+                    .child(PROPERTIES_FIELD).child(addition.property().getName());
+            case RenameSchemaComponent rename -> index.findById(rename.componentId()).orElseThrow().path();
+            case RenameSchemaProperty rename -> index.findById(rename.propertyId()).orElseThrow().path();
+            case DeleteSchemaComponent deletion -> index.findById(deletion.componentId()).orElseThrow().path();
+            case DeleteSchemaProperty deletion -> index.findById(deletion.propertyId()).orElseThrow().path();
+            case UpdateSchemaObject update -> index.findById(update.schema().getId()).orElseThrow().path();
+        };
     }
 }

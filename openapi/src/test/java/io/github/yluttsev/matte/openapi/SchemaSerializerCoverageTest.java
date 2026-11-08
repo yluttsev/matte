@@ -13,7 +13,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.AddSchemaComponent;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.ElementId;
@@ -41,7 +40,7 @@ class SchemaSerializerCoverageTest {
     private static final List<String> FIXTURES = List.of("additions-empty.yaml", "additions-empty-3.1.json");
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testAddComponent_WhenEverySchemaFieldIsPopulated_ShouldKeepEveryFieldAfterReimport() throws IOException {
@@ -57,7 +56,7 @@ class SchemaSerializerCoverageTest {
                     new AddSchemaComponent(new SchemaComponent(ElementId.random(), COMPONENT_NAME, complete))
             );
 
-            assertInstanceOf(EditSucceeded.class, result.edit(), result.edit().toString());
+            assertInstanceOf(OpenApiEditResult.Applied.class, result, result.toString());
             ImportResult reimported = importer.importDocument(
                     result.source().orElseThrow().content(),
                     ImportOptions.withFormat(imported.format().orElseThrow())

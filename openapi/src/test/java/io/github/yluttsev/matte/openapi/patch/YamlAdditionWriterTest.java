@@ -19,7 +19,7 @@ class YamlAdditionWriterTest {
         DocumentPath alias = DocumentPath.schemaComponent("Alias");
 
         assertThrows(
-                IllegalArgumentException.class,
+                SourceEditRefusal.class,
                 () -> writer.add(
                         text,
                         alias.child("properties"),
@@ -36,7 +36,7 @@ class YamlAdditionWriterTest {
         DocumentPath schemas = DocumentPath.parse("/components/schemas");
 
         assertThrows(
-                IllegalArgumentException.class,
+                SourceEditRefusal.class,
                 () -> writer.add(text, schemas, schemas, "New", Map.of("type", "object"))
         );
     }
@@ -47,7 +47,7 @@ class YamlAdditionWriterTest {
         DocumentPath old = DocumentPath.schemaComponent("Old");
 
         assertThrows(
-                IllegalArgumentException.class,
+                SourceEditRefusal.class,
                 () -> writer.add(
                         text,
                         old.child("properties"),

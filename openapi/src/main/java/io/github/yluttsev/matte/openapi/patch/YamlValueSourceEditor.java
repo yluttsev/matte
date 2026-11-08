@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
+import io.github.yluttsev.matte.openapi.SourceEditCode;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
 import org.snakeyaml.engine.v2.common.FlowStyle;
@@ -57,7 +58,11 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
     public String remove(String text, DocumentPath path) {
         LocatedNode located = locate(text, path);
         if (located.tuple() == null || located.parent() == null) {
-            throw new IllegalArgumentException("Source field is not part of a mapping: " + path);
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Source field is not part of a mapping: " + path,
+                    path
+            );
         }
         if (located.parent().getValue().size() == 1) {
             return removeOnlyField(text, located, path);
@@ -88,7 +93,11 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
                 tuple = null;
                 tupleIndex = -1;
             } else {
-                throw new IllegalArgumentException("Source path does not point to a value: " + path);
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_LAYOUT,
+                        "Source path does not point to a value: " + path,
+                        path
+                );
             }
         }
         YamlAliasSafety.requireUniqueChangedValue(root, path);
@@ -102,20 +111,26 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
         for (int index = 0; index < entries.size(); index++) {
             Node keyNode = entries.get(index).getKeyNode();
             if (!(keyNode instanceof ScalarNode key)) {
-                throw new IllegalArgumentException("Non-scalar YAML mapping keys cannot be patched");
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_LAYOUT,
+                        "Non-scalar YAML mapping keys cannot be patched"
+                );
             }
             if (!names.add(key.getValue())) {
-                throw new IllegalArgumentException("Duplicate YAML source key: " + key.getValue());
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_LAYOUT,
+                        "Duplicate YAML source key: " + key.getValue()
+                );
             }
             if ("<<".equals(key.getValue())) {
-                throw new IllegalArgumentException("Merge-based source mappings cannot be patched");
+                throw new SourceEditRefusal(SourceEditCode.MERGE_KEY, "Merge-based source mappings cannot be patched");
             }
             if (name.equals(key.getValue())) {
                 found = index;
             }
         }
         if (found < 0) {
-            throw new IllegalArgumentException("Source field was not found: " + name);
+            throw new SourceEditRefusal(SourceEditCode.AMBIGUOUS_LAYOUT, "Source field was not found: " + name);
         }
         return found;
     }
@@ -128,7 +143,11 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
             throw new IllegalArgumentException("Source path has an invalid sequence index: " + path, exception);
         }
         if (index < 0 || index >= sequence.getValue().size()) {
-            throw new IllegalArgumentException("Source sequence item was not found: " + path);
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Source sequence item was not found: " + path,
+                    path
+            );
         }
         return sequence.getValue().get(index);
     }
@@ -156,7 +175,11 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
         }
         int nextLineStart = lineStart(text, end);
         if (!text.substring(nextLineStart, end).isBlank() || nextLineStart == 0) {
-            throw new IllegalArgumentException("YAML block mapping end is ambiguous: " + path);
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "YAML block mapping end is ambiguous: " + path,
+                    path
+            );
         }
         int lineBreakStart = blockSeparatorStart(text, parentRange.start(), nextLineStart, path);
         return text.substring(0, parentRange.start()) + "{}" + text.substring(lineBreakStart);
@@ -168,7 +191,11 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
             int previousLineStart = lineStart(text, position - 1);
             String line = text.substring(previousLineStart, position).strip();
             if (line.startsWith("#")) {
-                throw new IllegalArgumentException("Comments around a YAML field cannot be moved safely: " + path);
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_COMMENT,
+                        "Comments around a YAML field cannot be moved safely: " + path,
+                        path
+                );
             }
             if (!line.isEmpty()) {
                 int lineBreakStart = position - 1;
@@ -179,7 +206,11 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
             }
             position = previousLineStart;
         }
-        throw new IllegalArgumentException("YAML block mapping end is ambiguous: " + path);
+        throw new SourceEditRefusal(
+                SourceEditCode.AMBIGUOUS_LAYOUT,
+                "YAML block mapping end is ambiguous: " + path,
+                path
+        );
     }
 
     private String removeFlowField(String text, LocatedNode located) {
@@ -278,21 +309,27 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
     private int commaBetween(String text, int start, int end) {
         int comma = text.indexOf(',', start);
         if (comma < 0 || comma >= end) {
-            throw new IllegalArgumentException("YAML flow mapping separator was not found");
+            throw new SourceEditRefusal(SourceEditCode.AMBIGUOUS_LAYOUT, "YAML flow mapping separator was not found");
         }
         return comma;
     }
 
     private void ensureNoComment(String text, int start, int end) {
         if (text.substring(start, end).contains("#")) {
-            throw new IllegalArgumentException("Comments around a YAML flow field cannot be moved safely");
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_COMMENT,
+                    "Comments around a YAML flow field cannot be moved safely"
+            );
         }
     }
 
     private void ensureNoInlineComment(String text, int valueEnd) {
         int end = lineEnd(text, valueEnd);
         if (text.substring(valueEnd, end).contains("#")) {
-            throw new IllegalArgumentException("Inline comments around a YAML field cannot be moved safely");
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_COMMENT,
+                    "Inline comments around a YAML field cannot be moved safely"
+            );
         }
     }
 
@@ -310,7 +347,10 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
             }
             int indentation = previousLine.length() - content.length();
             if (content.startsWith("#") && indentation >= keyIndentation) {
-                throw new IllegalArgumentException("Leading comments around a YAML field cannot be moved safely");
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_COMMENT,
+                        "Leading comments around a YAML field cannot be moved safely"
+                );
             }
             return;
         }
@@ -322,7 +362,10 @@ final class YamlValueSourceEditor implements SchemaValueSourceEditor {
             int lineEnd = lineEnd(text, lineStart);
             String line = text.substring(lineStart, Math.min(lineEnd, end)).stripLeading();
             if (line.startsWith("#")) {
-                throw new IllegalArgumentException("Comments around a YAML field cannot be moved safely");
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_COMMENT,
+                        "Comments around a YAML field cannot be moved safely"
+                );
             }
             lineStart = lineEnd;
         }

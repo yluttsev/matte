@@ -3,7 +3,6 @@ package io.github.yluttsev.matte.openapi;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.RenameSchemaProperty;
 import io.github.yluttsev.matte.core.model.ApiDocument;
 import io.github.yluttsev.matte.core.model.schema.SchemaObject;
@@ -18,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RequiredPropertyRenameTest {
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testRenameProperty_WhenYamlBlockRequiredContainsNewName_ShouldRemoveOldEntryAndKeepOrder() throws IOException {
@@ -62,7 +61,7 @@ class RequiredPropertyRenameTest {
                 new RenameSchemaProperty(customer.getId(), property.getId(), "newName")
         );
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         byte[] source = result.source().orElseThrow().content();
         assertArrayEquals(TestFixtures.bytes(expectedFixture), source);
         assertEquals(Set.copyOf(expectedRequired), schema(result.state().document().orElseThrow()).getRequired());
