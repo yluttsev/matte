@@ -33,9 +33,8 @@ class ImportSizeLimitTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"minimal.yaml", "minimal.json"})
-    void testImportDocument_WhenSizeExceedsLimitByOne_ShouldRetainBytesAndReportSize(
-            String fixture
-    ) throws IOException {
+    void testImportDocument_WhenSizeExceedsLimitByOne_ShouldRetainBytesAndReportSize(String fixture)
+            throws IOException {
         byte[] source = TestFixtures.bytes(fixture);
         int limit = source.length - 1;
 
