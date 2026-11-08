@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.SourceEditCode;
 import io.github.yluttsev.matte.openapi.SourceFormat;
+import io.github.yluttsev.matte.openapi.parser.ParserSettings;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
 import org.snakeyaml.engine.v2.common.FlowStyle;
@@ -27,8 +28,8 @@ final class RequiredArrayItemPatcher {
     private static final String DEFAULT_SEPARATOR = ", ";
     private static final Pattern ITEM_SEPARATOR = Pattern.compile(",\\s*");
     private static final Pattern BLOCK_ITEM_PREFIX = Pattern.compile(" *-[ ]+");
-    private static final LoadSettings YAML_SETTINGS = LoadSettings.builder().build();
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final LoadSettings YAML_SETTINGS = ParserSettings.yaml();
+    private static final ObjectMapper JSON = ParserSettings.json();
     private static final Map<SourceFormat, SourceScalarScanner> SCANNERS = Map.of(
             SourceFormat.JSON,
             new JsonScalarScanner(),

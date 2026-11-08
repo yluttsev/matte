@@ -28,10 +28,8 @@ import org.snakeyaml.engine.v2.nodes.NodeTuple;
 import org.snakeyaml.engine.v2.nodes.ScalarNode;
 import org.snakeyaml.engine.v2.nodes.SequenceNode;
 import org.snakeyaml.engine.v2.nodes.Tag;
-import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.json.JsonMapper;
 
 public final class SourceSchemaValueReader {
 
@@ -42,10 +40,8 @@ public final class SourceSchemaValueReader {
     private static final List<String> INTEGER_CONSTRAINTS = List.of(
             "minProperties", "maxProperties", "minItems", "maxItems", "minLength", "maxLength"
     );
-    private static final ObjectMapper JSON = JsonMapper.builder()
-            .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
-            .build();
-    private static final LoadSettings YAML = LoadSettings.builder().build();
+    private static final ObjectMapper JSON = ParserSettings.json();
+    private static final LoadSettings YAML = ParserSettings.yaml();
 
     private SourceSchemaValueReader() {
     }

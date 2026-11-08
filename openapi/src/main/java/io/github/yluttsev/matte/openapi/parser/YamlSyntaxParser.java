@@ -25,7 +25,7 @@ public final class YamlSyntaxParser implements SyntaxParser {
 
     private static final String MULTIPLE_DOCUMENTS_MESSAGE = "YAML must contain exactly one document";
     private static final String DUPLICATE_KEY_PREFIX = "Duplicate YAML key: ";
-    private static final LoadSettings SETTINGS = LoadSettings.builder().build();
+    private static final LoadSettings SETTINGS = ParserSettings.yaml();
 
     @Override
     public Optional<ImportDiagnostic> validate(String text) {

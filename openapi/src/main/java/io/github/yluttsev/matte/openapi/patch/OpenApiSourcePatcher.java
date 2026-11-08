@@ -16,7 +16,7 @@ import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.SourceDocument;
 import io.github.yluttsev.matte.openapi.SourceEditCode;
 import io.github.yluttsev.matte.openapi.SourceFormat;
-import org.snakeyaml.engine.v2.api.LoadSettings;
+import io.github.yluttsev.matte.openapi.parser.ParserSettings;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
 import org.snakeyaml.engine.v2.nodes.Node;
 
@@ -75,7 +75,7 @@ public final class OpenApiSourcePatcher {
         if (references.isEmpty()) {
             return;
         }
-        Node root = new Compose(LoadSettings.builder().build()).composeString(text).orElseThrow();
+        Node root = new Compose(ParserSettings.yaml()).composeString(text).orElseThrow();
         for (ReferenceChanged reference : references) {
             YamlAliasSafety.requireUniqueChangedValue(root, reference.sourceBefore());
         }
