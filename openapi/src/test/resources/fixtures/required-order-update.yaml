@@ -1,0 +1,13 @@
+openapi: 3.1.0
+info:
+  title: Required order
+  version: 1.0.0
+components:
+  schemas:
+    Customer:
+      type: object
+      properties:
+        b:
+          type: string
+      required:
+        - b
