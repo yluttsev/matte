@@ -1,0 +1,22 @@
+openapi: 3.1.0
+info:
+  title: Required diff
+  version: 1.0.0
+components:
+  schemas:
+    # Keep this comment
+    Customer:
+      type: object
+      properties:
+        a:
+          type: string
+        b:
+          type: string
+        c:
+          type: string
+        d:
+          type: string
+      required:
+        - b
+        - c
+        - d

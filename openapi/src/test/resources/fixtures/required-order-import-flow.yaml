@@ -1,0 +1,13 @@
+openapi: 3.1.0
+info:
+  title: Required import
+  version: 1.0.0
+components:
+  schemas:
+    Customer:
+      type: object
+      properties:
+        a: { type: string }
+        m: { type: string }
+        z: { type: string }
+      required: [z, a, m]

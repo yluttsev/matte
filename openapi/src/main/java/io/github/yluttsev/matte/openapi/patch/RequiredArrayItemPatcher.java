@@ -1,8 +1,12 @@
 package io.github.yluttsev.matte.openapi.patch;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.SourceFormat;
 import org.snakeyaml.engine.v2.api.LoadSettings;
@@ -13,10 +17,152 @@ import org.snakeyaml.engine.v2.nodes.Node;
 import org.snakeyaml.engine.v2.nodes.NodeTuple;
 import org.snakeyaml.engine.v2.nodes.ScalarNode;
 import org.snakeyaml.engine.v2.nodes.SequenceNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 final class RequiredArrayItemPatcher {
 
+    private static final char UTF8_BOM = 0xFEFF;
+    private static final String DEFAULT_SEPARATOR = ", ";
+    private static final Pattern ITEM_SEPARATOR = Pattern.compile(",\\s*");
+    private static final Pattern BLOCK_ITEM_PREFIX = Pattern.compile(" *-[ ]+");
     private static final LoadSettings YAML_SETTINGS = LoadSettings.builder().build();
+    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final Map<SourceFormat, SourceScalarScanner> SCANNERS = Map.of(
+            SourceFormat.JSON,
+            new JsonScalarScanner(),
+            SourceFormat.YAML,
+            new YamlScalarScanner()
+    );
+
+    String applyDifference(
+            String text,
+            SourceFormat format,
+            DocumentPath sequencePath,
+            Collection<String> removedNames,
+            Collection<String> addedNames
+    ) {
+        requireUnshared(text, format, sequencePath);
+        String current = text;
+        for (String name : addedNames) {
+            current = append(current, format, sequencePath, name);
+        }
+        if (!removedNames.isEmpty()) {
+            current = removeNames(current, format, sequencePath, removedNames);
+        }
+        return current;
+    }
+
+    private void requireUnshared(String text, SourceFormat format, DocumentPath sequencePath) {
+        if (format == SourceFormat.YAML) {
+            YamlAliasSafety.requireUniqueChangedValue(
+                    new Compose(YAML_SETTINGS).composeString(text).orElseThrow(),
+                    sequencePath
+            );
+        }
+    }
+
+    private String removeNames(
+            String text,
+            SourceFormat format,
+            DocumentPath sequencePath,
+            Collection<String> names
+    ) {
+        List<SourceScalar> items = stringItems(text, format, sequencePath);
+        List<SourceScalar> itemsToRemove = items.stream()
+                .filter(item -> names.contains(item.value()))
+                .toList();
+        if (itemsToRemove.isEmpty()) {
+            throw new IllegalArgumentException("Required array entry could not be located: " + sequencePath);
+        }
+        SourceTextEdits edits = new SourceTextEdits();
+        remove(text, format, sequencePath, items, itemsToRemove, edits);
+        return edits.apply(text);
+    }
+
+    private String append(String text, SourceFormat format, DocumentPath sequencePath, String name) {
+        List<SourceScalar> items = stringItems(text, format, sequencePath);
+        if (items.stream().anyMatch(item -> item.value().equals(name))) {
+            return text;
+        }
+        if (format == SourceFormat.JSON) {
+            return appendDelimited(text, items, JSON.writeValueAsString(name));
+        }
+        String value = SourceTextEdits.yamlScalar(name);
+        if (sequence(text, sequencePath).getFlowStyle() == FlowStyle.FLOW) {
+            return appendDelimited(text, items, value);
+        }
+        return appendYamlBlock(text, items, value);
+    }
+
+    private List<SourceScalar> stringItems(String text, SourceFormat format, DocumentPath sequencePath) {
+        List<SourceScalar> items = SCANNERS.get(format).scan(text).stream()
+                .filter(scalar -> !scalar.key())
+                .filter(scalar -> scalar.path().parent().filter(sequencePath::equals).isPresent())
+                .sorted(Comparator.comparingInt(this::sequenceIndex))
+                .toList();
+        if (items.isEmpty()) {
+            throw new IllegalArgumentException("Required array entry could not be located: " + sequencePath);
+        }
+        validateYamlIndexes(items);
+        if (sourceItemCount(text, format, sequencePath) != items.size()) {
+            throw new IllegalArgumentException("Required array contains a non-string entry: " + sequencePath);
+        }
+        return items;
+    }
+
+    private int sourceItemCount(String text, SourceFormat format, DocumentPath sequencePath) {
+        if (format == SourceFormat.YAML) {
+            return sequence(text, sequencePath).getValue().size();
+        }
+        String parseable = text;
+        if (!text.isEmpty() && text.charAt(0) == UTF8_BOM) {
+            parseable = text.substring(1);
+        }
+        JsonNode current = JSON.readTree(parseable);
+        for (String segment : sequencePath.segments()) {
+            if (current.isArray()) {
+                current = current.get(parseIndex(segment, sequencePath));
+            } else {
+                current = current.get(segment);
+            }
+            if (current == null) {
+                throw new IllegalArgumentException("Required array was not found: " + sequencePath);
+            }
+        }
+        if (!current.isArray()) {
+            throw new IllegalArgumentException("Required value is not an array: " + sequencePath);
+        }
+        return current.size();
+    }
+
+    private String appendDelimited(String text, List<SourceScalar> items, String value) {
+        SourceScalar last = items.getLast();
+        String separator = DEFAULT_SEPARATOR;
+        if (items.size() > 1) {
+            String between = text.substring(items.get(items.size() - 2).end(), last.start());
+            if (ITEM_SEPARATOR.matcher(between).matches()) {
+                separator = between;
+            }
+        }
+        return text.substring(0, last.end()) + separator + value + text.substring(last.end());
+    }
+
+    private String appendYamlBlock(String text, List<SourceScalar> items, String value) {
+        SourceScalar last = items.getLast();
+        int lineStart = lineStart(text, last.start());
+        String marker = text.substring(lineStart, last.start());
+        if (!BLOCK_ITEM_PREFIX.matcher(marker).matches()) {
+            throw new IllegalArgumentException("Required YAML array entry layout cannot be extended safely");
+        }
+        int position = lineEnd(text, last.end());
+        String newline = SourceLineEndings.near(text, lineStart);
+        String prefix = "";
+        if (position == text.length() && !text.endsWith("\n")) {
+            prefix = newline;
+        }
+        return text.substring(0, position) + prefix + marker + value + newline + text.substring(position);
+    }
 
     Set<DocumentPath> remove(
             String text,

@@ -3,6 +3,7 @@ package io.github.yluttsev.matte.openapi.patch;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -14,6 +15,7 @@ import io.github.yluttsev.matte.openapi.SourceFormat;
 
 public final class SchemaFieldPatcher {
 
+    private static final String REQUIRED_FIELD = "required";
     private static final Set<String> NESTED_SCHEMA_FIELDS = Set.of(
             "properties",
             "items",
@@ -81,8 +83,14 @@ public final class SchemaFieldPatcher {
     ) {
         boolean wasPresent = before.containsKey(field);
         boolean isPresent = after.containsKey(field);
-        if (wasPresent && isPresent && Objects.equals(before.get(field), after.get(field))) {
+        if (wasPresent && isPresent && Objects.equals(
+                SchemaComparison.normalizeField(field, before.get(field)),
+                SchemaComparison.normalizeField(field, after.get(field))
+        )) {
             return text;
+        }
+        if (wasPresent && isPresent && REQUIRED_FIELD.equals(field)) {
+            return updateRequired(text, schemaPath, before.get(field), after.get(field), format);
         }
         if (!wasPresent) {
             return addField(text, schemaPath, field, after.get(field), format);
@@ -91,6 +99,36 @@ public final class SchemaFieldPatcher {
             return VALUE_EDITORS.get(format).remove(text, schemaPath.child(field));
         }
         return VALUE_EDITORS.get(format).replace(text, schemaPath.child(field), after.get(field));
+    }
+
+    private String updateRequired(
+            String text,
+            DocumentPath schemaPath,
+            Object before,
+            Object after,
+            SourceFormat format
+    ) {
+        Set<String> previous = names(before);
+        Set<String> next = names(after);
+        Set<String> removed = new LinkedHashSet<>(previous);
+        removed.removeAll(next);
+        Set<String> added = new LinkedHashSet<>(next);
+        added.removeAll(previous);
+        return new RequiredArrayItemPatcher().applyDifference(
+                text,
+                format,
+                schemaPath.child(REQUIRED_FIELD),
+                removed,
+                added
+        );
+    }
+
+    private Set<String> names(Object value) {
+        Set<String> names = new LinkedHashSet<>();
+        for (Object name : (List<?>) value) {
+            names.add((String) name);
+        }
+        return names;
     }
 
     private String addField(String text, DocumentPath schemaPath, String field, Object value, SourceFormat format) {

@@ -37,6 +37,7 @@ public final class SourceSchemaValueReader {
 
     private static final String COMPONENTS_KEY = "components";
     private static final String SCHEMAS_KEY = "schemas";
+    private static final String REQUIRED_KEY = "required";
     private static final List<String> COMPOSITION_FIELDS = List.of("allOf", "oneOf", "anyOf");
     private static final List<String> INTEGER_CONSTRAINTS = List.of(
             "minProperties", "maxProperties", "minItems", "maxItems", "minLength", "maxLength"
@@ -89,7 +90,8 @@ public final class SourceSchemaValueReader {
                 jsonValues(schema.get("enum")),
                 version == OpenApiVersion.V3_1 && schema.has("const"),
                 constValue,
-                jsonIntegerConstraints(schema)
+                jsonIntegerConstraints(schema),
+                jsonRequiredNames(schema.get(REQUIRED_KEY))
         );
         values.put(path, fields);
 
@@ -168,6 +170,19 @@ public final class SourceSchemaValueReader {
         return new ObjectValue(properties);
     }
 
+    private static List<String> jsonRequiredNames(JsonNode node) {
+        if (node == null || !node.isArray()) {
+            return List.of();
+        }
+        List<String> names = new ArrayList<>();
+        for (JsonNode name : node) {
+            if (name.isString()) {
+                names.add(name.asString());
+            }
+        }
+        return names;
+    }
+
     private static Map<String, BigInteger> jsonIntegerConstraints(JsonNode schema) {
         Map<String, BigInteger> constraints = new LinkedHashMap<>();
         for (String field : INTEGER_CONSTRAINTS) {
@@ -228,7 +243,8 @@ public final class SourceSchemaValueReader {
                     yamlValues(mappingValue(mapping, "enum"), ancestors),
                     constNode != null,
                     yamlValueOrNull(constNode, ancestors),
-                    yamlIntegerConstraints(mapping)
+                    yamlIntegerConstraints(mapping),
+                    yamlRequiredNames(mappingValue(mapping, REQUIRED_KEY))
             );
             values.put(path, fields);
 
@@ -343,6 +359,19 @@ public final class SourceSchemaValueReader {
             return new NumberValue(new BigDecimal(value.replace("_", "")));
         }
         return new StringValue(value);
+    }
+
+    private static List<String> yamlRequiredNames(Node node) {
+        if (!(node instanceof SequenceNode sequence)) {
+            return List.of();
+        }
+        List<String> names = new ArrayList<>();
+        for (Node item : sequence.getValue()) {
+            if (item instanceof ScalarNode scalar && !Tag.NULL.equals(scalar.getTag())) {
+                names.add(scalar.getValue());
+            }
+        }
+        return names;
     }
 
     private static Map<String, BigInteger> yamlIntegerConstraints(MappingNode schema) {
