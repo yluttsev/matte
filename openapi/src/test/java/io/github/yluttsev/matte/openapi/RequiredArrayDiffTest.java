@@ -3,7 +3,6 @@ package io.github.yluttsev.matte.openapi;
 import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.List;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.RenameSchemaProperty;
 import io.github.yluttsev.matte.core.editing.command.UpdateSchemaObject;
 import io.github.yluttsev.matte.core.model.ApiDocument;
@@ -11,16 +10,16 @@ import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaProperty;
 import io.github.yluttsev.matte.openapi.testing.TestFixtures;
 import org.junit.jupiter.api.Test;
+import static io.github.yluttsev.matte.openapi.testing.EditAssertions.assertRefused;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class RequiredArrayDiffTest {
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testUpdateSchema_WhenYamlBlockRequiredNameIsRemoved_ShouldRemoveOnlyThatLine() throws IOException {
@@ -73,7 +72,7 @@ class RequiredArrayDiffTest {
 
             OpenApiEditResult result = update(imported, List.of("c", "b", "a"));
 
-            assertInstanceOf(EditSucceeded.class, result.edit());
+            assertInstanceOf(OpenApiEditResult.Applied.class, result);
             assertSame(imported.source(), result.source().orElseThrow());
         }
     }
@@ -84,7 +83,7 @@ class RequiredArrayDiffTest {
         ImportResult imported = importFixture("required-order-comment.yaml");
         byte[] original = imported.source().content();
 
-        assertThrows(IllegalArgumentException.class, () -> update(imported, List.of("a", "c")));
+        assertRefused(imported, () -> update(imported, List.of("a", "c")));
 
         assertArrayEquals(original, imported.source().content());
     }
@@ -94,7 +93,7 @@ class RequiredArrayDiffTest {
         ImportResult imported = importFixture("required-order-alias.yaml");
         byte[] original = imported.source().content();
 
-        assertThrows(IllegalArgumentException.class, () -> update(imported, List.of("a")));
+        assertRefused(imported, () -> update(imported, List.of("a")));
 
         assertArrayEquals(original, imported.source().content());
     }
@@ -142,7 +141,7 @@ class RequiredArrayDiffTest {
 
         OpenApiEditResult result = update(imported, required);
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertArrayEquals(TestFixtures.bytes(expectedFixture), result.source().orElseThrow().content());
         assertEquals(required, List.copyOf(customer(result.state().document().orElseThrow()).getRequired()));
         assertEquals(required, List.copyOf(customer(reimport(result, imported)).getRequired()));
@@ -162,7 +161,7 @@ class RequiredArrayDiffTest {
                 new RenameSchemaProperty(customer.getId(), renamed.getId(), "a")
         );
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertArrayEquals(TestFixtures.bytes(expectedFixture), result.source().orElseThrow().content());
         assertEquals(required, List.copyOf(customer(result.state().document().orElseThrow()).getRequired()));
         assertEquals(required, List.copyOf(customer(reimport(result, imported)).getRequired()));

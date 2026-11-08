@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
+import io.github.yluttsev.matte.openapi.SourceEditCode;
 import io.github.yluttsev.matte.openapi.SourceFormat;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
@@ -73,7 +74,11 @@ final class RequiredArrayItemPatcher {
                 .filter(item -> names.contains(item.value()))
                 .toList();
         if (itemsToRemove.isEmpty()) {
-            throw new IllegalArgumentException("Required array entry could not be located: " + sequencePath);
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Required array entry could not be located: " + sequencePath,
+                    sequencePath
+            );
         }
         SourceTextEdits edits = new SourceTextEdits();
         remove(text, format, sequencePath, items, itemsToRemove, edits);
@@ -102,11 +107,19 @@ final class RequiredArrayItemPatcher {
                 .sorted(Comparator.comparingInt(this::sequenceIndex))
                 .toList();
         if (items.isEmpty()) {
-            throw new IllegalArgumentException("Required array entry could not be located: " + sequencePath);
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Required array entry could not be located: " + sequencePath,
+                    sequencePath
+            );
         }
         validateYamlIndexes(items);
         if (sourceItemCount(text, format, sequencePath) != items.size()) {
-            throw new IllegalArgumentException("Required array contains a non-string entry: " + sequencePath);
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Required array contains a non-string entry: " + sequencePath,
+                    sequencePath
+            );
         }
         return items;
     }
@@ -127,11 +140,19 @@ final class RequiredArrayItemPatcher {
                 current = current.get(segment);
             }
             if (current == null) {
-                throw new IllegalArgumentException("Required array was not found: " + sequencePath);
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_LAYOUT,
+                        "Required array was not found: " + sequencePath,
+                        sequencePath
+                );
             }
         }
         if (!current.isArray()) {
-            throw new IllegalArgumentException("Required value is not an array: " + sequencePath);
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Required value is not an array: " + sequencePath,
+                    sequencePath
+            );
         }
         return current.size();
     }
@@ -153,7 +174,10 @@ final class RequiredArrayItemPatcher {
         int lineStart = lineStart(text, last.start());
         String marker = text.substring(lineStart, last.start());
         if (!BLOCK_ITEM_PREFIX.matcher(marker).matches()) {
-            throw new IllegalArgumentException("Required YAML array entry layout cannot be extended safely");
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Required YAML array entry layout cannot be extended safely"
+            );
         }
         int position = lineEnd(text, last.end());
         String newline = SourceLineEndings.near(text, lineStart);
@@ -186,7 +210,11 @@ final class RequiredArrayItemPatcher {
         for (SourceScalar item : itemsToRemove) {
             int index = sequenceItems.indexOf(item);
             if (index < 0) {
-                throw new IllegalArgumentException("Required array entry could not be located: " + item.path());
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_LAYOUT,
+                        "Required array entry could not be located: " + item.path(),
+                        item.path()
+                );
             }
             removed[index] = true;
         }
@@ -202,7 +230,11 @@ final class RequiredArrayItemPatcher {
     ) {
         SequenceNode sequence = sequence(text, sequencePath);
         if (sequence.getValue().size() != sequenceItems.size()) {
-            throw new IllegalArgumentException("Required YAML array contains a non-string entry: " + sequencePath);
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Required YAML array contains a non-string entry: " + sequencePath,
+                    sequencePath
+            );
         }
         validateYamlIndexes(sequenceItems);
         if (sequence.getFlowStyle() == FlowStyle.FLOW) {
@@ -216,7 +248,11 @@ final class RequiredArrayItemPatcher {
         for (int index = 0; index < sequenceItems.size(); index++) {
             SourceScalar item = sequenceItems.get(index);
             if (sequenceIndex(item) != index) {
-                throw new IllegalArgumentException("Required YAML array entry could not be located: " + item.path());
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_LAYOUT,
+                        "Required YAML array entry could not be located: " + item.path(),
+                        item.path()
+                );
             }
         }
     }
@@ -327,11 +363,17 @@ final class RequiredArrayItemPatcher {
             } else if (current instanceof SequenceNode sequence) {
                 current = sequenceChild(sequence, segment, path);
             } else {
-                throw new IllegalArgumentException("Required YAML array was not found: " + path);
+                throw new SourceEditRefusal(
+                        SourceEditCode.AMBIGUOUS_LAYOUT,
+                        "Required YAML array was not found: " + path
+                );
             }
         }
         if (!(current instanceof SequenceNode sequence)) {
-            throw new IllegalArgumentException("Required YAML value is not an array: " + path);
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_LAYOUT,
+                    "Required YAML value is not an array: " + path
+            );
         }
         return sequence;
     }
@@ -342,13 +384,13 @@ final class RequiredArrayItemPatcher {
                 return entry.getValueNode();
             }
         }
-        throw new IllegalArgumentException("Required YAML array was not found: " + path);
+        throw new SourceEditRefusal(SourceEditCode.AMBIGUOUS_LAYOUT, "Required YAML array was not found: " + path);
     }
 
     private Node sequenceChild(SequenceNode sequence, String segment, DocumentPath path) {
         int index = parseIndex(segment, path);
         if (index < 0 || index >= sequence.getValue().size()) {
-            throw new IllegalArgumentException("Required YAML array was not found: " + path);
+            throw new SourceEditRefusal(SourceEditCode.AMBIGUOUS_LAYOUT, "Required YAML array was not found: " + path);
         }
         return sequence.getValue().get(index);
     }
@@ -367,7 +409,10 @@ final class RequiredArrayItemPatcher {
 
     private void ensureNoComment(String text, int start, int end) {
         if (text.substring(start, end).contains("#")) {
-            throw new IllegalArgumentException("Comments around a required array entry cannot be moved safely");
+            throw new SourceEditRefusal(
+                    SourceEditCode.AMBIGUOUS_COMMENT,
+                    "Comments around a required array entry cannot be moved safely"
+            );
         }
     }
 

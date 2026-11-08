@@ -2,21 +2,20 @@ package io.github.yluttsev.matte.openapi;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.UpdateSchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.value.StringValue;
 import io.github.yluttsev.matte.openapi.testing.TestFixtures;
 import org.junit.jupiter.api.Test;
+import static io.github.yluttsev.matte.openapi.testing.EditAssertions.assertRefused;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class YamlScalarReplacementTest {
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testUpdateSchema_WhenLiteralScalarHasFollowingKey_ShouldPreserveLineBoundary() throws IOException {
@@ -47,10 +46,7 @@ class YamlScalarReplacementTest {
                 .defaultValue(new StringValue("Updated"))
                 .build();
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement))
-        );
+        assertRefused(imported, () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement)));
 
         assertArrayEquals(source, imported.source().content());
         assertEquals(original.getDefaultValue(), schema(imported, "Empty").getDefaultValue());
@@ -76,10 +72,7 @@ class YamlScalarReplacementTest {
         SchemaObject original = schema(imported, "Literal");
         SchemaObject replacement = SchemaObject.builder(original).description("Updated").build();
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement))
-        );
+        assertRefused(imported, () -> editor.updateSchema(imported, new UpdateSchemaObject(replacement)));
 
         assertArrayEquals(source, imported.source().content());
         assertEquals(original.getDescription(), schema(imported, "Literal").getDescription());
@@ -97,7 +90,7 @@ class YamlScalarReplacementTest {
 
     private void assertResult(ImportResult imported, OpenApiEditResult edited, String expected, boolean crlf)
             throws IOException {
-        assertInstanceOf(EditSucceeded.class, edited.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, edited);
         assertArrayEquals(fixture(expected, crlf), edited.source().orElseThrow().content());
         assertArrayEquals(fixture("yaml-scalar-replacement.yaml", crlf), imported.source().content());
         ImportResult reimported = importer.importDocument(

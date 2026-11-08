@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import io.github.yluttsev.matte.core.editing.EditCode;
 import io.github.yluttsev.matte.core.editing.EditRejected;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.DeleteSchemaComponent;
 import io.github.yluttsev.matte.core.editing.command.DeleteSchemaProperty;
 import io.github.yluttsev.matte.core.editing.command.RenameSchemaComponent;
@@ -19,16 +18,16 @@ import io.github.yluttsev.matte.openapi.testing.TestFixtures;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import static io.github.yluttsev.matte.openapi.testing.EditAssertions.assertRefused;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReferenceLocationsTest {
 
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @ParameterizedTest
     @CsvSource({"3.0,yaml", "3.0,json", "3.1,yaml", "3.1,json"})
@@ -40,12 +39,12 @@ class ReferenceLocationsTest {
         ImportResult imported = importCatalogue(version, extension);
         byte[] original = imported.source().content();
 
-        OpenApiSchemaEditor.RenameResult result = editor.rename(
+        OpenApiEditResult result = editor.rename(
                 imported,
                 new RenameSchemaComponent(component(imported).getId(), "New")
         );
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertArrayEquals(TestFixtures.bytes("reference-locations-" + version + "-renamed." + extension),
                 result.source().orElseThrow().content());
         assertArrayEquals(original, imported.source().content());
@@ -75,7 +74,7 @@ class ReferenceLocationsTest {
                 imported, new DeleteSchemaComponent(component(imported).getId())
         );
 
-        EditRejected rejected = assertInstanceOf(EditRejected.class, result.edit());
+        EditRejected rejected = assertInstanceOf(OpenApiEditResult.Rejected.class, result).edit();
         assertEquals(EditCode.REFERENCED_TARGET, rejected.issues().getFirst().code());
         for (String location : expected) {
             assertTrue(rejected.issues().getFirst().message().contains(location), location);
@@ -102,7 +101,7 @@ class ReferenceLocationsTest {
         OpenApiEditResult deletion = editor.deleteProperty(
                 imported, new DeleteSchemaProperty(schema.getId(), property.getId())
         );
-        EditRejected rejected = assertInstanceOf(EditRejected.class, deletion.edit());
+        EditRejected rejected = assertInstanceOf(OpenApiEditResult.Rejected.class, deletion).edit();
         for (String location : List.of("/webhooks/", "/components/callbacks/", "/components/pathItems/")) {
             assertTrue(rejected.issues().getFirst().message().contains(location), location);
         }
@@ -112,7 +111,7 @@ class ReferenceLocationsTest {
         OpenApiEditResult rename = editor.renameProperty(
                 imported, new RenameSchemaProperty(schema.getId(), property.getId(), "identifier")
         );
-        assertInstanceOf(EditSucceeded.class, rename.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, rename);
         assertArrayEquals(TestFixtures.bytes("reference-property-locations-renamed." + extension),
                 rename.source().orElseThrow().content());
         assertArrayEquals(original, imported.source().content());
@@ -124,17 +123,17 @@ class ReferenceLocationsTest {
             throws IOException {
         ImportResult imported = importFixture("reference-literals-only." + extension);
 
-        OpenApiSchemaEditor.RenameResult rename = editor.rename(
+        OpenApiEditResult rename = editor.rename(
                 imported, new RenameSchemaComponent(component(imported).getId(), "New")
         );
-        assertInstanceOf(EditSucceeded.class, rename.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, rename);
         assertArrayEquals(TestFixtures.bytes("reference-literals-only-renamed." + extension),
                 rename.source().orElseThrow().content());
 
         OpenApiEditResult deletion = editor.deleteComponent(
                 imported, new DeleteSchemaComponent(component(imported).getId())
         );
-        assertInstanceOf(EditSucceeded.class, deletion.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, deletion);
         assertArrayEquals(TestFixtures.bytes("reference-literals-only-deleted." + extension),
                 deletion.source().orElseThrow().content());
     }
@@ -145,19 +144,19 @@ class ReferenceLocationsTest {
             throws IOException {
         ImportResult imported = importFixture("reference-unknown-multiple." + extension);
         byte[] original = imported.source().content();
-        IllegalArgumentException refusal = assertThrows(IllegalArgumentException.class, () -> editor.rename(
+        OpenApiEditResult.Refused refusal = assertRefused(imported, () -> editor.rename(
                 imported, new RenameSchemaComponent(component(imported).getId(), "New")
         ));
         OpenApiEditResult deletion = editor.deleteComponent(
                 imported, new DeleteSchemaComponent(component(imported).getId())
         );
-        EditRejected rejected = assertInstanceOf(EditRejected.class, deletion.edit());
+        EditRejected rejected = assertInstanceOf(OpenApiEditResult.Rejected.class, deletion).edit();
         List<DocumentPath> incoming = new OpenApiSchemaDeletionPatcher().incomingReferences(
                 imported.source(), imported.format().orElseThrow(), DocumentPath.schemaComponent("Old")
         );
         assertEquals(3, incoming.size());
         for (String location : List.of("/one/$ref", "/two/$ref", "/lookalike/components/schemas/Fake/$ref")) {
-            assertTrue(refusal.getMessage().contains(location), location);
+            assertTrue(refusal.message().contains(location), location);
             assertTrue(rejected.issues().getFirst().message().contains(location), location);
         }
         assertSame(imported, deletion.state());

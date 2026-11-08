@@ -43,7 +43,7 @@ class SourceRangeScannerTest {
     void testScan_WhenYamlHasDuplicateKeys_ShouldRejectAmbiguousPaths() throws IOException {
         String text = new String(TestFixtures.bytes("duplicate-keys.yaml"), StandardCharsets.UTF_8);
 
-        assertThrows(IllegalArgumentException.class, () -> new YamlScalarScanner().scan(text));
+        assertThrows(SourceEditRefusal.class, () -> new YamlScalarScanner().scan(text));
     }
 
     @Test

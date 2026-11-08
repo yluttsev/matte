@@ -5,8 +5,6 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
-import io.github.yluttsev.matte.core.editing.EditRejected;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.AddSchemaComponent;
 import io.github.yluttsev.matte.core.editing.command.AddSchemaProperty;
 import io.github.yluttsev.matte.core.model.ElementId;
@@ -19,6 +17,7 @@ import io.github.yluttsev.matte.core.model.value.NullValue;
 import io.github.yluttsev.matte.core.model.value.StringValue;
 import io.github.yluttsev.matte.openapi.testing.TestFixtures;
 import org.junit.jupiter.api.Test;
+import static io.github.yluttsev.matte.openapi.testing.EditAssertions.assertRefused;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -28,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SchemaAdditionsTest {
 
     private final OpenApiImporter importer = new OpenApiImporter();
-    private final OpenApiSchemaEditor editor = new OpenApiSchemaEditor();
+    private final OpenApiEditor editor = new OpenApiEditor();
 
     @Test
     void testAddComponent_WhenYamlHasNoComponents_ShouldCreateMissingSections() throws IOException {
@@ -36,7 +35,7 @@ class SchemaAdditionsTest {
 
         OpenApiEditResult result = editor.addComponent(imported, component("Customer"));
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         String expected = new String(TestFixtures.bytes("additions-empty.yaml"), StandardCharsets.UTF_8)
                 + "components:\n  schemas:\n    Customer:\n      type: object\n";
         assertEquals(expected, text(result));
@@ -206,7 +205,7 @@ class SchemaAdditionsTest {
                 )
         );
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertTrue(text(result).contains("default: null"));
         assertTrue(text(result).contains("pattern: \"^[a-z]+$\""));
         SchemaObject added = assertInstanceOf(
@@ -279,7 +278,7 @@ class SchemaAdditionsTest {
         String expected = new String(TestFixtures.bytes("additions-nested.yaml"), StandardCharsets.UTF_8)
                 + "          properties:\n            city:\n              type: string\n";
         assertEquals(expected, text(result));
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
     }
 
     @Test
@@ -400,7 +399,7 @@ class SchemaAdditionsTest {
                 )
         );
 
-        assertInstanceOf(EditRejected.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Rejected.class, result);
         assertTrue(result.source().isEmpty());
         assertArrayEquals(imported.source().content(), result.state().source().content());
     }
@@ -411,7 +410,7 @@ class SchemaAdditionsTest {
 
         OpenApiEditResult result = editor.addComponent(imported, component("Customer"));
 
-        assertInstanceOf(EditRejected.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Rejected.class, result);
         assertTrue(result.source().isEmpty());
         assertArrayEquals(imported.source().content(), result.state().source().content());
     }
@@ -429,7 +428,7 @@ class SchemaAdditionsTest {
                 )
         );
 
-        assertInstanceOf(EditRejected.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Rejected.class, result);
         assertTrue(result.source().isEmpty());
         assertArrayEquals(original, result.state().source().content());
         assertEquals(1, result.state().document().orElseThrow().getComponents().getSchemas().size());
@@ -448,7 +447,7 @@ class SchemaAdditionsTest {
                 )
         );
 
-        assertInstanceOf(EditRejected.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Rejected.class, result);
         assertTrue(result.source().isEmpty());
     }
 
@@ -464,8 +463,7 @@ class SchemaAdditionsTest {
                 imported.document()
         );
 
-        assertThrows(
-                IllegalArgumentException.class,
+        assertRefused(mismatched,
                 () -> editor.addProperty(
                         mismatched,
                         new AddSchemaProperty(
@@ -487,7 +485,7 @@ class SchemaAdditionsTest {
                 new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Name", schema))
         );
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertTrue(text(result).contains("      pattern: \"[a-z]+ \""));
     }
 
@@ -496,7 +494,7 @@ class SchemaAdditionsTest {
         ImportResult imported = importFixture("additions-empty.yaml");
 
         assertThrows(
-                IllegalArgumentException.class,
+                IllegalStateException.class,
                 () -> editor.addComponent(
                         imported,
                         new AddSchemaComponent(
@@ -520,7 +518,7 @@ class SchemaAdditionsTest {
                 new AddSchemaComponent(new SchemaComponent(ElementId.random(), "Rich", schema))
         );
 
-        assertInstanceOf(EditSucceeded.class, result.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, result);
         assertTrue(text(result).contains("const: 2.5"));
         assertTrue(text(result).contains("exclusiveMinimum: 1.5"));
         assertTrue(text(result).contains("allOf:"));

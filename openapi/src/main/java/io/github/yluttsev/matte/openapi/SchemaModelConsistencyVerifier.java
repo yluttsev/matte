@@ -16,7 +16,7 @@ final class SchemaModelConsistencyVerifier {
         Map<String, Object> expectedSchemas = schemas(semanticResult, version);
         Map<String, Object> actualSchemas = schemas(reimported, version);
         if (!Objects.equals(normalizeSchemas(expectedSchemas), normalizeSchemas(actualSchemas))) {
-            throw new IllegalArgumentException(
+            throw new IllegalStateException(
                     "Re-imported OpenAPI schema model differs from the semantic edit result"
             );
         }

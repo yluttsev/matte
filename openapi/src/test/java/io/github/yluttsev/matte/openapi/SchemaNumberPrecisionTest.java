@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
-import io.github.yluttsev.matte.core.editing.EditSucceeded;
 import io.github.yluttsev.matte.core.editing.command.UpdateSchemaObject;
 import io.github.yluttsev.matte.core.model.schema.SchemaObject;
 import io.github.yluttsev.matte.core.model.value.ArrayValue;
@@ -59,7 +58,7 @@ class SchemaNumberPrecisionTest {
                 .defaultValue(new ObjectValue(Map.of("nested", new ArrayValue(List.of(new NumberValue(PRECISE))))))
                 .build();
 
-        OpenApiEditResult edited = new OpenApiSchemaEditor().updateSchema(
+        OpenApiEditResult edited = new OpenApiEditor().updateSchema(
                 imported,
                 new UpdateSchemaObject(replacement)
         );
@@ -68,7 +67,7 @@ class SchemaNumberPrecisionTest {
                 ImportOptions.autoDetect()
         );
 
-        assertInstanceOf(EditSucceeded.class, edited.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, edited);
         assertEquals(ABOVE_INTEGER, schema(edited.state()).getMinLength());
         assertEquals(replacement.getDefaultValue(), schema(edited.state()).getDefaultValue());
         assertEquals(ABOVE_INTEGER, schema(reimported).getMinLength());
@@ -80,7 +79,7 @@ class SchemaNumberPrecisionTest {
         ImportResult imported = importFixture("schema-numbers-3.1.yaml");
         SchemaObject replacement = SchemaObject.builder(schema(imported)).title("Updated").build();
 
-        OpenApiEditResult edited = new OpenApiSchemaEditor().updateSchema(
+        OpenApiEditResult edited = new OpenApiEditor().updateSchema(
                 imported,
                 new UpdateSchemaObject(replacement)
         );
@@ -89,7 +88,7 @@ class SchemaNumberPrecisionTest {
                 ImportOptions.autoDetect()
         );
 
-        assertInstanceOf(EditSucceeded.class, edited.edit());
+        assertInstanceOf(OpenApiEditResult.Applied.class, edited);
         assertEquals(ABOVE_INTEGER, schema(edited.state()).getMinLength());
         assertEquals(ABOVE_INTEGER, schema(reimported).getMinLength());
     }

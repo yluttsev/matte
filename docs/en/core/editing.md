@@ -6,6 +6,8 @@ This package handles atomic execution of semantic commands against a document, p
 
 `DocumentEditor` accepts a list of `EditCommandHandler` instances through its constructor. The no-argument constructor supplies the current schema handlers for existing callers. An application composition root can construct and inject the handlers without changing the dispatcher; the dispatcher takes an immutable copy of the supplied list.
 
+See the [OpenAPI editing contract](../openapi/editing.md) for source-aware results (`Applied`, `Rejected`, `Refused`), refusal codes and atomicity guarantees.
+
 ## Editing Session and Mutation Control
 
 `DocumentEditor.apply(document, command)` never mutates the input document instance. Every operation executes atomically in the following sequence:

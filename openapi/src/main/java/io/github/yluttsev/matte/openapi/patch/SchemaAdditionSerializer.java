@@ -20,6 +20,7 @@ import io.github.yluttsev.matte.core.model.value.NumberValue;
 import io.github.yluttsev.matte.core.model.value.ObjectValue;
 import io.github.yluttsev.matte.core.model.value.StringValue;
 import io.github.yluttsev.matte.openapi.OpenApiVersion;
+import io.github.yluttsev.matte.openapi.SourceEditCode;
 
 public final class SchemaAdditionSerializer {
 
@@ -142,7 +143,10 @@ public final class SchemaAdditionSerializer {
             return;
         }
         if (inclusiveValue != null && !inclusiveValue.equals(exclusiveValue)) {
-            throw new IllegalArgumentException("OpenAPI 3.0 cannot represent different inclusive and exclusive bounds");
+            throw new SourceEditRefusal(
+                    SourceEditCode.UNSUPPORTED_IN_VERSION,
+                    "OpenAPI 3.0 cannot represent different inclusive and exclusive bounds"
+            );
         }
         result.put(boundName, exclusiveValue);
         result.put(exclusiveName, true);
@@ -175,7 +179,10 @@ public final class SchemaAdditionSerializer {
             boolean nullable = types.contains(JsonType.NULL);
             types = types.stream().filter(type -> type != JsonType.NULL).toList();
             if (types.size() > 1 || nullable && types.isEmpty()) {
-                throw new IllegalArgumentException("OpenAPI 3.0 requires one non-null type for nullable schemas");
+                throw new SourceEditRefusal(
+                        SourceEditCode.UNSUPPORTED_IN_VERSION,
+                        "OpenAPI 3.0 requires one non-null type for nullable schemas"
+                );
             }
             if (!types.isEmpty()) {
                 result.put("type", typeName(types.iterator().next()));
@@ -256,7 +263,10 @@ public final class SchemaAdditionSerializer {
     private void requireSupportedFields(SchemaObject schema, OpenApiVersion version) {
         if (version == OpenApiVersion.V3_0
                 && (!schema.getExamples().isEmpty() || schema.getConstValue() != null)) {
-            throw new IllegalArgumentException("Schema examples and const require OpenAPI 3.1");
+            throw new SourceEditRefusal(
+                    SourceEditCode.UNSUPPORTED_IN_VERSION,
+                    "Schema examples and const require OpenAPI 3.1"
+            );
         }
         requireSupportedChildren(schema, version);
     }

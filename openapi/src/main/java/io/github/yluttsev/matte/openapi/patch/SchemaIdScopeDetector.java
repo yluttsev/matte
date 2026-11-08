@@ -3,8 +3,10 @@ package io.github.yluttsev.matte.openapi.patch;
 import java.nio.charset.CharacterCodingException;
 import java.util.Map;
 import java.util.Objects;
+import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.OpenApiVersion;
 import io.github.yluttsev.matte.openapi.SourceDocument;
+import io.github.yluttsev.matte.openapi.SourceEditCode;
 import io.github.yluttsev.matte.openapi.SourceFormat;
 import io.github.yluttsev.matte.openapi.parser.SourceStructureReader;
 
@@ -35,8 +37,18 @@ public final class SchemaIdScopeDetector {
 
     public static void rejectIfPresent(SourceDocument source, SourceFormat format) {
         if (containsSchemaId(source, format)) {
-            throw new IllegalArgumentException(UNSUPPORTED_EDIT_MESSAGE);
+            throw new SourceEditRefusal(
+                    SourceEditCode.SCHEMA_ID_SCOPE,
+                    UNSUPPORTED_EDIT_MESSAGE,
+                    schemaIdPath(source, format)
+            );
         }
+    }
+
+    private static DocumentPath schemaIdPath(SourceDocument source, SourceFormat format) {
+        return SCANNERS.get(format).scan(withoutBom(decode(source))).stream()
+                .filter(SchemaReferenceRelocator::isPotentialSchemaId)
+                .findFirst().orElseThrow().path();
     }
 
     private static boolean isOpenApi31(String text, SourceFormat format) {
