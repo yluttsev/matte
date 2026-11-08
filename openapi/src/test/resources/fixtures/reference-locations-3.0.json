@@ -1,0 +1,1677 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Reference location catalogue",
+    "version": "1"
+  },
+  "paths": {
+    "/items": {
+      "$ref": "#/components/schemas/Old",
+      "parameters": [
+        {
+          "$ref": "#/components/schemas/Old"
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "schema": {
+            "$ref": "#/components/schemas/Old"
+          },
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Old"
+              },
+              "encoding": {
+                "part": {
+                  "headers": {
+                    "x-real-header": {
+                      "description": "header",
+                      "schema": {
+                        "$ref": "#/components/schemas/Old"
+                      },
+                      "content": {
+                        "application/json": {
+                          "schema": {
+                            "$ref": "#/components/schemas/Old"
+                          }
+                        }
+                      },
+                      "examples": {
+                        "sample": {
+                          "$ref": "#/components/schemas/Old"
+                        },
+                        "literal": {
+                          "value": {
+                            "$ref": "#/components/schemas/Old"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "examples": {
+                "sample": {
+                  "$ref": "#/components/schemas/Old"
+                },
+                "literal": {
+                  "value": {
+                    "$ref": "#/components/schemas/Old"
+                  }
+                }
+              },
+              "example": {
+                "$ref": "#/components/schemas/Old"
+              },
+              "x-payload": {
+                "$ref": "#/components/schemas/Old"
+              }
+            }
+          },
+          "examples": {
+            "sample": {
+              "$ref": "#/components/schemas/Old"
+            },
+            "literal": {
+              "value": {
+                "$ref": "#/components/schemas/Old"
+              }
+            }
+          },
+          "example": {
+            "$ref": "#/components/schemas/Old"
+          }
+        }
+      ],
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/components/schemas/Old"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/Old"
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Old"
+                },
+                "encoding": {
+                  "part": {
+                    "headers": {
+                      "x-real-header": {
+                        "description": "header",
+                        "schema": {
+                          "$ref": "#/components/schemas/Old"
+                        },
+                        "content": {
+                          "application/json": {
+                            "schema": {
+                              "$ref": "#/components/schemas/Old"
+                            }
+                          }
+                        },
+                        "examples": {
+                          "sample": {
+                            "$ref": "#/components/schemas/Old"
+                          },
+                          "literal": {
+                            "value": {
+                              "$ref": "#/components/schemas/Old"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "sample": {
+                    "$ref": "#/components/schemas/Old"
+                  },
+                  "literal": {
+                    "value": {
+                      "$ref": "#/components/schemas/Old"
+                    }
+                  }
+                },
+                "example": {
+                  "$ref": "#/components/schemas/Old"
+                },
+                "x-payload": {
+                  "$ref": "#/components/schemas/Old"
+                }
+              }
+            },
+            "examples": {
+              "sample": {
+                "$ref": "#/components/schemas/Old"
+              },
+              "literal": {
+                "value": {
+                  "$ref": "#/components/schemas/Old"
+                }
+              }
+            },
+            "example": {
+              "$ref": "#/components/schemas/Old"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/schemas/Old",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Old"
+              },
+              "encoding": {
+                "part": {
+                  "headers": {
+                    "x-real-header": {
+                      "description": "header",
+                      "schema": {
+                        "$ref": "#/components/schemas/Old"
+                      },
+                      "content": {
+                        "application/json": {
+                          "schema": {
+                            "$ref": "#/components/schemas/Old"
+                          }
+                        }
+                      },
+                      "examples": {
+                        "sample": {
+                          "$ref": "#/components/schemas/Old"
+                        },
+                        "literal": {
+                          "value": {
+                            "$ref": "#/components/schemas/Old"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "examples": {
+                "sample": {
+                  "$ref": "#/components/schemas/Old"
+                },
+                "literal": {
+                  "value": {
+                    "$ref": "#/components/schemas/Old"
+                  }
+                }
+              },
+              "example": {
+                "$ref": "#/components/schemas/Old"
+              },
+              "x-payload": {
+                "$ref": "#/components/schemas/Old"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Old"
+                },
+                "encoding": {
+                  "part": {
+                    "headers": {
+                      "x-real-header": {
+                        "description": "header",
+                        "schema": {
+                          "$ref": "#/components/schemas/Old"
+                        },
+                        "content": {
+                          "application/json": {
+                            "schema": {
+                              "$ref": "#/components/schemas/Old"
+                            }
+                          }
+                        },
+                        "examples": {
+                          "sample": {
+                            "$ref": "#/components/schemas/Old"
+                          },
+                          "literal": {
+                            "value": {
+                              "$ref": "#/components/schemas/Old"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "sample": {
+                    "$ref": "#/components/schemas/Old"
+                  },
+                  "literal": {
+                    "value": {
+                      "$ref": "#/components/schemas/Old"
+                    }
+                  }
+                },
+                "example": {
+                  "$ref": "#/components/schemas/Old"
+                },
+                "x-payload": {
+                  "$ref": "#/components/schemas/Old"
+                }
+              }
+            },
+            "headers": {
+              "result": {
+                "description": "header",
+                "schema": {
+                  "$ref": "#/components/schemas/Old"
+                },
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/Old"
+                    }
+                  }
+                },
+                "examples": {
+                  "sample": {
+                    "$ref": "#/components/schemas/Old"
+                  },
+                  "literal": {
+                    "value": {
+                      "$ref": "#/components/schemas/Old"
+                    }
+                  }
+                }
+              }
+            },
+            "links": {
+              "target": {
+                "$ref": "#/components/schemas/Old"
+              },
+              "literal": {
+                "operationId": "test",
+                "parameters": {
+                  "data": {
+                    "$ref": "#/components/schemas/Old"
+                  }
+                },
+                "requestBody": {
+                  "$ref": "#/components/schemas/Old"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/schemas/Old"
+          }
+        },
+        "callbacks": {
+          "direct": {
+            "$ref": "#/components/schemas/Old"
+          },
+          "inline": {
+            "{$request.body#/url}": {
+              "post": {
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/Old"
+                      },
+                      "encoding": {
+                        "part": {
+                          "headers": {
+                            "x-real-header": {
+                              "description": "header",
+                              "schema": {
+                                "$ref": "#/components/schemas/Old"
+                              },
+                              "content": {
+                                "application/json": {
+                                  "schema": {
+                                    "$ref": "#/components/schemas/Old"
+                                  }
+                                }
+                              },
+                              "examples": {
+                                "sample": {
+                                  "$ref": "#/components/schemas/Old"
+                                },
+                                "literal": {
+                                  "value": {
+                                    "$ref": "#/components/schemas/Old"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "examples": {
+                        "sample": {
+                          "$ref": "#/components/schemas/Old"
+                        },
+                        "literal": {
+                          "value": {
+                            "$ref": "#/components/schemas/Old"
+                          }
+                        }
+                      },
+                      "example": {
+                        "$ref": "#/components/schemas/Old"
+                      },
+                      "x-payload": {
+                        "$ref": "#/components/schemas/Old"
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "200": {
+                    "description": "OK",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/Old"
+                        },
+                        "encoding": {
+                          "part": {
+                            "headers": {
+                              "x-real-header": {
+                                "description": "header",
+                                "schema": {
+                                  "$ref": "#/components/schemas/Old"
+                                },
+                                "content": {
+                                  "application/json": {
+                                    "schema": {
+                                      "$ref": "#/components/schemas/Old"
+                                    }
+                                  }
+                                },
+                                "examples": {
+                                  "sample": {
+                                    "$ref": "#/components/schemas/Old"
+                                  },
+                                  "literal": {
+                                    "value": {
+                                      "$ref": "#/components/schemas/Old"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "examples": {
+                          "sample": {
+                            "$ref": "#/components/schemas/Old"
+                          },
+                          "literal": {
+                            "value": {
+                              "$ref": "#/components/schemas/Old"
+                            }
+                          }
+                        },
+                        "example": {
+                          "$ref": "#/components/schemas/Old"
+                        },
+                        "x-payload": {
+                          "$ref": "#/components/schemas/Old"
+                        }
+                      }
+                    },
+                    "headers": {
+                      "result": {
+                        "description": "header",
+                        "schema": {
+                          "$ref": "#/components/schemas/Old"
+                        },
+                        "content": {
+                          "application/json": {
+                            "schema": {
+                              "$ref": "#/components/schemas/Old"
+                            }
+                          }
+                        },
+                        "examples": {
+                          "sample": {
+                            "$ref": "#/components/schemas/Old"
+                          },
+                          "literal": {
+                            "value": {
+                              "$ref": "#/components/schemas/Old"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "links": {
+                      "target": {
+                        "$ref": "#/components/schemas/Old"
+                      },
+                      "literal": {
+                        "operationId": "test",
+                        "parameters": {
+                          "data": {
+                            "$ref": "#/components/schemas/Old"
+                          }
+                        },
+                        "requestBody": {
+                          "$ref": "#/components/schemas/Old"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "nested": {
+            "{$request.query.url}": {
+              "post": {
+                "callbacks": {
+                  "again": {
+                    "{$request.query.next}": {
+                      "post": {
+                        "requestBody": {
+                          "content": {
+                            "application/json": {
+                              "schema": {
+                                "$ref": "#/components/schemas/Old"
+                              },
+                              "encoding": {
+                                "part": {
+                                  "headers": {
+                                    "x-real-header": {
+                                      "description": "header",
+                                      "schema": {
+                                        "$ref": "#/components/schemas/Old"
+                                      },
+                                      "content": {
+                                        "application/json": {
+                                          "schema": {
+                                            "$ref": "#/components/schemas/Old"
+                                          }
+                                        }
+                                      },
+                                      "examples": {
+                                        "sample": {
+                                          "$ref": "#/components/schemas/Old"
+                                        },
+                                        "literal": {
+                                          "value": {
+                                            "$ref": "#/components/schemas/Old"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "examples": {
+                                "sample": {
+                                  "$ref": "#/components/schemas/Old"
+                                },
+                                "literal": {
+                                  "value": {
+                                    "$ref": "#/components/schemas/Old"
+                                  }
+                                }
+                              },
+                              "example": {
+                                "$ref": "#/components/schemas/Old"
+                              },
+                              "x-payload": {
+                                "$ref": "#/components/schemas/Old"
+                              }
+                            }
+                          }
+                        },
+                        "responses": {
+                          "200": {
+                            "description": "OK",
+                            "content": {
+                              "application/json": {
+                                "schema": {
+                                  "$ref": "#/components/schemas/Old"
+                                },
+                                "encoding": {
+                                  "part": {
+                                    "headers": {
+                                      "x-real-header": {
+                                        "description": "header",
+                                        "schema": {
+                                          "$ref": "#/components/schemas/Old"
+                                        },
+                                        "content": {
+                                          "application/json": {
+                                            "schema": {
+                                              "$ref": "#/components/schemas/Old"
+                                            }
+                                          }
+                                        },
+                                        "examples": {
+                                          "sample": {
+                                            "$ref": "#/components/schemas/Old"
+                                          },
+                                          "literal": {
+                                            "value": {
+                                              "$ref": "#/components/schemas/Old"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "examples": {
+                                  "sample": {
+                                    "$ref": "#/components/schemas/Old"
+                                  },
+                                  "literal": {
+                                    "value": {
+                                      "$ref": "#/components/schemas/Old"
+                                    }
+                                  }
+                                },
+                                "example": {
+                                  "$ref": "#/components/schemas/Old"
+                                },
+                                "x-payload": {
+                                  "$ref": "#/components/schemas/Old"
+                                }
+                              }
+                            },
+                            "headers": {
+                              "result": {
+                                "description": "header",
+                                "schema": {
+                                  "$ref": "#/components/schemas/Old"
+                                },
+                                "content": {
+                                  "application/json": {
+                                    "schema": {
+                                      "$ref": "#/components/schemas/Old"
+                                    }
+                                  }
+                                },
+                                "examples": {
+                                  "sample": {
+                                    "$ref": "#/components/schemas/Old"
+                                  },
+                                  "literal": {
+                                    "value": {
+                                      "$ref": "#/components/schemas/Old"
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "links": {
+                              "target": {
+                                "$ref": "#/components/schemas/Old"
+                              },
+                              "literal": {
+                                "operationId": "test",
+                                "parameters": {
+                                  "data": {
+                                    "$ref": "#/components/schemas/Old"
+                                  }
+                                },
+                                "requestBody": {
+                                  "$ref": "#/components/schemas/Old"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "responses": {
+                  "204": {
+                    "description": "OK"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Old": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        }
+      },
+      "Other": {
+        "type": "string"
+      },
+      "Holder": {
+        "type": "object",
+        "properties": {
+          "x-name": {
+            "$ref": "#/components/schemas/Old"
+          },
+          "example": {
+            "$ref": "#/components/schemas/Old"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/Old"
+          }
+        },
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Old"
+        },
+        "items": {
+          "$ref": "#/components/schemas/Old"
+        },
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Old"
+          }
+        ],
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Old"
+          }
+        ],
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Old"
+          }
+        ],
+        "not": {
+          "$ref": "#/components/schemas/Old"
+        },
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "old": "#/components/schemas/Old",
+            "$ref": "#/components/schemas/Old",
+            "x-label": "#/components/schemas/Old"
+          }
+        },
+        "default": {
+          "$ref": "#/components/schemas/Old"
+        },
+        "example": {
+          "$ref": "#/components/schemas/Old"
+        },
+        "enum": [
+          {
+            "$ref": "#/components/schemas/Old"
+          }
+        ],
+        "x-payload": {
+          "$ref": "#/components/schemas/Old"
+        },
+        "unknown": {
+          "$ref": "#/components/schemas/Other"
+        }
+      }
+    },
+    "parameters": {
+      "query": {
+        "name": "q",
+        "in": "query",
+        "schema": {
+          "$ref": "#/components/schemas/Old"
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Old"
+            },
+            "encoding": {
+              "part": {
+                "headers": {
+                  "x-real-header": {
+                    "description": "header",
+                    "schema": {
+                      "$ref": "#/components/schemas/Old"
+                    },
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/Old"
+                        }
+                      }
+                    },
+                    "examples": {
+                      "sample": {
+                        "$ref": "#/components/schemas/Old"
+                      },
+                      "literal": {
+                        "value": {
+                          "$ref": "#/components/schemas/Old"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "examples": {
+              "sample": {
+                "$ref": "#/components/schemas/Old"
+              },
+              "literal": {
+                "value": {
+                  "$ref": "#/components/schemas/Old"
+                }
+              }
+            },
+            "example": {
+              "$ref": "#/components/schemas/Old"
+            },
+            "x-payload": {
+              "$ref": "#/components/schemas/Old"
+            }
+          }
+        },
+        "examples": {
+          "sample": {
+            "$ref": "#/components/schemas/Old"
+          },
+          "literal": {
+            "value": {
+              "$ref": "#/components/schemas/Old"
+            }
+          }
+        },
+        "example": {
+          "$ref": "#/components/schemas/Old"
+        }
+      },
+      "reference": {
+        "$ref": "#/components/schemas/Old"
+      }
+    },
+    "headers": {
+      "header": {
+        "description": "header",
+        "schema": {
+          "$ref": "#/components/schemas/Old"
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Old"
+            }
+          }
+        },
+        "examples": {
+          "sample": {
+            "$ref": "#/components/schemas/Old"
+          },
+          "literal": {
+            "value": {
+              "$ref": "#/components/schemas/Old"
+            }
+          }
+        }
+      },
+      "reference": {
+        "$ref": "#/components/schemas/Old"
+      }
+    },
+    "requestBodies": {
+      "body": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Old"
+            },
+            "encoding": {
+              "part": {
+                "headers": {
+                  "x-real-header": {
+                    "description": "header",
+                    "schema": {
+                      "$ref": "#/components/schemas/Old"
+                    },
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/Old"
+                        }
+                      }
+                    },
+                    "examples": {
+                      "sample": {
+                        "$ref": "#/components/schemas/Old"
+                      },
+                      "literal": {
+                        "value": {
+                          "$ref": "#/components/schemas/Old"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "examples": {
+              "sample": {
+                "$ref": "#/components/schemas/Old"
+              },
+              "literal": {
+                "value": {
+                  "$ref": "#/components/schemas/Old"
+                }
+              }
+            },
+            "example": {
+              "$ref": "#/components/schemas/Old"
+            },
+            "x-payload": {
+              "$ref": "#/components/schemas/Old"
+            }
+          }
+        }
+      },
+      "reference": {
+        "$ref": "#/components/schemas/Old"
+      }
+    },
+    "responses": {
+      "response": {
+        "description": "OK",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Old"
+            },
+            "encoding": {
+              "part": {
+                "headers": {
+                  "x-real-header": {
+                    "description": "header",
+                    "schema": {
+                      "$ref": "#/components/schemas/Old"
+                    },
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/Old"
+                        }
+                      }
+                    },
+                    "examples": {
+                      "sample": {
+                        "$ref": "#/components/schemas/Old"
+                      },
+                      "literal": {
+                        "value": {
+                          "$ref": "#/components/schemas/Old"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "examples": {
+              "sample": {
+                "$ref": "#/components/schemas/Old"
+              },
+              "literal": {
+                "value": {
+                  "$ref": "#/components/schemas/Old"
+                }
+              }
+            },
+            "example": {
+              "$ref": "#/components/schemas/Old"
+            },
+            "x-payload": {
+              "$ref": "#/components/schemas/Old"
+            }
+          }
+        },
+        "headers": {
+          "result": {
+            "description": "header",
+            "schema": {
+              "$ref": "#/components/schemas/Old"
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Old"
+                }
+              }
+            },
+            "examples": {
+              "sample": {
+                "$ref": "#/components/schemas/Old"
+              },
+              "literal": {
+                "value": {
+                  "$ref": "#/components/schemas/Old"
+                }
+              }
+            }
+          }
+        },
+        "links": {
+          "target": {
+            "$ref": "#/components/schemas/Old"
+          },
+          "literal": {
+            "operationId": "test",
+            "parameters": {
+              "data": {
+                "$ref": "#/components/schemas/Old"
+              }
+            },
+            "requestBody": {
+              "$ref": "#/components/schemas/Old"
+            }
+          }
+        }
+      },
+      "reference": {
+        "$ref": "#/components/schemas/Old"
+      }
+    },
+    "callbacks": {
+      "callback": {
+        "{$request.query.url}": {
+          "$ref": "#/components/schemas/Old",
+          "parameters": [
+            {
+              "$ref": "#/components/schemas/Old"
+            },
+            {
+              "name": "q",
+              "in": "query",
+              "schema": {
+                "$ref": "#/components/schemas/Old"
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Old"
+                  },
+                  "encoding": {
+                    "part": {
+                      "headers": {
+                        "x-real-header": {
+                          "description": "header",
+                          "schema": {
+                            "$ref": "#/components/schemas/Old"
+                          },
+                          "content": {
+                            "application/json": {
+                              "schema": {
+                                "$ref": "#/components/schemas/Old"
+                              }
+                            }
+                          },
+                          "examples": {
+                            "sample": {
+                              "$ref": "#/components/schemas/Old"
+                            },
+                            "literal": {
+                              "value": {
+                                "$ref": "#/components/schemas/Old"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "examples": {
+                    "sample": {
+                      "$ref": "#/components/schemas/Old"
+                    },
+                    "literal": {
+                      "value": {
+                        "$ref": "#/components/schemas/Old"
+                      }
+                    }
+                  },
+                  "example": {
+                    "$ref": "#/components/schemas/Old"
+                  },
+                  "x-payload": {
+                    "$ref": "#/components/schemas/Old"
+                  }
+                }
+              },
+              "examples": {
+                "sample": {
+                  "$ref": "#/components/schemas/Old"
+                },
+                "literal": {
+                  "value": {
+                    "$ref": "#/components/schemas/Old"
+                  }
+                }
+              },
+              "example": {
+                "$ref": "#/components/schemas/Old"
+              }
+            }
+          ],
+          "get": {
+            "parameters": [
+              {
+                "$ref": "#/components/schemas/Old"
+              },
+              {
+                "name": "q",
+                "in": "query",
+                "schema": {
+                  "$ref": "#/components/schemas/Old"
+                },
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/Old"
+                    },
+                    "encoding": {
+                      "part": {
+                        "headers": {
+                          "x-real-header": {
+                            "description": "header",
+                            "schema": {
+                              "$ref": "#/components/schemas/Old"
+                            },
+                            "content": {
+                              "application/json": {
+                                "schema": {
+                                  "$ref": "#/components/schemas/Old"
+                                }
+                              }
+                            },
+                            "examples": {
+                              "sample": {
+                                "$ref": "#/components/schemas/Old"
+                              },
+                              "literal": {
+                                "value": {
+                                  "$ref": "#/components/schemas/Old"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "examples": {
+                      "sample": {
+                        "$ref": "#/components/schemas/Old"
+                      },
+                      "literal": {
+                        "value": {
+                          "$ref": "#/components/schemas/Old"
+                        }
+                      }
+                    },
+                    "example": {
+                      "$ref": "#/components/schemas/Old"
+                    },
+                    "x-payload": {
+                      "$ref": "#/components/schemas/Old"
+                    }
+                  }
+                },
+                "examples": {
+                  "sample": {
+                    "$ref": "#/components/schemas/Old"
+                  },
+                  "literal": {
+                    "value": {
+                      "$ref": "#/components/schemas/Old"
+                    }
+                  }
+                },
+                "example": {
+                  "$ref": "#/components/schemas/Old"
+                }
+              }
+            ],
+            "requestBody": {
+              "$ref": "#/components/schemas/Old",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Old"
+                  },
+                  "encoding": {
+                    "part": {
+                      "headers": {
+                        "x-real-header": {
+                          "description": "header",
+                          "schema": {
+                            "$ref": "#/components/schemas/Old"
+                          },
+                          "content": {
+                            "application/json": {
+                              "schema": {
+                                "$ref": "#/components/schemas/Old"
+                              }
+                            }
+                          },
+                          "examples": {
+                            "sample": {
+                              "$ref": "#/components/schemas/Old"
+                            },
+                            "literal": {
+                              "value": {
+                                "$ref": "#/components/schemas/Old"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "examples": {
+                    "sample": {
+                      "$ref": "#/components/schemas/Old"
+                    },
+                    "literal": {
+                      "value": {
+                        "$ref": "#/components/schemas/Old"
+                      }
+                    }
+                  },
+                  "example": {
+                    "$ref": "#/components/schemas/Old"
+                  },
+                  "x-payload": {
+                    "$ref": "#/components/schemas/Old"
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "OK",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/Old"
+                    },
+                    "encoding": {
+                      "part": {
+                        "headers": {
+                          "x-real-header": {
+                            "description": "header",
+                            "schema": {
+                              "$ref": "#/components/schemas/Old"
+                            },
+                            "content": {
+                              "application/json": {
+                                "schema": {
+                                  "$ref": "#/components/schemas/Old"
+                                }
+                              }
+                            },
+                            "examples": {
+                              "sample": {
+                                "$ref": "#/components/schemas/Old"
+                              },
+                              "literal": {
+                                "value": {
+                                  "$ref": "#/components/schemas/Old"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "examples": {
+                      "sample": {
+                        "$ref": "#/components/schemas/Old"
+                      },
+                      "literal": {
+                        "value": {
+                          "$ref": "#/components/schemas/Old"
+                        }
+                      }
+                    },
+                    "example": {
+                      "$ref": "#/components/schemas/Old"
+                    },
+                    "x-payload": {
+                      "$ref": "#/components/schemas/Old"
+                    }
+                  }
+                },
+                "headers": {
+                  "result": {
+                    "description": "header",
+                    "schema": {
+                      "$ref": "#/components/schemas/Old"
+                    },
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/Old"
+                        }
+                      }
+                    },
+                    "examples": {
+                      "sample": {
+                        "$ref": "#/components/schemas/Old"
+                      },
+                      "literal": {
+                        "value": {
+                          "$ref": "#/components/schemas/Old"
+                        }
+                      }
+                    }
+                  }
+                },
+                "links": {
+                  "target": {
+                    "$ref": "#/components/schemas/Old"
+                  },
+                  "literal": {
+                    "operationId": "test",
+                    "parameters": {
+                      "data": {
+                        "$ref": "#/components/schemas/Old"
+                      }
+                    },
+                    "requestBody": {
+                      "$ref": "#/components/schemas/Old"
+                    }
+                  }
+                }
+              },
+              "default": {
+                "$ref": "#/components/schemas/Old"
+              }
+            },
+            "callbacks": {
+              "direct": {
+                "$ref": "#/components/schemas/Old"
+              },
+              "inline": {
+                "{$request.body#/url}": {
+                  "post": {
+                    "requestBody": {
+                      "content": {
+                        "application/json": {
+                          "schema": {
+                            "$ref": "#/components/schemas/Old"
+                          },
+                          "encoding": {
+                            "part": {
+                              "headers": {
+                                "x-real-header": {
+                                  "description": "header",
+                                  "schema": {
+                                    "$ref": "#/components/schemas/Old"
+                                  },
+                                  "content": {
+                                    "application/json": {
+                                      "schema": {
+                                        "$ref": "#/components/schemas/Old"
+                                      }
+                                    }
+                                  },
+                                  "examples": {
+                                    "sample": {
+                                      "$ref": "#/components/schemas/Old"
+                                    },
+                                    "literal": {
+                                      "value": {
+                                        "$ref": "#/components/schemas/Old"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "examples": {
+                            "sample": {
+                              "$ref": "#/components/schemas/Old"
+                            },
+                            "literal": {
+                              "value": {
+                                "$ref": "#/components/schemas/Old"
+                              }
+                            }
+                          },
+                          "example": {
+                            "$ref": "#/components/schemas/Old"
+                          },
+                          "x-payload": {
+                            "$ref": "#/components/schemas/Old"
+                          }
+                        }
+                      }
+                    },
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": {
+                              "$ref": "#/components/schemas/Old"
+                            },
+                            "encoding": {
+                              "part": {
+                                "headers": {
+                                  "x-real-header": {
+                                    "description": "header",
+                                    "schema": {
+                                      "$ref": "#/components/schemas/Old"
+                                    },
+                                    "content": {
+                                      "application/json": {
+                                        "schema": {
+                                          "$ref": "#/components/schemas/Old"
+                                        }
+                                      }
+                                    },
+                                    "examples": {
+                                      "sample": {
+                                        "$ref": "#/components/schemas/Old"
+                                      },
+                                      "literal": {
+                                        "value": {
+                                          "$ref": "#/components/schemas/Old"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "examples": {
+                              "sample": {
+                                "$ref": "#/components/schemas/Old"
+                              },
+                              "literal": {
+                                "value": {
+                                  "$ref": "#/components/schemas/Old"
+                                }
+                              }
+                            },
+                            "example": {
+                              "$ref": "#/components/schemas/Old"
+                            },
+                            "x-payload": {
+                              "$ref": "#/components/schemas/Old"
+                            }
+                          }
+                        },
+                        "headers": {
+                          "result": {
+                            "description": "header",
+                            "schema": {
+                              "$ref": "#/components/schemas/Old"
+                            },
+                            "content": {
+                              "application/json": {
+                                "schema": {
+                                  "$ref": "#/components/schemas/Old"
+                                }
+                              }
+                            },
+                            "examples": {
+                              "sample": {
+                                "$ref": "#/components/schemas/Old"
+                              },
+                              "literal": {
+                                "value": {
+                                  "$ref": "#/components/schemas/Old"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "links": {
+                          "target": {
+                            "$ref": "#/components/schemas/Old"
+                          },
+                          "literal": {
+                            "operationId": "test",
+                            "parameters": {
+                              "data": {
+                                "$ref": "#/components/schemas/Old"
+                              }
+                            },
+                            "requestBody": {
+                              "$ref": "#/components/schemas/Old"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "nested": {
+                "{$request.query.url}": {
+                  "post": {
+                    "callbacks": {
+                      "again": {
+                        "{$request.query.next}": {
+                          "post": {
+                            "requestBody": {
+                              "content": {
+                                "application/json": {
+                                  "schema": {
+                                    "$ref": "#/components/schemas/Old"
+                                  },
+                                  "encoding": {
+                                    "part": {
+                                      "headers": {
+                                        "x-real-header": {
+                                          "description": "header",
+                                          "schema": {
+                                            "$ref": "#/components/schemas/Old"
+                                          },
+                                          "content": {
+                                            "application/json": {
+                                              "schema": {
+                                                "$ref": "#/components/schemas/Old"
+                                              }
+                                            }
+                                          },
+                                          "examples": {
+                                            "sample": {
+                                              "$ref": "#/components/schemas/Old"
+                                            },
+                                            "literal": {
+                                              "value": {
+                                                "$ref": "#/components/schemas/Old"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "examples": {
+                                    "sample": {
+                                      "$ref": "#/components/schemas/Old"
+                                    },
+                                    "literal": {
+                                      "value": {
+                                        "$ref": "#/components/schemas/Old"
+                                      }
+                                    }
+                                  },
+                                  "example": {
+                                    "$ref": "#/components/schemas/Old"
+                                  },
+                                  "x-payload": {
+                                    "$ref": "#/components/schemas/Old"
+                                  }
+                                }
+                              }
+                            },
+                            "responses": {
+                              "200": {
+                                "description": "OK",
+                                "content": {
+                                  "application/json": {
+                                    "schema": {
+                                      "$ref": "#/components/schemas/Old"
+                                    },
+                                    "encoding": {
+                                      "part": {
+                                        "headers": {
+                                          "x-real-header": {
+                                            "description": "header",
+                                            "schema": {
+                                              "$ref": "#/components/schemas/Old"
+                                            },
+                                            "content": {
+                                              "application/json": {
+                                                "schema": {
+                                                  "$ref": "#/components/schemas/Old"
+                                                }
+                                              }
+                                            },
+                                            "examples": {
+                                              "sample": {
+                                                "$ref": "#/components/schemas/Old"
+                                              },
+                                              "literal": {
+                                                "value": {
+                                                  "$ref": "#/components/schemas/Old"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "examples": {
+                                      "sample": {
+                                        "$ref": "#/components/schemas/Old"
+                                      },
+                                      "literal": {
+                                        "value": {
+                                          "$ref": "#/components/schemas/Old"
+                                        }
+                                      }
+                                    },
+                                    "example": {
+                                      "$ref": "#/components/schemas/Old"
+                                    },
+                                    "x-payload": {
+                                      "$ref": "#/components/schemas/Old"
+                                    }
+                                  }
+                                },
+                                "headers": {
+                                  "result": {
+                                    "description": "header",
+                                    "schema": {
+                                      "$ref": "#/components/schemas/Old"
+                                    },
+                                    "content": {
+                                      "application/json": {
+                                        "schema": {
+                                          "$ref": "#/components/schemas/Old"
+                                        }
+                                      }
+                                    },
+                                    "examples": {
+                                      "sample": {
+                                        "$ref": "#/components/schemas/Old"
+                                      },
+                                      "literal": {
+                                        "value": {
+                                          "$ref": "#/components/schemas/Old"
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "links": {
+                                  "target": {
+                                    "$ref": "#/components/schemas/Old"
+                                  },
+                                  "literal": {
+                                    "operationId": "test",
+                                    "parameters": {
+                                      "data": {
+                                        "$ref": "#/components/schemas/Old"
+                                      }
+                                    },
+                                    "requestBody": {
+                                      "$ref": "#/components/schemas/Old"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "responses": {
+                      "204": {
+                        "description": "OK"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "reference": {
+        "$ref": "#/components/schemas/Old"
+      }
+    },
+    "examples": {
+      "reference": {
+        "$ref": "#/components/schemas/Old"
+      },
+      "literal": {
+        "value": {
+          "$ref": "#/components/schemas/Old"
+        }
+      }
+    },
+    "links": {
+      "reference": {
+        "$ref": "#/components/schemas/Old"
+      }
+    },
+    "securitySchemes": {
+      "reference": {
+        "$ref": "#/components/schemas/Old"
+      }
+    }
+  }
+}

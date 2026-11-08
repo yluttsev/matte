@@ -1,0 +1,56 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Literal references",
+    "version": "1"
+  },
+  "paths": {
+    "x-literal": {
+      "$ref": "#/components/schemas/Old"
+    }
+  },
+  "x-literal": {
+    "$ref": "#/components/schemas/Old"
+  },
+  "components": {
+    "schemas": {"Old": {
+        "type": "string"
+      },
+      "Holder": {
+        "type": "object",
+        "default": {
+          "$ref": "#/components/schemas/Old"
+        },
+        "example": {
+          "$ref": "#/components/schemas/Old"
+        },
+        "examples": [
+          {
+            "$ref": "#/components/schemas/Old"
+          }
+        ],
+        "enum": [
+          {
+            "$ref": "#/components/schemas/Old"
+          }
+        ],
+        "const": {
+          "$ref": "#/components/schemas/Old"
+        },
+        "x-literal": {
+          "$ref": "#/components/schemas/Old"
+        },
+        "unknown": {
+          "$ref": "#/components/schemas/Other"
+        }
+      }
+    },
+    "examples": {
+      "sample": {
+        "value": {
+          "$ref": "#/components/schemas/Old"
+        }
+      }
+    }
+  }
+}
