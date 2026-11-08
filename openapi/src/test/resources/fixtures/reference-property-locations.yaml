@@ -1,0 +1,96 @@
+"openapi": "3.1.0"
+"info":
+  "title": "Property reference locations"
+  "version": "1"
+"paths":
+  "x-literal":
+    "$ref": "#/components/schemas/Old/properties/id"
+"webhooks":
+  "event":
+    "post":
+      "requestBody":
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/Old/properties/id"
+            "encoding":
+              "file":
+                "headers":
+                  "result":
+                    "schema":
+                      "$ref": "#/components/schemas/Old/properties/id"
+      "responses":
+        "200":
+          "description": "OK"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Old/properties/id"
+              "encoding":
+                "file":
+                  "headers":
+                    "result":
+                      "schema":
+                        "$ref": "#/components/schemas/Old/properties/id"
+"components":
+  "schemas":
+    "Old":
+      "type": "object"
+      "properties":
+        "id":
+          "type": "string"
+  "callbacks":
+    "event":
+      "{$request.query.url}":
+        "post":
+          "requestBody":
+            "content":
+              "application/json":
+                "schema":
+                  "$ref": "#/components/schemas/Old/properties/id"
+                "encoding":
+                  "file":
+                    "headers":
+                      "result":
+                        "schema":
+                          "$ref": "#/components/schemas/Old/properties/id"
+          "responses":
+            "200":
+              "description": "OK"
+              "content":
+                "application/json":
+                  "schema":
+                    "$ref": "#/components/schemas/Old/properties/id"
+                  "encoding":
+                    "file":
+                      "headers":
+                        "result":
+                          "schema":
+                            "$ref": "#/components/schemas/Old/properties/id"
+  "pathItems":
+    "shared":
+      "post":
+        "requestBody":
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Old/properties/id"
+              "encoding":
+                "file":
+                  "headers":
+                    "result":
+                      "schema":
+                        "$ref": "#/components/schemas/Old/properties/id"
+        "responses":
+          "200":
+            "description": "OK"
+            "content":
+              "application/json":
+                "schema":
+                  "$ref": "#/components/schemas/Old/properties/id"
+                "encoding":
+                  "file":
+                    "headers":
+                      "result":
+                        "schema":
+                          "$ref": "#/components/schemas/Old/properties/id"

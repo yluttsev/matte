@@ -1,0 +1,1009 @@
+"openapi": "3.0.0"
+"info":
+  "title": "Reference location catalogue"
+  "version": "1"
+"paths":
+  "/items":
+    "$ref": "#/components/schemas/New"
+    "parameters":
+      -
+        "$ref": "#/components/schemas/New"
+      -
+        "name": "q"
+        "in": "query"
+        "schema":
+          "$ref": "#/components/schemas/New"
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/New"
+            "encoding":
+              "part":
+                "headers":
+                  "x-real-header":
+                    "description": "header"
+                    "schema":
+                      "$ref": "#/components/schemas/New"
+                    "content":
+                      "application/json":
+                        "schema":
+                          "$ref": "#/components/schemas/New"
+                    "examples":
+                      "sample":
+                        "$ref": "#/components/schemas/New"
+                      "literal":
+                        "value":
+                          "$ref": "#/components/schemas/Old"
+            "examples":
+              "sample":
+                "$ref": "#/components/schemas/New"
+              "literal":
+                "value":
+                  "$ref": "#/components/schemas/Old"
+            "example":
+              "$ref": "#/components/schemas/Old"
+            "x-payload":
+              "$ref": "#/components/schemas/Old"
+        "examples":
+          "sample":
+            "$ref": "#/components/schemas/New"
+          "literal":
+            "value":
+              "$ref": "#/components/schemas/Old"
+        "example":
+          "$ref": "#/components/schemas/Old"
+    "get":
+      "parameters":
+        -
+          "$ref": "#/components/schemas/New"
+        -
+          "name": "q"
+          "in": "query"
+          "schema":
+            "$ref": "#/components/schemas/New"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/New"
+              "encoding":
+                "part":
+                  "headers":
+                    "x-real-header":
+                      "description": "header"
+                      "schema":
+                        "$ref": "#/components/schemas/New"
+                      "content":
+                        "application/json":
+                          "schema":
+                            "$ref": "#/components/schemas/New"
+                      "examples":
+                        "sample":
+                          "$ref": "#/components/schemas/New"
+                        "literal":
+                          "value":
+                            "$ref": "#/components/schemas/Old"
+              "examples":
+                "sample":
+                  "$ref": "#/components/schemas/New"
+                "literal":
+                  "value":
+                    "$ref": "#/components/schemas/Old"
+              "example":
+                "$ref": "#/components/schemas/Old"
+              "x-payload":
+                "$ref": "#/components/schemas/Old"
+          "examples":
+            "sample":
+              "$ref": "#/components/schemas/New"
+            "literal":
+              "value":
+                "$ref": "#/components/schemas/Old"
+          "example":
+            "$ref": "#/components/schemas/Old"
+      "requestBody":
+        "$ref": "#/components/schemas/New"
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/New"
+            "encoding":
+              "part":
+                "headers":
+                  "x-real-header":
+                    "description": "header"
+                    "schema":
+                      "$ref": "#/components/schemas/New"
+                    "content":
+                      "application/json":
+                        "schema":
+                          "$ref": "#/components/schemas/New"
+                    "examples":
+                      "sample":
+                        "$ref": "#/components/schemas/New"
+                      "literal":
+                        "value":
+                          "$ref": "#/components/schemas/Old"
+            "examples":
+              "sample":
+                "$ref": "#/components/schemas/New"
+              "literal":
+                "value":
+                  "$ref": "#/components/schemas/Old"
+            "example":
+              "$ref": "#/components/schemas/Old"
+            "x-payload":
+              "$ref": "#/components/schemas/Old"
+      "responses":
+        "200":
+          "description": "OK"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/New"
+              "encoding":
+                "part":
+                  "headers":
+                    "x-real-header":
+                      "description": "header"
+                      "schema":
+                        "$ref": "#/components/schemas/New"
+                      "content":
+                        "application/json":
+                          "schema":
+                            "$ref": "#/components/schemas/New"
+                      "examples":
+                        "sample":
+                          "$ref": "#/components/schemas/New"
+                        "literal":
+                          "value":
+                            "$ref": "#/components/schemas/Old"
+              "examples":
+                "sample":
+                  "$ref": "#/components/schemas/New"
+                "literal":
+                  "value":
+                    "$ref": "#/components/schemas/Old"
+              "example":
+                "$ref": "#/components/schemas/Old"
+              "x-payload":
+                "$ref": "#/components/schemas/Old"
+          "headers":
+            "result":
+              "description": "header"
+              "schema":
+                "$ref": "#/components/schemas/New"
+              "content":
+                "application/json":
+                  "schema":
+                    "$ref": "#/components/schemas/New"
+              "examples":
+                "sample":
+                  "$ref": "#/components/schemas/New"
+                "literal":
+                  "value":
+                    "$ref": "#/components/schemas/Old"
+          "links":
+            "target":
+              "$ref": "#/components/schemas/New"
+            "literal":
+              "operationId": "test"
+              "parameters":
+                "data":
+                  "$ref": "#/components/schemas/Old"
+              "requestBody":
+                "$ref": "#/components/schemas/Old"
+        "default":
+          "$ref": "#/components/schemas/New"
+      "callbacks":
+        "direct":
+          "$ref": "#/components/schemas/New"
+        "inline":
+          "{$request.body#/url}":
+            "post":
+              "requestBody":
+                "content":
+                  "application/json":
+                    "schema":
+                      "$ref": "#/components/schemas/New"
+                    "encoding":
+                      "part":
+                        "headers":
+                          "x-real-header":
+                            "description": "header"
+                            "schema":
+                              "$ref": "#/components/schemas/New"
+                            "content":
+                              "application/json":
+                                "schema":
+                                  "$ref": "#/components/schemas/New"
+                            "examples":
+                              "sample":
+                                "$ref": "#/components/schemas/New"
+                              "literal":
+                                "value":
+                                  "$ref": "#/components/schemas/Old"
+                    "examples":
+                      "sample":
+                        "$ref": "#/components/schemas/New"
+                      "literal":
+                        "value":
+                          "$ref": "#/components/schemas/Old"
+                    "example":
+                      "$ref": "#/components/schemas/Old"
+                    "x-payload":
+                      "$ref": "#/components/schemas/Old"
+              "responses":
+                "200":
+                  "description": "OK"
+                  "content":
+                    "application/json":
+                      "schema":
+                        "$ref": "#/components/schemas/New"
+                      "encoding":
+                        "part":
+                          "headers":
+                            "x-real-header":
+                              "description": "header"
+                              "schema":
+                                "$ref": "#/components/schemas/New"
+                              "content":
+                                "application/json":
+                                  "schema":
+                                    "$ref": "#/components/schemas/New"
+                              "examples":
+                                "sample":
+                                  "$ref": "#/components/schemas/New"
+                                "literal":
+                                  "value":
+                                    "$ref": "#/components/schemas/Old"
+                      "examples":
+                        "sample":
+                          "$ref": "#/components/schemas/New"
+                        "literal":
+                          "value":
+                            "$ref": "#/components/schemas/Old"
+                      "example":
+                        "$ref": "#/components/schemas/Old"
+                      "x-payload":
+                        "$ref": "#/components/schemas/Old"
+                  "headers":
+                    "result":
+                      "description": "header"
+                      "schema":
+                        "$ref": "#/components/schemas/New"
+                      "content":
+                        "application/json":
+                          "schema":
+                            "$ref": "#/components/schemas/New"
+                      "examples":
+                        "sample":
+                          "$ref": "#/components/schemas/New"
+                        "literal":
+                          "value":
+                            "$ref": "#/components/schemas/Old"
+                  "links":
+                    "target":
+                      "$ref": "#/components/schemas/New"
+                    "literal":
+                      "operationId": "test"
+                      "parameters":
+                        "data":
+                          "$ref": "#/components/schemas/Old"
+                      "requestBody":
+                        "$ref": "#/components/schemas/Old"
+        "nested":
+          "{$request.query.url}":
+            "post":
+              "callbacks":
+                "again":
+                  "{$request.query.next}":
+                    "post":
+                      "requestBody":
+                        "content":
+                          "application/json":
+                            "schema":
+                              "$ref": "#/components/schemas/New"
+                            "encoding":
+                              "part":
+                                "headers":
+                                  "x-real-header":
+                                    "description": "header"
+                                    "schema":
+                                      "$ref": "#/components/schemas/New"
+                                    "content":
+                                      "application/json":
+                                        "schema":
+                                          "$ref": "#/components/schemas/New"
+                                    "examples":
+                                      "sample":
+                                        "$ref": "#/components/schemas/New"
+                                      "literal":
+                                        "value":
+                                          "$ref": "#/components/schemas/Old"
+                            "examples":
+                              "sample":
+                                "$ref": "#/components/schemas/New"
+                              "literal":
+                                "value":
+                                  "$ref": "#/components/schemas/Old"
+                            "example":
+                              "$ref": "#/components/schemas/Old"
+                            "x-payload":
+                              "$ref": "#/components/schemas/Old"
+                      "responses":
+                        "200":
+                          "description": "OK"
+                          "content":
+                            "application/json":
+                              "schema":
+                                "$ref": "#/components/schemas/New"
+                              "encoding":
+                                "part":
+                                  "headers":
+                                    "x-real-header":
+                                      "description": "header"
+                                      "schema":
+                                        "$ref": "#/components/schemas/New"
+                                      "content":
+                                        "application/json":
+                                          "schema":
+                                            "$ref": "#/components/schemas/New"
+                                      "examples":
+                                        "sample":
+                                          "$ref": "#/components/schemas/New"
+                                        "literal":
+                                          "value":
+                                            "$ref": "#/components/schemas/Old"
+                              "examples":
+                                "sample":
+                                  "$ref": "#/components/schemas/New"
+                                "literal":
+                                  "value":
+                                    "$ref": "#/components/schemas/Old"
+                              "example":
+                                "$ref": "#/components/schemas/Old"
+                              "x-payload":
+                                "$ref": "#/components/schemas/Old"
+                          "headers":
+                            "result":
+                              "description": "header"
+                              "schema":
+                                "$ref": "#/components/schemas/New"
+                              "content":
+                                "application/json":
+                                  "schema":
+                                    "$ref": "#/components/schemas/New"
+                              "examples":
+                                "sample":
+                                  "$ref": "#/components/schemas/New"
+                                "literal":
+                                  "value":
+                                    "$ref": "#/components/schemas/Old"
+                          "links":
+                            "target":
+                              "$ref": "#/components/schemas/New"
+                            "literal":
+                              "operationId": "test"
+                              "parameters":
+                                "data":
+                                  "$ref": "#/components/schemas/Old"
+                              "requestBody":
+                                "$ref": "#/components/schemas/Old"
+              "responses":
+                "204":
+                  "description": "OK"
+"components":
+  "schemas":
+    "New":
+      "type": "object"
+      "properties":
+        "id":
+          "type": "string"
+    "Other":
+      "type": "string"
+    "Holder":
+      "type": "object"
+      "properties":
+        "x-name":
+          "$ref": "#/components/schemas/New"
+        "example":
+          "$ref": "#/components/schemas/New"
+        "properties":
+          "$ref": "#/components/schemas/New"
+      "additionalProperties":
+        "$ref": "#/components/schemas/New"
+      "items":
+        "$ref": "#/components/schemas/New"
+      "allOf":
+        -
+          "$ref": "#/components/schemas/New"
+      "oneOf":
+        -
+          "$ref": "#/components/schemas/New"
+      "anyOf":
+        -
+          "$ref": "#/components/schemas/New"
+      "not":
+        "$ref": "#/components/schemas/New"
+      "discriminator":
+        "propertyName": "kind"
+        "mapping":
+          "old": "#/components/schemas/New"
+          "$ref": "#/components/schemas/New"
+          "x-label": "#/components/schemas/New"
+      "default":
+        "$ref": "#/components/schemas/Old"
+      "example":
+        "$ref": "#/components/schemas/Old"
+      "enum":
+        -
+          "$ref": "#/components/schemas/Old"
+      "x-payload":
+        "$ref": "#/components/schemas/Old"
+      "unknown":
+        "$ref": "#/components/schemas/Other"
+  "parameters":
+    "query":
+      "name": "q"
+      "in": "query"
+      "schema":
+        "$ref": "#/components/schemas/New"
+      "content":
+        "application/json":
+          "schema":
+            "$ref": "#/components/schemas/New"
+          "encoding":
+            "part":
+              "headers":
+                "x-real-header":
+                  "description": "header"
+                  "schema":
+                    "$ref": "#/components/schemas/New"
+                  "content":
+                    "application/json":
+                      "schema":
+                        "$ref": "#/components/schemas/New"
+                  "examples":
+                    "sample":
+                      "$ref": "#/components/schemas/New"
+                    "literal":
+                      "value":
+                        "$ref": "#/components/schemas/Old"
+          "examples":
+            "sample":
+              "$ref": "#/components/schemas/New"
+            "literal":
+              "value":
+                "$ref": "#/components/schemas/Old"
+          "example":
+            "$ref": "#/components/schemas/Old"
+          "x-payload":
+            "$ref": "#/components/schemas/Old"
+      "examples":
+        "sample":
+          "$ref": "#/components/schemas/New"
+        "literal":
+          "value":
+            "$ref": "#/components/schemas/Old"
+      "example":
+        "$ref": "#/components/schemas/Old"
+    "reference":
+      "$ref": "#/components/schemas/New"
+  "headers":
+    "header":
+      "description": "header"
+      "schema":
+        "$ref": "#/components/schemas/New"
+      "content":
+        "application/json":
+          "schema":
+            "$ref": "#/components/schemas/New"
+      "examples":
+        "sample":
+          "$ref": "#/components/schemas/New"
+        "literal":
+          "value":
+            "$ref": "#/components/schemas/Old"
+    "reference":
+      "$ref": "#/components/schemas/New"
+  "requestBodies":
+    "body":
+      "content":
+        "application/json":
+          "schema":
+            "$ref": "#/components/schemas/New"
+          "encoding":
+            "part":
+              "headers":
+                "x-real-header":
+                  "description": "header"
+                  "schema":
+                    "$ref": "#/components/schemas/New"
+                  "content":
+                    "application/json":
+                      "schema":
+                        "$ref": "#/components/schemas/New"
+                  "examples":
+                    "sample":
+                      "$ref": "#/components/schemas/New"
+                    "literal":
+                      "value":
+                        "$ref": "#/components/schemas/Old"
+          "examples":
+            "sample":
+              "$ref": "#/components/schemas/New"
+            "literal":
+              "value":
+                "$ref": "#/components/schemas/Old"
+          "example":
+            "$ref": "#/components/schemas/Old"
+          "x-payload":
+            "$ref": "#/components/schemas/Old"
+    "reference":
+      "$ref": "#/components/schemas/New"
+  "responses":
+    "response":
+      "description": "OK"
+      "content":
+        "application/json":
+          "schema":
+            "$ref": "#/components/schemas/New"
+          "encoding":
+            "part":
+              "headers":
+                "x-real-header":
+                  "description": "header"
+                  "schema":
+                    "$ref": "#/components/schemas/New"
+                  "content":
+                    "application/json":
+                      "schema":
+                        "$ref": "#/components/schemas/New"
+                  "examples":
+                    "sample":
+                      "$ref": "#/components/schemas/New"
+                    "literal":
+                      "value":
+                        "$ref": "#/components/schemas/Old"
+          "examples":
+            "sample":
+              "$ref": "#/components/schemas/New"
+            "literal":
+              "value":
+                "$ref": "#/components/schemas/Old"
+          "example":
+            "$ref": "#/components/schemas/Old"
+          "x-payload":
+            "$ref": "#/components/schemas/Old"
+      "headers":
+        "result":
+          "description": "header"
+          "schema":
+            "$ref": "#/components/schemas/New"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/New"
+          "examples":
+            "sample":
+              "$ref": "#/components/schemas/New"
+            "literal":
+              "value":
+                "$ref": "#/components/schemas/Old"
+      "links":
+        "target":
+          "$ref": "#/components/schemas/New"
+        "literal":
+          "operationId": "test"
+          "parameters":
+            "data":
+              "$ref": "#/components/schemas/Old"
+          "requestBody":
+            "$ref": "#/components/schemas/Old"
+    "reference":
+      "$ref": "#/components/schemas/New"
+  "callbacks":
+    "callback":
+      "{$request.query.url}":
+        "$ref": "#/components/schemas/New"
+        "parameters":
+          -
+            "$ref": "#/components/schemas/New"
+          -
+            "name": "q"
+            "in": "query"
+            "schema":
+              "$ref": "#/components/schemas/New"
+            "content":
+              "application/json":
+                "schema":
+                  "$ref": "#/components/schemas/New"
+                "encoding":
+                  "part":
+                    "headers":
+                      "x-real-header":
+                        "description": "header"
+                        "schema":
+                          "$ref": "#/components/schemas/New"
+                        "content":
+                          "application/json":
+                            "schema":
+                              "$ref": "#/components/schemas/New"
+                        "examples":
+                          "sample":
+                            "$ref": "#/components/schemas/New"
+                          "literal":
+                            "value":
+                              "$ref": "#/components/schemas/Old"
+                "examples":
+                  "sample":
+                    "$ref": "#/components/schemas/New"
+                  "literal":
+                    "value":
+                      "$ref": "#/components/schemas/Old"
+                "example":
+                  "$ref": "#/components/schemas/Old"
+                "x-payload":
+                  "$ref": "#/components/schemas/Old"
+            "examples":
+              "sample":
+                "$ref": "#/components/schemas/New"
+              "literal":
+                "value":
+                  "$ref": "#/components/schemas/Old"
+            "example":
+              "$ref": "#/components/schemas/Old"
+        "get":
+          "parameters":
+            -
+              "$ref": "#/components/schemas/New"
+            -
+              "name": "q"
+              "in": "query"
+              "schema":
+                "$ref": "#/components/schemas/New"
+              "content":
+                "application/json":
+                  "schema":
+                    "$ref": "#/components/schemas/New"
+                  "encoding":
+                    "part":
+                      "headers":
+                        "x-real-header":
+                          "description": "header"
+                          "schema":
+                            "$ref": "#/components/schemas/New"
+                          "content":
+                            "application/json":
+                              "schema":
+                                "$ref": "#/components/schemas/New"
+                          "examples":
+                            "sample":
+                              "$ref": "#/components/schemas/New"
+                            "literal":
+                              "value":
+                                "$ref": "#/components/schemas/Old"
+                  "examples":
+                    "sample":
+                      "$ref": "#/components/schemas/New"
+                    "literal":
+                      "value":
+                        "$ref": "#/components/schemas/Old"
+                  "example":
+                    "$ref": "#/components/schemas/Old"
+                  "x-payload":
+                    "$ref": "#/components/schemas/Old"
+              "examples":
+                "sample":
+                  "$ref": "#/components/schemas/New"
+                "literal":
+                  "value":
+                    "$ref": "#/components/schemas/Old"
+              "example":
+                "$ref": "#/components/schemas/Old"
+          "requestBody":
+            "$ref": "#/components/schemas/New"
+            "content":
+              "application/json":
+                "schema":
+                  "$ref": "#/components/schemas/New"
+                "encoding":
+                  "part":
+                    "headers":
+                      "x-real-header":
+                        "description": "header"
+                        "schema":
+                          "$ref": "#/components/schemas/New"
+                        "content":
+                          "application/json":
+                            "schema":
+                              "$ref": "#/components/schemas/New"
+                        "examples":
+                          "sample":
+                            "$ref": "#/components/schemas/New"
+                          "literal":
+                            "value":
+                              "$ref": "#/components/schemas/Old"
+                "examples":
+                  "sample":
+                    "$ref": "#/components/schemas/New"
+                  "literal":
+                    "value":
+                      "$ref": "#/components/schemas/Old"
+                "example":
+                  "$ref": "#/components/schemas/Old"
+                "x-payload":
+                  "$ref": "#/components/schemas/Old"
+          "responses":
+            "200":
+              "description": "OK"
+              "content":
+                "application/json":
+                  "schema":
+                    "$ref": "#/components/schemas/New"
+                  "encoding":
+                    "part":
+                      "headers":
+                        "x-real-header":
+                          "description": "header"
+                          "schema":
+                            "$ref": "#/components/schemas/New"
+                          "content":
+                            "application/json":
+                              "schema":
+                                "$ref": "#/components/schemas/New"
+                          "examples":
+                            "sample":
+                              "$ref": "#/components/schemas/New"
+                            "literal":
+                              "value":
+                                "$ref": "#/components/schemas/Old"
+                  "examples":
+                    "sample":
+                      "$ref": "#/components/schemas/New"
+                    "literal":
+                      "value":
+                        "$ref": "#/components/schemas/Old"
+                  "example":
+                    "$ref": "#/components/schemas/Old"
+                  "x-payload":
+                    "$ref": "#/components/schemas/Old"
+              "headers":
+                "result":
+                  "description": "header"
+                  "schema":
+                    "$ref": "#/components/schemas/New"
+                  "content":
+                    "application/json":
+                      "schema":
+                        "$ref": "#/components/schemas/New"
+                  "examples":
+                    "sample":
+                      "$ref": "#/components/schemas/New"
+                    "literal":
+                      "value":
+                        "$ref": "#/components/schemas/Old"
+              "links":
+                "target":
+                  "$ref": "#/components/schemas/New"
+                "literal":
+                  "operationId": "test"
+                  "parameters":
+                    "data":
+                      "$ref": "#/components/schemas/Old"
+                  "requestBody":
+                    "$ref": "#/components/schemas/Old"
+            "default":
+              "$ref": "#/components/schemas/New"
+          "callbacks":
+            "direct":
+              "$ref": "#/components/schemas/New"
+            "inline":
+              "{$request.body#/url}":
+                "post":
+                  "requestBody":
+                    "content":
+                      "application/json":
+                        "schema":
+                          "$ref": "#/components/schemas/New"
+                        "encoding":
+                          "part":
+                            "headers":
+                              "x-real-header":
+                                "description": "header"
+                                "schema":
+                                  "$ref": "#/components/schemas/New"
+                                "content":
+                                  "application/json":
+                                    "schema":
+                                      "$ref": "#/components/schemas/New"
+                                "examples":
+                                  "sample":
+                                    "$ref": "#/components/schemas/New"
+                                  "literal":
+                                    "value":
+                                      "$ref": "#/components/schemas/Old"
+                        "examples":
+                          "sample":
+                            "$ref": "#/components/schemas/New"
+                          "literal":
+                            "value":
+                              "$ref": "#/components/schemas/Old"
+                        "example":
+                          "$ref": "#/components/schemas/Old"
+                        "x-payload":
+                          "$ref": "#/components/schemas/Old"
+                  "responses":
+                    "200":
+                      "description": "OK"
+                      "content":
+                        "application/json":
+                          "schema":
+                            "$ref": "#/components/schemas/New"
+                          "encoding":
+                            "part":
+                              "headers":
+                                "x-real-header":
+                                  "description": "header"
+                                  "schema":
+                                    "$ref": "#/components/schemas/New"
+                                  "content":
+                                    "application/json":
+                                      "schema":
+                                        "$ref": "#/components/schemas/New"
+                                  "examples":
+                                    "sample":
+                                      "$ref": "#/components/schemas/New"
+                                    "literal":
+                                      "value":
+                                        "$ref": "#/components/schemas/Old"
+                          "examples":
+                            "sample":
+                              "$ref": "#/components/schemas/New"
+                            "literal":
+                              "value":
+                                "$ref": "#/components/schemas/Old"
+                          "example":
+                            "$ref": "#/components/schemas/Old"
+                          "x-payload":
+                            "$ref": "#/components/schemas/Old"
+                      "headers":
+                        "result":
+                          "description": "header"
+                          "schema":
+                            "$ref": "#/components/schemas/New"
+                          "content":
+                            "application/json":
+                              "schema":
+                                "$ref": "#/components/schemas/New"
+                          "examples":
+                            "sample":
+                              "$ref": "#/components/schemas/New"
+                            "literal":
+                              "value":
+                                "$ref": "#/components/schemas/Old"
+                      "links":
+                        "target":
+                          "$ref": "#/components/schemas/New"
+                        "literal":
+                          "operationId": "test"
+                          "parameters":
+                            "data":
+                              "$ref": "#/components/schemas/Old"
+                          "requestBody":
+                            "$ref": "#/components/schemas/Old"
+            "nested":
+              "{$request.query.url}":
+                "post":
+                  "callbacks":
+                    "again":
+                      "{$request.query.next}":
+                        "post":
+                          "requestBody":
+                            "content":
+                              "application/json":
+                                "schema":
+                                  "$ref": "#/components/schemas/New"
+                                "encoding":
+                                  "part":
+                                    "headers":
+                                      "x-real-header":
+                                        "description": "header"
+                                        "schema":
+                                          "$ref": "#/components/schemas/New"
+                                        "content":
+                                          "application/json":
+                                            "schema":
+                                              "$ref": "#/components/schemas/New"
+                                        "examples":
+                                          "sample":
+                                            "$ref": "#/components/schemas/New"
+                                          "literal":
+                                            "value":
+                                              "$ref": "#/components/schemas/Old"
+                                "examples":
+                                  "sample":
+                                    "$ref": "#/components/schemas/New"
+                                  "literal":
+                                    "value":
+                                      "$ref": "#/components/schemas/Old"
+                                "example":
+                                  "$ref": "#/components/schemas/Old"
+                                "x-payload":
+                                  "$ref": "#/components/schemas/Old"
+                          "responses":
+                            "200":
+                              "description": "OK"
+                              "content":
+                                "application/json":
+                                  "schema":
+                                    "$ref": "#/components/schemas/New"
+                                  "encoding":
+                                    "part":
+                                      "headers":
+                                        "x-real-header":
+                                          "description": "header"
+                                          "schema":
+                                            "$ref": "#/components/schemas/New"
+                                          "content":
+                                            "application/json":
+                                              "schema":
+                                                "$ref": "#/components/schemas/New"
+                                          "examples":
+                                            "sample":
+                                              "$ref": "#/components/schemas/New"
+                                            "literal":
+                                              "value":
+                                                "$ref": "#/components/schemas/Old"
+                                  "examples":
+                                    "sample":
+                                      "$ref": "#/components/schemas/New"
+                                    "literal":
+                                      "value":
+                                        "$ref": "#/components/schemas/Old"
+                                  "example":
+                                    "$ref": "#/components/schemas/Old"
+                                  "x-payload":
+                                    "$ref": "#/components/schemas/Old"
+                              "headers":
+                                "result":
+                                  "description": "header"
+                                  "schema":
+                                    "$ref": "#/components/schemas/New"
+                                  "content":
+                                    "application/json":
+                                      "schema":
+                                        "$ref": "#/components/schemas/New"
+                                  "examples":
+                                    "sample":
+                                      "$ref": "#/components/schemas/New"
+                                    "literal":
+                                      "value":
+                                        "$ref": "#/components/schemas/Old"
+                              "links":
+                                "target":
+                                  "$ref": "#/components/schemas/New"
+                                "literal":
+                                  "operationId": "test"
+                                  "parameters":
+                                    "data":
+                                      "$ref": "#/components/schemas/Old"
+                                  "requestBody":
+                                    "$ref": "#/components/schemas/Old"
+                  "responses":
+                    "204":
+                      "description": "OK"
+    "reference":
+      "$ref": "#/components/schemas/New"
+  "examples":
+    "reference":
+      "$ref": "#/components/schemas/New"
+    "literal":
+      "value":
+        "$ref": "#/components/schemas/Old"
+  "links":
+    "reference":
+      "$ref": "#/components/schemas/New"
+  "securitySchemes":
+    "reference":
+      "$ref": "#/components/schemas/New"

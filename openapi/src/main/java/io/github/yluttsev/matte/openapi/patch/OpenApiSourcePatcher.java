@@ -42,6 +42,10 @@ public final class OpenApiSourcePatcher {
         String text = decode(source);
         List<SourceScalar> scalars = SCANNERS.get(format).scan(text);
         SchemaReferenceRelocator relocator = rename.relocator();
+        List<DocumentPath> unrecognized = relocator.unrecognizedReferences(scalars);
+        if (!unrecognized.isEmpty()) {
+            throw new IllegalArgumentException("Unrecognized reference locations: " + unrecognized);
+        }
         validateChanges(changes, scalars, relocator);
         SourceTextEdits edits = edits(text, format, scalars, rename, relocator);
         return new SourceDocument(edits.apply(text).getBytes(StandardCharsets.UTF_8));

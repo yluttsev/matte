@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.SourceDocument;
 import io.github.yluttsev.matte.openapi.SourceFormat;
@@ -36,9 +37,11 @@ public final class OpenApiSchemaDeletionPatcher {
 
         String text = decode(source);
         SchemaReferenceRelocator matcher = new SchemaReferenceRelocator(targetPath, targetPath);
-        return SCANNERS.get(format).scan(text).stream()
-                .filter(scalar -> matcher.referencesTarget(scalar, targetPath))
-                .map(SourceScalar::path)
+        List<SourceScalar> scalars = SCANNERS.get(format).scan(text);
+        return Stream.concat(
+                scalars.stream().filter(scalar -> matcher.referencesTarget(scalar, targetPath)).map(SourceScalar::path),
+                matcher.unrecognizedReferences(scalars).stream()
+        )
                 .filter(path -> !path.startsWith(targetPath))
                 .distinct()
                 .toList();

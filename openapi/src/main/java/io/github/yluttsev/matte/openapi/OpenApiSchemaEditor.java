@@ -77,6 +77,12 @@ public final class OpenApiSchemaEditor {
         }
         EditResult edit = new DocumentEditor().apply(imported.document().orElseThrow(), command);
         if (!(edit instanceof EditSucceeded succeeded)) {
+            if (edit instanceof EditRejected rejected
+                    && rejected.issues().stream().anyMatch(issue -> issue.code() == EditCode.REFERENCED_TARGET)) {
+                return sourceDeletionRejection(imported, command).orElseGet(
+                        () -> new OpenApiEditResult(edit, Optional.empty(), imported)
+                );
+            }
             return new OpenApiEditResult(edit, Optional.empty(), imported);
         }
         SourceFormat format = imported.format().orElseThrow();
@@ -92,8 +98,7 @@ public final class OpenApiSchemaEditor {
         }
         Optional<OpenApiEditResult> sourceReferenceRejection = rejectUnmappedIncomingReferences(
                 imported,
-                succeeded,
-                format
+                succeeded
         );
         if (sourceReferenceRejection.isPresent()) {
             return sourceReferenceRejection.orElseThrow();
@@ -182,8 +187,7 @@ public final class OpenApiSchemaEditor {
 
     private Optional<OpenApiEditResult> rejectUnmappedIncomingReferences(
             ImportResult imported,
-            EditSucceeded succeeded,
-            SourceFormat format
+            EditSucceeded succeeded
     ) {
         if (succeeded.changeSet().changes().isEmpty()) {
             return Optional.empty();
@@ -193,16 +197,39 @@ public final class OpenApiSchemaEditor {
         }
         Change change = succeeded.changeSet().changes().getFirst();
         DocumentPath targetPath = deletionPath(change);
+        return rejectIncomingReferences(imported, targetPath, deletionDescription(change));
+    }
+
+    private Optional<OpenApiEditResult> sourceDeletionRejection(ImportResult imported, EditCommand command) {
+        if (SchemaIdScopeDetector.containsSchemaId(imported.source(), imported.format().orElseThrow())) {
+            return Optional.empty();
+        }
+        DocumentIndex index = DocumentIndex.build(imported.document().orElseThrow());
+        DocumentPath path;
+        if (command instanceof DeleteSchemaComponent component) {
+            path = index.findById(component.componentId()).orElseThrow().path();
+        } else if (command instanceof DeleteSchemaProperty property) {
+            path = index.findById(property.propertyId()).orElseThrow().path();
+        } else {
+            return Optional.empty();
+        }
+        return rejectIncomingReferences(imported, path, path.toString());
+    }
+
+    private Optional<OpenApiEditResult> rejectIncomingReferences(
+            ImportResult imported,
+            DocumentPath targetPath,
+            String target
+    ) {
         List<DocumentPath> references = new OpenApiSchemaDeletionPatcher().incomingReferences(
                 imported.source(),
-                format,
+                imported.format().orElseThrow(),
                 targetPath
         );
         if (references.isEmpty()) {
             return Optional.empty();
         }
         String locations = references.stream().map(Object::toString).collect(Collectors.joining(", "));
-        String target = deletionDescription(change);
         EditRejected rejection = new EditRejected(List.of(new EditIssue(
                 EditCode.REFERENCED_TARGET,
                 "Cannot delete " + target + "; incoming references: " + locations
