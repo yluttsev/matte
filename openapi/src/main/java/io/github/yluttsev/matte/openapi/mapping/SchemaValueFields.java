@@ -14,12 +14,14 @@ public record SchemaValueFields(
         List<DocumentValue> enumValues,
         boolean hasConst,
         DocumentValue constValue,
-        Map<String, BigInteger> integerConstraints
+        Map<String, BigInteger> integerConstraints,
+        List<String> requiredNames
 ) {
 
     public SchemaValueFields {
         examples = List.copyOf(examples);
         enumValues = List.copyOf(enumValues);
         integerConstraints = Map.copyOf(integerConstraints);
+        requiredNames = List.copyOf(requiredNames);
     }
 }

@@ -1,8 +1,6 @@
 package io.github.yluttsev.matte.openapi.patch;
 
-import java.math.BigDecimal;
 import java.nio.charset.CharacterCodingException;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -64,7 +62,10 @@ public final class SchemaSourceVerifier {
         fields.addAll(after.keySet());
         fields.removeIf(
                 field -> before.containsKey(field) && after.containsKey(field)
-                && Objects.equals(normalize(before.get(field)), normalize(after.get(field)))
+                && Objects.equals(
+                        SchemaComparison.normalizeField(field, before.get(field)),
+                        SchemaComparison.normalizeField(field, after.get(field))
+                )
         );
         return fields;
     }
@@ -86,8 +87,8 @@ public final class SchemaSourceVerifier {
             boolean actualPresent = actual.containsKey(field);
             if (expectedPresent != actualPresent
                     || expectedPresent && !Objects.equals(
-                            normalize(expected.get(field)),
-                            normalize(actual.get(field))
+                            SchemaComparison.normalizeField(field, expected.get(field)),
+                            SchemaComparison.normalizeField(field, actual.get(field))
                     )) {
                 throw new IllegalArgumentException("Schema field was not preserved: " + path.child(field));
             }
@@ -96,7 +97,7 @@ public final class SchemaSourceVerifier {
 
     private void verifyValue(SourceDocument source, SourceFormat format, DocumentPath path, Object expected) {
         Object actual = valueAt(readDocument(source, format), path);
-        if (!Objects.equals(normalize(expected), normalize(actual))) {
+        if (!Objects.equals(SchemaComparison.normalizeSchema(expected), SchemaComparison.normalizeSchema(actual))) {
             throw new IllegalArgumentException("Schema source was not preserved: " + path);
         }
     }
@@ -135,23 +136,6 @@ public final class SchemaSourceVerifier {
             if (value == null) {
                 return null;
             }
-        }
-        return value;
-    }
-
-    private Object normalize(Object value) {
-        if (value instanceof Number number) {
-            return new BigDecimal(number.toString()).stripTrailingZeros();
-        }
-        if (value instanceof Map<?, ?> mapping) {
-            Map<Object, Object> normalized = new LinkedHashMap<>();
-            mapping.forEach((key, nested) -> normalized.put(key, normalize(nested)));
-            return normalized;
-        }
-        if (value instanceof List<?> sequence) {
-            List<Object> normalized = new ArrayList<>();
-            sequence.forEach(nested -> normalized.add(normalize(nested)));
-            return normalized;
         }
         return value;
     }

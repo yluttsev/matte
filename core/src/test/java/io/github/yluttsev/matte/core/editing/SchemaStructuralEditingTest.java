@@ -1,5 +1,6 @@
 package io.github.yluttsev.matte.core.editing;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import io.github.yluttsev.matte.core.editing.change.ReferenceChanged;
@@ -71,6 +72,53 @@ class SchemaStructuralEditingTest {
                 new ReferenceIndexBuilder().build(DocumentIndex.build(result.document()))
                         .usages().stream().map(usage -> usage.sourcePath()).toList()
         );
+    }
+
+    @Test
+    void testRenameProperty_WhenNameIsInsideRequired_ShouldKeepItsPosition() {
+        assertRequiredAfterRename(List.of("m", "b"), "b", "a", List.of("m", "a"));
+        assertRequiredAfterRename(List.of("b", "m"), "b", "a", List.of("a", "m"));
+        assertRequiredAfterRename(List.of("m", "b", "z"), "b", "a", List.of("m", "a", "z"));
+    }
+
+    @Test
+    void testRenameProperty_WhenNameIsNotRequired_ShouldKeepRequiredUnchanged() {
+        assertRequiredAfterRename(List.of("m", "z"), "b", "a", List.of("m", "z"));
+    }
+
+    @Test
+    void testRenameProperty_WhenNewNameIsAlreadyRequired_ShouldDropOldNameOnly() {
+        assertRequiredAfterRename(List.of("b", "a", "z"), "b", "a", List.of("a", "z"));
+    }
+
+    @Test
+    void testRenameProperty_WhenNameIsUnchanged_ShouldKeepRequiredOrder() {
+        assertRequiredAfterRename(List.of("z", "b", "a"), "b", "b", List.of("z", "b", "a"));
+    }
+
+    private void assertRequiredAfterRename(
+            List<String> required,
+            String oldName,
+            String newName,
+            List<String> expected
+    ) {
+        ElementId propertyId = ElementId.random();
+        SchemaObject schema = SchemaObject.builder(ElementId.random())
+                .properties(List.of(
+                        property(oldName, propertyId, SchemaObject.builder(ElementId.random()).build()),
+                        property("m", ElementId.random(), SchemaObject.builder(ElementId.random()).build())
+                ))
+                .required(new LinkedHashSet<>(required))
+                .build();
+        ApiDocument original = document(component("User", schema));
+
+        EditSucceeded result = assertInstanceOf(EditSucceeded.class, editor.apply(
+                original,
+                new RenameSchemaProperty(schema.getId(), propertyId, newName)
+        ));
+
+        assertEquals(expected, List.copyOf(schema(result.document(), "User").getRequired()));
+        assertEquals(required, List.copyOf(schema(original, "User").getRequired()));
     }
 
     @Test

@@ -135,10 +135,7 @@ public final class CoreModelMapper {
                 example = mapOptionalValue(source.getExample(), source.getExampleSetFlag());
                 enumValues = mapValues(source.getEnum());
             }
-            Set<String> required = Set.of();
-            if (source.getRequired() != null) {
-                required = new LinkedHashSet<>(source.getRequired());
-            }
+            Set<String> required = mapRequired(source.getRequired(), values);
             return SchemaObject.builder(ElementId.random())
                     .types(extractTypes(source, version))
                     .title(source.getTitle())
@@ -195,6 +192,23 @@ public final class CoreModelMapper {
         } finally {
             ancestors.remove(source);
         }
+    }
+
+    private Set<String> mapRequired(List<String> parsed, SchemaValueFields values) {
+        Set<String> required = new LinkedHashSet<>();
+        if (parsed == null) {
+            return required;
+        }
+        Set<String> parsedNames = new LinkedHashSet<>(parsed);
+        if (values != null) {
+            for (String name : values.requiredNames()) {
+                if (parsedNames.contains(name)) {
+                    required.add(name);
+                }
+            }
+        }
+        required.addAll(parsedNames);
+        return required;
     }
 
     private Set<JsonType> extractTypes(io.swagger.v3.oas.models.media.Schema<?> source, OpenApiVersion version) {

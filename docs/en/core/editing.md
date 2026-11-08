@@ -36,7 +36,7 @@ Rejection codes (`EditCode`):
 Supported schema editing commands:
 - `AddSchemaComponent` — appends a new schema to `components/schemas` and emits `SchemaComponentAdded`;
 - `AddSchemaProperty` — locates the target `SchemaObject` by its `ElementId` (whether a top-level component schema or a nested inline schema), appends a new property, and emits `SchemaPropertyAdded`;
-- `RenameSchemaProperty` — locates a property by its `ElementId` within the specified `SchemaObject`, preserves its identity, renames it, updates the owning schema's matching `required` name, and rewrites local pointers to the property and its descendants;
+- `RenameSchemaProperty` — locates a property by its `ElementId` within the specified `SchemaObject`, preserves its identity, renames it, replaces the matching `required` name in place (keeping its position, or dropping the old name when the new one is already listed), and rewrites local pointers to the property and its descendants;
 - `DeleteSchemaProperty` — removes a property by its `ElementId` when no reference from outside its subtree targets it, and emits `SchemaPropertyDeleted`;
 - `DeleteSchemaComponent` — removes a schema component when no reference from outside its subtree targets it, and emits `SchemaComponentDeleted`;
 - `UpdateSchemaObject` — replaces the fields of an existing `SchemaObject` while preserving its `ElementId`; `SchemaObjectUpdated` records the schema path and before/after snapshots;

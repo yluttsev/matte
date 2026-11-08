@@ -282,9 +282,26 @@ public final class SchemaObject implements Schema, ReferenceOwner {
         SchemaProperty property = findProperty(propertyId);
         String oldName = property.getName();
         property.rename(access, name);
-        if (required.remove(oldName)) {
-            required.add(name);
+        if (!oldName.equals(name) && required.contains(oldName)) {
+            renameRequired(oldName, name);
         }
+    }
+
+    private void renameRequired(String oldName, String newName) {
+        if (required.contains(newName)) {
+            required.remove(oldName);
+            return;
+        }
+        List<String> names = new ArrayList<>();
+        for (String name : required) {
+            if (name.equals(oldName)) {
+                names.add(newName);
+            } else {
+                names.add(name);
+            }
+        }
+        required.clear();
+        required.addAll(names);
     }
 
     public void removeProperty(MutationAccess access, ElementId propertyId) {
