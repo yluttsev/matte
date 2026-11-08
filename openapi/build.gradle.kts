@@ -1,9 +1,9 @@
 plugins {
-    id("java")
+    `java-library`
 }
 
 dependencies {
-    implementation(project(":core"))
+    api(project(":core"))
     implementation("tools.jackson.core:jackson-core:3.2.4")
     implementation("tools.jackson.core:jackson-databind:3.2.4")
     implementation("org.snakeyaml:snakeyaml-engine:3.2")

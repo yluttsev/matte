@@ -1,12 +1,5 @@
 plugins {
-    id("java")
-}
-
-group = "io.github.yluttsev"
-version = "1.0-SNAPSHOT"
-
-repositories {
-    mavenCentral()
+    `java-library`
 }
 
 dependencies {
