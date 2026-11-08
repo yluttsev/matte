@@ -12,6 +12,10 @@ subprojects {
     pluginManager.withPlugin("java") {
         pluginManager.apply("checkstyle")
 
+        extensions.configure<JavaPluginExtension> {
+            toolchain.languageVersion = JavaLanguageVersion.of(25)
+        }
+
         extensions.configure<CheckstyleExtension> {
             toolVersion = "14.4.0"
             configFile = rootProject.file("checkstyle.xml")
