@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.SourceEditCode;
+import io.github.yluttsev.matte.openapi.parser.ParserSettings;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
 import org.snakeyaml.engine.v2.common.ScalarStyle;
@@ -18,7 +19,7 @@ import org.snakeyaml.engine.v2.nodes.SequenceNode;
 
 final class YamlScalarScanner implements SourceScalarScanner {
 
-    private static final LoadSettings SETTINGS = LoadSettings.builder().build();
+    private static final LoadSettings SETTINGS = ParserSettings.yaml();
 
     @Override
     public List<SourceScalar> scan(String text) {

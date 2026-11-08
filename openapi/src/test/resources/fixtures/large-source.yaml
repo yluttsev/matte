@@ -1,0 +1,10 @@
+openapi: 3.0.3
+info:
+  title: Large document
+  version: '1'
+paths: {}
+x-padding: '__PADDING__'
+components:
+  schemas:
+    Item:
+      type: string

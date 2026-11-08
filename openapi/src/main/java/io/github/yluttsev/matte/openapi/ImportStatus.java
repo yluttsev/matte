@@ -2,6 +2,7 @@ package io.github.yluttsev.matte.openapi;
 
 public enum ImportStatus {
     EMPTY_SOURCE,
+    SOURCE_TOO_LARGE,
     INVALID_ENCODING,
     AMBIGUOUS_FORMAT,
     SYNTAX_ERROR,

@@ -6,11 +6,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
+import io.github.yluttsev.matte.openapi.parser.ParserSettings;
 import tools.jackson.databind.ObjectMapper;
 
 final class SourceTextEdits {
 
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final ObjectMapper JSON = ParserSettings.json();
     private static final Pattern SAFE_PLAIN_SCALAR = Pattern.compile("[A-Za-z_][A-Za-z0-9_.-]*");
     private static final Set<String> YAML_KEYWORDS = Set.of("true", "false", "null");
 

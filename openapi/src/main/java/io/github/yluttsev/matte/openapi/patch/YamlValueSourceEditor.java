@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.SourceEditCode;
+import io.github.yluttsev.matte.openapi.parser.ParserSettings;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.api.lowlevel.Compose;
 import org.snakeyaml.engine.v2.common.FlowStyle;
@@ -18,8 +19,8 @@ import tools.jackson.databind.ObjectMapper;
 
 final class YamlValueSourceEditor implements SchemaValueSourceEditor {
 
-    private static final LoadSettings SETTINGS = LoadSettings.builder().build();
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final LoadSettings SETTINGS = ParserSettings.yaml();
+    private static final ObjectMapper JSON = ParserSettings.json();
 
     @Override
     public String replace(String text, DocumentPath path, Object value) {

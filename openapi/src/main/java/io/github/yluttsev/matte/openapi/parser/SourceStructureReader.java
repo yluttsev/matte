@@ -19,8 +19,8 @@ public final class SourceStructureReader {
     private static final String SWAGGER_KEY = "swagger";
     private static final String COMPONENTS_KEY = "components";
     private static final String SCHEMAS_KEY = "schemas";
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final LoadSettings SETTINGS = LoadSettings.builder().build();
+    private static final ObjectMapper MAPPER = ParserSettings.json();
+    private static final LoadSettings SETTINGS = ParserSettings.yaml();
 
     private SourceStructureReader() {
     }

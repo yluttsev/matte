@@ -34,6 +34,14 @@ public final class OpenApiImporter {
     public ImportResult importDocument(byte[] content, ImportOptions options) {
         Objects.requireNonNull(options, "options");
         SourceDocument source = new SourceDocument(content);
+        if (source.length() > options.maxSourceBytes()) {
+            return reject(
+                    source,
+                    options.formatHint(),
+                    ImportStatus.SOURCE_TOO_LARGE,
+                    "Source size " + source.length() + " bytes exceeds limit " + options.maxSourceBytes() + " bytes"
+            );
+        }
         if (source.length() == 0) {
             return reject(source, options.formatHint(), ImportDiagnostic.emptySource());
         }

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import io.github.yluttsev.matte.core.navigation.DocumentPath;
 import io.github.yluttsev.matte.openapi.SourceEditCode;
+import io.github.yluttsev.matte.openapi.parser.ParserSettings;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
 import tools.jackson.core.ObjectReadContext;
@@ -17,7 +18,7 @@ final class JsonAdditionWriter implements SourceAdditionWriter {
 
     private static final char UTF8_BOM = 0xFEFF;
     private static final JsonFactory FACTORY = new JsonFactory();
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final ObjectMapper JSON = ParserSettings.json();
 
     @Override
     public String add(
